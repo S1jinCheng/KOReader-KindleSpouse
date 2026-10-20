@@ -44,11 +44,16 @@ test = Path(tempfile.mkdtemp(prefix="notebook-embedded-", dir=build))
 (test / "patches").mkdir()
 (test / "books").mkdir()
 shutil.copytree(engine / "icons", test / "icons")
-with zipfile.ZipFile(test / "books/fixture.epub", "w") as archive:
-    archive.writestr("mimetype", "application/epub+zip")
-    archive.writestr("META-INF/container.xml", '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="book.opf" media-type="application/oebps-package+xml"/></rootfiles></container>')
-    archive.writestr("book.opf", '<package version="2.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">notebook-fixture</dc:identifier><dc:title>阅读的四季</dc:title><dc:creator>KindleSpouse</dc:creator></metadata><manifest><item id="text" href="text.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="text"/></spine></package>')
-    archive.writestr("text.xhtml", '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>阅读的四季</title></head><body><h1>阅读的四季</h1></body></html>')
+titles = ["阅读的四季", "山间来信", "一日三餐", "慢慢走", "生活的形状", "一间自己的书房", "寻常故事", "昨日书简", "漫长的旅途", "春日来信", "理想的下午", "此时此地"]
+for index, title in enumerate(titles):
+    with zipfile.ZipFile(test / "books" / (title + ".epub"), "w") as archive:
+        archive.writestr("mimetype", "application/epub+zip")
+        archive.writestr("META-INF/container.xml", '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="book.opf" media-type="application/oebps-package+xml"/></rootfiles></container>')
+        archive.writestr("book.opf", f'<package version="2.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">notebook-fixture-{index}</dc:identifier><dc:title>{title}</dc:title><dc:creator>KindleSpouse</dc:creator><meta name="cover" content="cover"/></metadata><manifest><item id="text" href="text.xhtml" media-type="application/xhtml+xml"/><item id="cover" href="cover.svg" media-type="image/svg+xml"/></manifest><spine><itemref idref="text"/></spine></package>')
+        archive.writestr("text.xhtml", f'<html xmlns="http://www.w3.org/1999/xhtml"><head><title>{title}</title></head><body><h1>{title}</h1></body></html>')
+        shade = [235, 85, 195, 150, 215, 110][index % 6]
+        ink = "white" if shade < 150 else "black"
+        archive.writestr("cover.svg", f'<svg xmlns="http://www.w3.org/2000/svg" width="400" height="600"><rect width="400" height="600" fill="rgb({shade},{shade},{shade})"/><rect x="25" y="25" width="350" height="550" stroke="{ink}" stroke-width="2" fill="none"/><text x="200" y="210" font-size="30" text-anchor="middle" fill="{ink}">READING</text><text x="200" y="320" font-size="82" text-anchor="middle" fill="{ink}">{index + 1:02}</text></svg>')
 disabled = ",".join("[" + json.dumps(item.name.removesuffix(".koplugin")) + "]=true" for item in (runtime / "plugins").iterdir() if item.name.endswith(".koplugin") and item.name != "coverbrowser.koplugin")
 (test / "settings.reader.lua").write_text('return {language="zh_CN",last_migration_date=20260701,quickstart_shown_version=99999999,home_dir=' + json.dumps(str(test / "books")) + ',start_with="filemanager",disable_network_connection=true,auto_suspend_timeout_seconds=0,notebook_draw_with_finger=true,plugins_disabled={' + disabled + '}}', encoding="utf-8")
 patch = root / ("kindlespouse/test_notebook.lua" if fork else "tests/notebook-embedded.lua")
@@ -62,6 +67,6 @@ result = subprocess.run([str(runtime / "luajit"), "reader.lua", str(test / "book
 (test / "runtime.log").write_text(result.stdout + result.stderr, encoding="utf-8")
 shutil.copyfile(test / "runtime.log", output / "notebook-runtime.log")
 assert result.returncode == 0 and "Embedded Notebook acceptance passed" in result.stdout, (result.stdout + result.stderr)[-6000:]
-for name in ("gallery", "editor", "saved", "landscape"):
+for name in ("library", "gallery", "scrolled", "editor", "saved", "landscape"):
     assert (output / ("notebook-embedded-" + name + ".png")).stat().st_size > 1000
 print("Passed in real KOReader: cover tap, search, touch ink, eraser, undo/redo, pages, folders, save/reopen, Library return, editable imported vector fixture, portrait/landscape. No device access.")

@@ -5,6 +5,7 @@ on:
     branches: [codex/notebook-embedded]
     paths:
       - experiments/notebook/**
+      - plugins/kindlespouse.koplugin/**
       - kindlespouse/test_notebook.lua
       - .github/workflows/kindlespouse-notebook.yml
   workflow_dispatch:

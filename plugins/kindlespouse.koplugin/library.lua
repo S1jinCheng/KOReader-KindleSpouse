@@ -37,10 +37,6 @@ function Library.record(ui, item, root, history)
     local previous = cache[item.path]
     local current = previous and previous.size == item.attr.size and previous.modified == item.attr.modification
     local props = ui.bookinfo:getDocProps(item.path, nil, true)
-    if not props.title and not current then
-        local ok, result = pcall(ui.bookinfo.getDocProps, ui.bookinfo, item.path)
-        if ok and result then props = result end
-    end
     local title = props.title or current and previous.title or props.display_title or item.text
     local author = props.authors or current and previous.author or ""
     local metadata = { title = title, author = author, size = item.attr.size, modified = item.attr.modification,
@@ -182,10 +178,10 @@ function Library.toolbar(ui)
     local Button = require("ui/widget/button")
     local Blitbuffer = require("ffi/blitbuffer")
     local settings = Library.settings()
-    local width, height = Screen:getWidth(), Screen:scaleBySize(38)
+    local width, height = Screen:getWidth(), Screen:scaleBySize(28)
     local function button(text, size, callback, active)
         return Button:new { text = text, width = size, height = height, bordersize = 0, padding = 0,
-            radius = 0, text_font_size = 16, text_font_bold = active or false, show_parent = ui,
+            radius = 0, text_font_size = 12, text_font_bold = active or false, show_parent = ui,
             background = active and Blitbuffer.COLOR_LIGHT_GRAY or Blitbuffer.COLOR_WHITE, callback = callback }
     end
     local sort_title = "最近阅读"

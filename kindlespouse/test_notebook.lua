@@ -19,7 +19,7 @@ local engine = Embedded.new(engine_directory)
 engine:install(Home)
 local Library, Document, Stroke = engine.load("library"), engine.load("document"), engine.load("stroke")
 assert(Library.ensureDir(""))
-local titles = { "日常随记", "阅读摘记", "灵感手账", "工作思考", "旅行计划", "我的草稿" }
+local titles = { "日常随记", "阅读摘记", "灵感手账", "工作思考", "旅行计划", "我的草稿", "春日计划", "读书清单", "旅行手记", "每日记录", "晨间随笔", "摘录与想法" }
 for index, title in ipairs(titles) do
     local document = Document:new(Library.abs(title .. ".scribe"))
     document:setTemplate(index % 2 == 0 and "grid" or "ruled")
@@ -66,8 +66,17 @@ local function shot(ui, name)
     Screen:shot(output .. "/notebook-embedded-" .. name .. ".png")
 end
 local ui, editor, original_count
+local Event = require("ui/event")
+local Geom = require("ui/geometry")
+local function swipe(view, direction, distance)
+    view:handleEvent(Event:new("Gesture", { ges = "swipe", pos = Geom:new { x = 200, y = view.dimen.y + 200 }, direction = direction, distance = distance }))
+end
+local function tap(view, card, gesture)
+    view:handleEvent(Event:new("Gesture", { ges = gesture or "tap", pos = Geom:new {
+        x = card.dimen.x + 40, y = math.max(card.dimen.y + 40, view.dimen.y + 20) } }))
+end
 local function findCard(widget, path)
-    if widget.item and widget.item.path == path and widget.onTap then return widget end
+    if widget.entry and widget.entry.path == path and widget.onTap then return widget end
     for _, child in ipairs(widget) do
         if type(child) == "table" then
             local found = findCard(child, path)
@@ -75,14 +84,67 @@ local function findCard(widget, path)
         end
     end
 end
-UIManager:scheduleIn(3, function() check(function()
+UIManager:scheduleIn(6, function() check(function()
     ui = assert(FileManager.instance)
+    shot(ui, "library")
+    assert(ui.kindlespouse_shelf and ui.kindlespouse_shelf.columns == 3)
+    for _, card in pairs(ui.kindlespouse_shelf.cards) do assert(card.caption.text and card.caption.text ~= "") end
+    local books = ui.kindlespouse_shelf
+    if books._max_scroll_offset_y > 300 then
+        swipe(books, "north", 300)
+        assert(books:getScrolledOffset().y == 300)
+        shot(ui, "library-scrolled")
+        local index = (math.ceil(300 / books.row_h) * books.columns) + 1
+        local card = assert(books.cards[index])
+        local opened, original_open = nil, books.on_open
+        books.on_open = function(item) opened = item end
+        tap(books, card)
+        assert(opened == books.items[index], "Scrolled cover taps must open the correct book")
+        books.on_open = original_open
+        ui.layout[#ui.layout][2].callback()
+        ui.layout[#ui.layout][1].callback()
+        assert(ui.kindlespouse_shelf:getScrolledOffset().y == 300, "Library position must survive tab switching")
+        ui.kindlespouse_shelf:setScrolledOffset({ y = 0 })
+    end
+    local many = {}
+    for index = 1, 1000 do many[index] = { title = "图书 " .. index } end
+    local large = require("shelf"):new { dimen = Geom:new { w = Screen:getWidth(), h = 1000 }, items = many,
+        provider = function(item) return item end, on_open = function() end }
+    large:paintTo(Screen.bb, 0, 0)
+    swipe(large, "north", 1000000)
+    large:paintTo(Screen.bb, 0, 0)
+    local live = 0
+    for _ in pairs(large.cards) do live = live + 1 end
+    assert(live < 20 and large.cards[1000], "Large libraries must render only visible cards and reach the last book")
+    large:free()
     ui.layout[#ui.layout][2].callback()
     assert(ui.kindlespouse_tab == "Notebook" and engine.gallery)
-    assert(#engine.gallery.items == 6)
+    assert(#engine.gallery.items == #titles)
 end) end)
-UIManager:scheduleIn(7, function() check(function()
+UIManager:scheduleIn(10, function() check(function()
     shot(ui, "gallery")
+    local view = engine.gallery.shelf
+    assert(view._max_scroll_offset_y > 0 and view.swipe_full_view == false)
+    swipe(view, "north", 300)
+    assert(view:getScrolledOffset().y == 300, "Swipe distance must scroll without page snapping")
+    shot(ui, "scrolled")
+    ui.layout[#ui.layout][1].callback()
+    ui.layout[#ui.layout][2].callback()
+    view = engine.gallery.shelf
+    assert(view:getScrolledOffset().y == 300, "Notebook position must survive tab switching")
+    shot(ui, "restored")
+    local selected_index = math.ceil(300 / view.row_h) * view.columns + 1
+    local selected_path = view.items[selected_index].path
+    tap(view, assert(view.cards[selected_index]), "hold")
+    assert(engine.gallery.selection[selected_path], "Long press after scrolling must select the correct notebook")
+    shot(ui, "selection")
+    local selected_card = assert(findCard(engine.gallery, selected_path))
+    assert(selected_card.caption.text:find("✓", 1, true), "Selected notebooks must be visibly marked")
+    engine.gallery:_endSelection()
+    view = engine.gallery.shelf
+    shot(ui, "deselected")
+    swipe(view, "south", 300)
+    assert(view:getScrolledOffset().y == 0)
     local navigation = ui.layout[#ui.layout]
     assert(navigation[1].dimen.y + navigation[1]:getSize().h <= Screen:getHeight())
     engine.gallery.query = "阅读"
@@ -90,9 +152,10 @@ UIManager:scheduleIn(7, function() check(function()
     assert(#engine.gallery.items == 1 and engine.gallery.items[1].name == "阅读摘记")
     engine.gallery.query = ""
     engine.gallery:_rebuild()
-    assert(#engine.gallery.items == 6)
+    assert(#engine.gallery.items == #titles)
+    shot(ui, "filtered")
     local card = assert(findCard(engine.gallery, engine.gallery.items[1].path))
-    card:onTap()
+    tap(engine.gallery.shelf, card)
     editor = assert(engine.editor)
     assert(editor.document:pageCount() == 2)
     original_count = #editor.document:getPage().strokes
@@ -129,14 +192,14 @@ UIManager:scheduleIn(7, function() check(function()
     ui.layout[#ui.layout][1].callback()
     assert(ui.kindlespouse_tab == "Library" and not engine.gallery)
     ui.layout[#ui.layout][2].callback()
-    assert(ui.kindlespouse_tab == "Notebook" and #engine.gallery.items == 6)
+    assert(ui.kindlespouse_tab == "Notebook" and #engine.gallery.items == #titles)
     assert(Library.ensureDir("项目"))
     engine.gallery:_goTo("项目")
     assert(engine.gallery.folder == "项目" and #engine.gallery.items == 0)
     engine.gallery:_goTo("")
-    assert(engine.gallery.folder == "" and #engine.gallery.items == 7)
+    assert(engine.gallery.folder == "" and #engine.gallery.items == #titles + 1)
 end) end)
-UIManager:scheduleIn(10, function() check(function()
+UIManager:scheduleIn(13, function() check(function()
     local data_file = assert(io.open(root .. "/native-vectors.json", "r"))
     local data = require("json").decode(data_file:read("*a"))
     data_file:close()

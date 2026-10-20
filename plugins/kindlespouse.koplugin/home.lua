@@ -11,7 +11,7 @@ function Home.enabled()
 end
 
 function Home.navigationHeight()
-    return Screen:scaleBySize(58)
+    return Screen:scaleBySize(40)
 end
 
 function Home.books(chooser, root)
@@ -48,19 +48,6 @@ function FileChooser:init()
         self.genItemTableFromPath = function(chooser, root) return Home.books(chooser, root) end
     end
     original_init(self)
-    if self.ui and self.ui.kindlespouse_home and Home.enabled() then
-        local toolbar = Library.toolbar(self.ui)
-        local height = toolbar:getSize().h
-        local calculate = self._recalculateDimen
-        self._recalculateDimen = function(chooser, ...)
-            chooser.inner_dimen.h = chooser.inner_dimen.h - height
-            calculate(chooser, ...)
-            chooser.inner_dimen.h = chooser.inner_dimen.h + height
-        end
-        self.content_group[1] = require("ui/widget/verticalgroup"):new { align = "left", self.title_bar, toolbar }
-        self.content_group:resetLayout()
-        self:updateItems(1)
-    end
 end
 
 function Home.returnToKindle(companion)
@@ -107,20 +94,41 @@ function Home.layout(ui, companion)
     local Blitbuffer = require("ffi/blitbuffer")
     local half = math.floor(Screen:getWidth() / 2)
     local selected = ui.kindlespouse_tab or "Library"
+    if ui.kindlespouse_shelf then ui.kindlespouse_shelf:onCloseWidget(); ui.kindlespouse_shelf = nil end
+    ui.cropping_widget = nil
+    local previous = ui.title_bar
+    ui.title_bar = require("ui/widget/titlebar"):new {
+        width = Screen:getWidth(), fullscreen = true, align = "left", title = selected,
+        subtitle = selected == "Library" and Home.count(ui) or "Notebook",
+        title_face = require("ui/font"):getFace("cfont", 18), subtitle_face = require("ui/font"):getFace("cfont", 11),
+        left_icon = previous.left_icon, right_icon = previous.right_icon,
+        left_icon_size_ratio = 0.38, right_icon_size_ratio = 0.38,
+        button_padding = Screen:scaleBySize(8),
+        left_icon_tap_callback = previous.left_icon_tap_callback,
+        left_icon_hold_callback = previous.left_icon_hold_callback,
+        right_icon_tap_callback = previous.right_icon_tap_callback,
+        right_icon_hold_callback = previous.right_icon_hold_callback,
+    }
     local body = ui[1]
-    local focus = ui.layout
+    local focus = {}
     if selected == "Notebook" then
         local height = Screen:getHeight() - Home.navigationHeight() - ui.title_bar:getHeight()
         body = VerticalGroup:new { align = "left", ui.title_bar, Home.notebook(companion, height) }
         focus = {}
+    else
+        local toolbar = Library.toolbar(ui)
+        local height = Screen:getHeight() - Home.navigationHeight() - ui.title_bar:getHeight() - toolbar:getSize().h
+        ui.kindlespouse_shelf = require("shelf").library(ui, height)
+        ui.cropping_widget = ui.kindlespouse_shelf
+        body = VerticalGroup:new { align = "left", ui.title_bar, toolbar, ui.kindlespouse_shelf }
     end
     local navigation = HorizontalGroup:new { align = "center" }
     for index, tab in ipairs({ "Library", "Notebook" }) do
         navigation[index] = Button:new {
             text = tab, width = index == 1 and half or Screen:getWidth() - half,
             height = Home.navigationHeight(), bordersize = 0, padding = 0,
-            text_font_size = 20, text_font_bold = selected == tab,
-            background = selected == tab and Blitbuffer.COLOR_LIGHT_GRAY or Blitbuffer.COLOR_WHITE,
+            text_font_size = 13, text_font_bold = selected == tab, radius = 0,
+            background = Blitbuffer.COLOR_WHITE,
             show_parent = ui,
             callback = function()
                 if ui.kindlespouse_tab == tab then return end
@@ -158,7 +166,7 @@ function Home.install(companion)
             local chooser = manager.file_chooser
             manager.file_chooser = nil
             local mode = G_reader_settings:readSetting("kindlespouse_home_previous_mode") or nil
-            if Home.enabled() then mode = Library.settings().view == "list" and "list_image_meta" or "mosaic_image" end
+            if Home.enabled() then mode = nil end
             manager.coverbrowser:setDisplayMode(mode)
             manager.file_chooser = chooser
         end
@@ -220,6 +228,8 @@ end
 
 function Home.toggle(companion)
     local ui = companion.ui
+    if ui.kindlespouse_shelf then ui.kindlespouse_shelf:onCloseWidget(); ui.kindlespouse_shelf = nil end
+    ui.cropping_widget = nil
     local enabled = not Home.enabled()
     G_reader_settings:saveSetting("kindlespouse_home", enabled)
     if enabled then
