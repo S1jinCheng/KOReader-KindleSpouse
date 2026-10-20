@@ -452,6 +452,7 @@ end
 
 function Companion:addToMainMenu(menu_items)
     menu_items.kindlespouse = { text = "KindleSpouse", sub_item_table = {
+        { text = "Profile and cloud sync", callback = function() require("profile").open(self) end },
         { text = "Use KindleSpouse home", enabled_func = function() return not self.ui.document end,
           checked_func = function() return G_reader_settings:readSetting("kindlespouse_home") ~= false end,
           callback = function() if not self.ui.document then require("home").toggle(self) end end },

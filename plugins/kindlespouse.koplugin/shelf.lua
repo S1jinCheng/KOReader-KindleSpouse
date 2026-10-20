@@ -215,6 +215,7 @@ function Shelf.library(ui, height)
     local function collect()
         if shelf.closed then return end
         manager:collectSubprocesses()
+        if ui.kindlespouse_recent then ui.kindlespouse_recent:updateCover() end
         shelf:refreshCards()
         if manager:isExtractingInBackground() then UIManager:scheduleIn(1, collect) end
     end

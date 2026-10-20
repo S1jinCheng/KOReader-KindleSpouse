@@ -85,6 +85,77 @@ function Home.notebook(companion, height)
     }
 end
 
+function Home.lastBook()
+    local registry = require("document/documentregistry")
+    local latest, when
+    for _, item in ipairs(require("readhistory").hist) do
+        if type(item.file) == "string" and lfs.attributes(item.file, "mode") == "file" and registry:hasProvider(item.file) then
+            local time = tonumber(item.time) or 0
+            if not latest or time > when then latest, when = item.file, time end
+        end
+    end
+    local previous = G_reader_settings:readSetting("lastfile")
+    if not latest and type(previous) == "string" and lfs.attributes(previous, "mode") == "file" and registry:hasProvider(previous) then latest = previous end
+    return latest
+end
+
+function Home.openRecent(companion, filename)
+    if not filename then companion:notify("还没有阅读记录，请先打开一本书。"); return end
+    if lfs.attributes(filename, "mode") ~= "file" then
+        companion:notify("上次阅读的图书已移动或删除。")
+        companion.ui:reinit(companion.ui.file_chooser.path)
+        return
+    end
+    require("apps/reader/readerui"):showReader(filename)
+end
+
+function Home.recentButton(companion, width)
+    local Geom = require("ui/geometry")
+    local InputContainer = require("ui/widget/container/inputcontainer")
+    local file = Home.lastBook()
+    local cover_w, cover_h = Screen:scaleBySize(44), Screen:scaleBySize(64)
+    local protrude = cover_h - Home.navigationHeight()
+    local info = file and require("bookinfomanager"):getBookInfo(file, true) or nil
+    local picture
+    if info and info.cover_bb then
+        local bb = info.cover_bb
+        picture = require("ui/widget/imagewidget"):new { image = bb, scale_factor = math.min(cover_w / bb:getWidth(), cover_h / bb:getHeight()) }
+    else
+        picture = require("ui/widget/iconwidget"):new { icon = "book.opened", width = cover_w - 12, height = cover_h - 12 }
+    end
+    local title = info and info.title or file and file:match("([^/]+)$") or "继续阅读"
+    local button = InputContainer:new { file = file, title = title, cover_loaded = info and info.cover_bb ~= nil,
+        dimen = Geom:new { w = width, h = cover_h },
+        require("ui/widget/container/centercontainer"):new { dimen = Geom:new { w = width, h = cover_h },
+            require("ui/widget/container/framecontainer"):new { padding = 0, margin = 0, bordersize = 1,
+                require("ui/widget/container/centercontainer"):new { dimen = Geom:new { w = cover_w - 2, h = cover_h - 2 }, picture } } } }
+    button.getSize = function() return Geom:new { w = width, h = Home.navigationHeight() } end
+    button.paintTo = function(widget, bb, x, y)
+        widget.dimen.x, widget.dimen.y = x, y - protrude
+        widget[1]:paintTo(bb, x, y - protrude)
+    end
+    button.callback = function() Home.openRecent(companion, file) end
+    button.updateCover = function(widget)
+        if not file or widget.cover_loaded then return end
+        local cached = require("bookinfomanager"):getBookInfo(file, true)
+        if not cached or not cached.cover_bb then return end
+        local bb = cached.cover_bb
+        widget[1]:free()
+        widget[1] = require("ui/widget/container/centercontainer"):new { dimen = Geom:new { w = width, h = cover_h },
+            require("ui/widget/container/framecontainer"):new { padding = 0, margin = 0, bordersize = 1,
+                require("ui/widget/container/centercontainer"):new { dimen = Geom:new { w = cover_w - 2, h = cover_h - 2 },
+                    require("ui/widget/imagewidget"):new { image = bb, scale_factor = math.min((cover_w - 2) / bb:getWidth(), (cover_h - 2) / bb:getHeight()) } } } }
+        widget.cover_loaded, widget.title = true, cached.title or widget.title
+    end
+    button.ges_events = {
+        Recent = { require("ui/gesturerange"):new { ges = "tap", range = button.dimen } },
+        RecentTitle = { require("ui/gesturerange"):new { ges = "hold", range = button.dimen } },
+    }
+    button.onRecent = function() button.callback(); return true end
+    button.onRecentTitle = function(widget) companion:notify(widget.title); return true end
+    return button
+end
+
 function Home.layout(ui, companion)
     local VerticalGroup = require("ui/widget/verticalgroup")
     local HorizontalGroup = require("ui/widget/horizontalgroup")
@@ -92,11 +163,14 @@ function Home.layout(ui, companion)
     local LeftContainer = require("ui/widget/container/leftcontainer")
     local Button = require("ui/widget/button")
     local Blitbuffer = require("ffi/blitbuffer")
-    local half = math.floor(Screen:getWidth() / 2)
+    local center_width = Screen:scaleBySize(88)
+    local side_width = math.floor((Screen:getWidth() - center_width) / 2)
     local selected = ui.kindlespouse_tab or "Library"
     if ui.kindlespouse_shelf then ui.kindlespouse_shelf:onCloseWidget(); ui.kindlespouse_shelf = nil end
+    if ui.kindlespouse_recent then ui.kindlespouse_recent:free() end
+    if ui.kindlespouse_header then ui.kindlespouse_header:free() end
     ui.cropping_widget = nil
-    local header = Library.header(ui)
+    local header = Library.header(ui, companion)
     ui.kindlespouse_header = header
     local body = ui[1]
     local focus = {}
@@ -113,8 +187,8 @@ function Home.layout(ui, companion)
     end
     local navigation = HorizontalGroup:new { align = "center" }
     for index, tab in ipairs({ "Library", "Notebook" }) do
-        navigation[index] = Button:new {
-            text = tab == "Notebook" and "Notebooks" or tab, width = index == 1 and half or Screen:getWidth() - half,
+        navigation[index == 1 and 1 or 3] = Button:new {
+            text = tab == "Notebook" and "Notebooks" or tab, width = index == 1 and side_width or Screen:getWidth() - side_width - center_width,
             height = Home.navigationHeight(), bordersize = 0, padding = 0,
             text_font_face = Library.fonts.ui, text_font_size = 12, text_font_bold = false, radius = 0,
             background = Blitbuffer.COLOR_WHITE,
@@ -127,8 +201,10 @@ function Home.layout(ui, companion)
             end,
         }
     end
+    navigation[2] = Home.recentButton(companion, center_width)
+    ui.kindlespouse_recent = navigation[2]
     for index, tab in ipairs({ "Library", "Notebook" }) do
-        local button = navigation[index]
+        local button = navigation[index == 1 and 1 or 3]
         local original_paint = button.paintTo
         button.paintTo = function(widget, bb, x, y)
             original_paint(widget, bb, x, y)
@@ -142,7 +218,10 @@ function Home.layout(ui, companion)
     local original_paint = navigation.paintTo
     navigation.paintTo = function(widget, bb, x, y)
         original_paint(widget, bb, x, y)
-        bb:paintRect(x, y, Screen:getWidth(), 1, Blitbuffer.COLOR_GRAY)
+        local gap = Screen:scaleBySize(46)
+        local left = math.floor((Screen:getWidth() - gap) / 2)
+        bb:paintRect(x, y, left, 1, Blitbuffer.COLOR_GRAY)
+        bb:paintRect(x + left + gap, y, Screen:getWidth() - left - gap, 1, Blitbuffer.COLOR_GRAY)
     end
     ui[1] = FrameContainer:new {
         padding = 0, margin = 0, bordersize = 0, background = Blitbuffer.COLOR_WHITE,
@@ -150,9 +229,16 @@ function Home.layout(ui, companion)
             LeftContainer:new { dimen = require("ui/geometry"):new { w = Screen:getWidth(), h = Screen:getHeight() - Home.navigationHeight() }, body },
             navigation },
     }
+    local original_propagate = ui[1].propagateEvent
+    ui[1].propagateEvent = function(widget, event)
+        local gesture = event.handler == "onGesture" and event.args and event.args[1]
+        if gesture and gesture.pos and (gesture.ges == "tap" or gesture.ges == "hold")
+            and gesture.pos:intersectWith(ui.kindlespouse_recent.dimen) and ui.kindlespouse_recent:handleEvent(event) then return true end
+        return original_propagate(widget, event)
+    end
     ui.layout = {}
     for _, row in ipairs(focus or {}) do ui.layout[#ui.layout + 1] = row end
-    ui.layout[#ui.layout + 1] = { navigation[1], navigation[2] }
+    ui.layout[#ui.layout + 1] = { navigation[1], navigation[3] }
     ui.title_bar:setTitle(selected)
     ui.title_bar:setSubTitle(selected == "Library" and Home.count(ui) or "Kindle Scribe")
     ui:registerKeyEvents()
@@ -242,6 +328,7 @@ end
 
 function Home.toggle(companion)
     local ui = companion.ui
+    if ui.kindlespouse_recent then ui.kindlespouse_recent:free(); ui.kindlespouse_recent = nil end
     if ui.kindlespouse_shelf then ui.kindlespouse_shelf:onCloseWidget(); ui.kindlespouse_shelf = nil end
     ui.cropping_widget = nil
     local enabled = not Home.enabled()

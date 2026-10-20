@@ -39,13 +39,33 @@ for index, title in ipairs(titles) do
     document:goToPage(1)
     assert(document:save())
 end
+local Profile = require("profile")
+local companion = { directory = root .. "/companion", notify = function() end }
+assert(require("libs/libkoreader-lfs").mkdir(companion.directory))
+local function fixture(name, value)
+    local file = assert(io.open(companion.directory .. "/" .. name, "wb"))
+    file:write(require("json").encode(value)); file:close()
+end
+fixture("config.json", { version = 1, name = "Kindle Scribe" })
+fixture("sleep-profile.json", { version = 1, displayName = "KindleSpouse 读者", avatar = "KS", clouds = {
+    { id = "reading", name = "阅读书库", provider = "drive", connected = true },
+    { id = "backup", name = "笔记备份", provider = "onedrive", connected = false },
+} })
+fixture("progress.json", { state = "completed", completedAt = os.time(), received = 3, files = 28 })
+function companion:status() return Profile.read(self.directory, "progress.json") end
+function companion:syncProfile() fixture("progress.json", { state = "running", stage = "receiving_local_profile", profileOnly = true, done = 0, total = 1 }) end
+function companion:sync() fixture("progress.json", { state = "running", stage = "uploading_bundles", done = 1, total = 4 }) end
+function companion:pause() fixture("progress.json", { state = "paused" }) end
+local recent_file = root .. "/books/阅读的四季.epub"
+require("readhistory").hist = { { file = recent_file, time = os.time() } }
 local original_init = FileManager.init
 function FileManager:init()
     local original_setup, installed = self.setupLayout, false
     self.setupLayout = function(manager)
         if not installed then
             installed = true
-            Home.install { ui = manager, notify = function() end }
+            companion.ui = manager
+            Home.install(companion)
         end
         return original_setup(manager)
     end
@@ -89,6 +109,42 @@ UIManager:scheduleIn(6, function() check(function()
     ui = assert(FileManager.instance)
     shot(ui, "library")
     assert(ui.kindlespouse_shelf and ui.kindlespouse_shelf.list_view and ui.kindlespouse_shelf.columns == 1)
+    assert(ui.kindlespouse_recent.file == recent_file)
+    require("library").refresh(ui, { query = "慢慢走" })
+    shot(ui, "recent-filtered")
+    assert(#ui.file_chooser.item_table == 1 and ui.kindlespouse_recent.file == recent_file)
+    local ReaderUI = require("apps/reader/readerui")
+    local opened, original_open = nil, ReaderUI.showReader
+    ReaderUI.showReader = function(_, file) opened = file end
+    local recent = ui.kindlespouse_recent
+    ui[1]:handleEvent(Event:new("Gesture", { ges = "tap", pos = Geom:new { x = recent.dimen.x + recent.dimen.w / 2, y = recent.dimen.y + 4 } }))
+    ReaderUI.showReader = original_open
+    assert(opened == recent_file, "Protruding recent cover must open the previous book, even when filtered out")
+    require("library").refresh(ui, { query = "" })
+    UIManager:widgetRepaint(ui, 0, 0)
+    ui.kindlespouse_profile:onProfile()
+    local panel = assert(companion.profile_panel)
+    assert(panel.data.paired and panel.data.name == "KindleSpouse 读者" and #panel.data.clouds == 2)
+    shot(panel, "profile")
+    panel.actions:getButtonById("profile").callback()
+    assert(panel.data.state == "running" and not panel.actions:getButtonById("sync").enabled)
+    shot(panel, "profile-syncing")
+    panel.actions:getButtonById("pause").callback()
+    assert(panel.data.state == "paused" and panel.actions:getButtonById("sync").text == "继续同步")
+    panel.actions:getButtonById("sync").callback()
+    assert(panel.data.state == "running" and panel.data.detail:find("1/4", 1, true))
+    fixture("progress.json", { state = "failed" })
+    panel:refreshNow()
+    assert(panel.data.state == "failed" and panel.actions:getButtonById("sync").enabled)
+    fixture("progress.json", { state = "completed", received = 3, files = 28, completedAt = os.time() })
+    panel:refreshNow()
+    UIManager:close(panel)
+    assert(panel.closed and companion.profile_panel == nil)
+    assert(os.rename(companion.directory .. "/config.json", companion.directory .. "/config.saved"))
+    local unpaired = Profile.open(companion)
+    assert(not unpaired.data.paired and not unpaired.actions:getButtonById("profile").enabled and not unpaired.actions:getButtonById("sync").enabled)
+    UIManager:close(unpaired)
+    assert(os.rename(companion.directory .. "/config.saved", companion.directory .. "/config.json"))
     require("library").refresh(ui, { view = "grid" })
     shot(ui, "library-grid")
     assert(ui.kindlespouse_shelf.columns == 3)

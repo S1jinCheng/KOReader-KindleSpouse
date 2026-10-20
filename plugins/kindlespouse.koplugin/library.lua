@@ -197,7 +197,7 @@ function Library.filters(ui)
     end)
 end
 
-function Library.header(ui)
+function Library.header(ui, companion)
     local Geom = require("ui/geometry")
     local Font = require("ui/font")
     local Button = require("ui/widget/button")
@@ -209,7 +209,9 @@ function Library.header(ui)
     local InputContainer = require("ui/widget/container/inputcontainer")
     local width, pad = Screen:getWidth(), Screen:scaleBySize(16)
     local third = math.floor(width / 3)
-    local status_height = Screen:scaleBySize(22)
+    local status_height = Screen:scaleBySize(26)
+    local profile_button = require("profile").button(companion, status_height)
+    ui.kindlespouse_profile = profile_button
     local battery = ""
     if Device:isKindle() and Device:hasBattery() then
         local power = Device:getPowerDevice()
@@ -219,7 +221,9 @@ function Library.header(ui)
     local status = HorizontalGroup:new { align = "center",
         require("ui/widget/container/leftcontainer"):new { dimen = Geom:new { w = third, h = status_height },
             FrameContainer:new { padding = 0, padding_left = pad, bordersize = 0,
-                TextWidget:new { text = os.date("%H:%M"), face = Font:getFace(Library.fonts.ui, 9) } } },
+                HorizontalGroup:new { align = "center", profile_button,
+                    require("ui/widget/horizontalspan"):new { width = Screen:scaleBySize(8) },
+                    TextWidget:new { text = os.date("%H:%M"), face = Font:getFace(Library.fonts.ui, 9) } } } },
         CenterContainer:new { dimen = Geom:new { w = third, h = status_height },
             require("ui/widget/iconbutton"):new { icon = "chevron.up", icon_rotation_angle = 180,
                 width = Screen:scaleBySize(18), height = Screen:scaleBySize(18), padding = 0,

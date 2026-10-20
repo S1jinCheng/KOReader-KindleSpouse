@@ -67,6 +67,6 @@ result = subprocess.run([str(runtime / "luajit"), "reader.lua", str(test / "book
 (test / "runtime.log").write_text(result.stdout + result.stderr, encoding="utf-8")
 shutil.copyfile(test / "runtime.log", output / "notebook-runtime.log")
 assert result.returncode == 0 and "Embedded Notebook acceptance passed" in result.stdout, (result.stdout + result.stderr)[-6000:]
-for name in ("library", "gallery", "scrolled", "editor", "saved", "landscape"):
+for name in ("library", "profile", "profile-syncing", "gallery", "scrolled", "editor", "saved", "landscape"):
     assert (output / ("notebook-embedded-" + name + ".png")).stat().st_size > 1000
 print("Passed in real KOReader: cover tap, search, touch ink, eraser, undo/redo, pages, folders, save/reopen, Library return, editable imported vector fixture, portrait/landscape. No device access.")
