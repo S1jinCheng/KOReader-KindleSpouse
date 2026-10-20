@@ -30,7 +30,7 @@ function Home.books(chooser, root)
                 local attr = lfs.symlinkattributes(filename)
                 if attr and attr.mode == "directory" and chooser:show_dir(name) then
                     visit(filename)
-                elseif attr and attr.mode == "file" and chooser:show_file(name, filename) then
+                elseif attr and attr.mode == "file" and require("document/documentregistry"):hasProvider(filename) then
                     files[#files + 1] = Library.record(chooser.ui, chooser:getListItem(directory, name, filename, attr, collate), root, history)
                 end
             end

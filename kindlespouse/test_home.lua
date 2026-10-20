@@ -46,6 +46,12 @@ UIManager:scheduleIn(3, function() check(function()
     local navigation = ui.layout[#ui.layout]
     assert(#navigation == 2 and navigation[1].text == "Library" and navigation[2].text == "Notebook")
     assert(ui.title_bar.right_icon_tap_callback and ui.title_bar.left_icon_tap_callback)
+    local FileChooser = require("ui/widget/filechooser")
+    local previous_filter = FileChooser.show_filter
+    FileChooser.show_filter = { status = { reading = true } }
+    Library.refresh(ui, { shelf = "all" })
+    assert(#ui.file_chooser.item_table == 8, "Library All must not inherit a hidden native file-browser status filter")
+    FileChooser.show_filter = previous_filter
     local FT = require("ffi/freetype")
     local manifest_file = assert(io.open(project .. "/kindlespouse/fonts.json", "r"))
     local font_manifest = require("json").decode(manifest_file:read("*a"))

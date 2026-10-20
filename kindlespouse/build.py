@@ -19,14 +19,26 @@ manifest = json.loads((root / 'kindlespouse' / 'fonts.json').read_text(encoding=
 for asset in manifest['assets']:
     filename = cache / asset['filename']
     if not filename.exists() or hashlib.sha256(filename.read_bytes()).hexdigest() != asset['sha256']:
-        request = urllib.request.Request(asset['url'], headers={'User-Agent': 'KindleSpouse/0.1'})
-        with urllib.request.urlopen(request, timeout=120) as response:
-            data = response.read(asset['bytes'] + 1)
-        if len(data) != asset['bytes'] or hashlib.sha256(data).hexdigest() != asset['sha256']:
-            raise ValueError('Font fingerprint mismatch: ' + asset['filename'])
+        source = asset['url']
+        sources = [source.replace('https://mirrors.ustc.edu.cn/CTAN/', 'https://mirrors.ctan.org/'), source]
+        failure = None
+        for source in sources:
+            print('Fetching ' + asset['filename'], flush=True)
+            try:
+                request = urllib.request.Request(source, headers={'User-Agent': 'KindleSpouse/0.2'})
+                with urllib.request.urlopen(request, timeout=30) as response:
+                    data = response.read(asset['bytes'] + 1)
+                if len(data) != asset['bytes'] or hashlib.sha256(data).hexdigest() != asset['sha256']:
+                    raise ValueError('Font fingerprint mismatch: ' + asset['filename'])
+                break
+            except (OSError, ValueError) as error:
+                failure = error
+        else:
+            raise RuntimeError('Cannot obtain verified font: ' + asset['filename']) from failure
         temporary = filename.with_name(filename.name + '.partial')
         temporary.write_bytes(data)
         temporary.replace(filename)
+    print('Verified ' + asset['filename'], flush=True)
     if args.prepare_fonts and asset.get('style'):
         destination = root / 'resources' / 'fonts' / 'kindlespouse' / asset['filename']
         destination.parent.mkdir(parents=True, exist_ok=True)
