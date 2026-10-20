@@ -84,10 +84,14 @@ local function findCard(widget, path)
         end
     end
 end
+UIManager:tickAfterNext(function()
 UIManager:scheduleIn(6, function() check(function()
     ui = assert(FileManager.instance)
     shot(ui, "library")
-    assert(ui.kindlespouse_shelf and ui.kindlespouse_shelf.columns == 3)
+    assert(ui.kindlespouse_shelf and ui.kindlespouse_shelf.list_view and ui.kindlespouse_shelf.columns == 1)
+    require("library").refresh(ui, { view = "grid" })
+    shot(ui, "library-grid")
+    assert(ui.kindlespouse_shelf.columns == 3)
     for _, card in pairs(ui.kindlespouse_shelf.cards) do assert(card.caption.text and card.caption.text ~= "") end
     local books = ui.kindlespouse_shelf
     if books._max_scroll_offset_y > 300 then
@@ -150,9 +154,11 @@ UIManager:scheduleIn(10, function() check(function()
     engine.gallery.query = "阅读"
     engine.gallery:_rebuild()
     assert(#engine.gallery.items == 1 and engine.gallery.items[1].name == "阅读摘记")
+    assert(ui.kindlespouse_search_label.text == "阅读", "Notebook search must use its own query")
     engine.gallery.query = ""
     engine.gallery:_rebuild()
     assert(#engine.gallery.items == #titles)
+    assert(ui.kindlespouse_search_label.text == "搜索笔记本")
     shot(ui, "filtered")
     local card = assert(findCard(engine.gallery, engine.gallery.items[1].path))
     tap(engine.gallery.shelf, card)
@@ -245,3 +251,4 @@ UIManager:scheduleIn(13, function() check(function()
     print("Embedded Notebook acceptance passed: same-process gallery and editor, touch ink, undo/redo, atomic save and reopen, two-tab return, editable imported vectors, page count, portrait and landscape.")
     if not failed then UIManager:quit(0) end
 end) end)
+end)

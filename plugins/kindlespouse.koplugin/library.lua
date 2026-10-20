@@ -5,9 +5,23 @@ local Device = require("device")
 local util = require("util")
 local Screen = Device.screen
 local Library = {}
-local defaults = { query = "", shelf = "all", format = "", author = "", source = "", collection = "", sort = "recent", view = "grid" }
+Library.fonts = { title = "cfont", ui = "cfont" }
+local defaults = { query = "", shelf = "all", format = "", author = "", source = "", collection = "", sort = "recent", view = "list" }
 local shelves = { { "all", "全部" }, { "new", "未读" }, { "reading", "在读" }, { "complete", "已读" }, { "favorites", "收藏" } }
 local sorts = { { "recent", "最近阅读" }, { "added", "最近添加" }, { "title", "书名" }, { "author", "作者" }, { "progress", "阅读进度" } }
+
+function Library.prepareFonts()
+    if Library.fonts_ready then return end
+    Library.fonts_ready = true
+    if not Device:isKindle() then return end
+    for _, filename in ipairs(require("fontlist"):getFontList()) do
+        local name = filename:match("([^/]+)$")
+        if name and name:lower():gsub("[-_]", "") == "amazonemberregular.ttf" then
+            Library.fonts.title, Library.fonts.ui = name, name
+            break
+        end
+    end
+end
 
 function Library.settings()
     local saved = G_reader_settings:readSetting("kindlespouse_library", {})
@@ -103,11 +117,12 @@ function Library.choose(ui, title, options, select)
     local items = {}
     for _, option in ipairs(options) do
         items[#items + 1] = { text = option[2], callback = function()
-            select(option[1])
+            return select(option[1])
         end }
     end
     dialog = require("ui/widget/menu"):new {
         title = title, width = math.floor(Screen:getWidth() * 0.9), height = math.floor(Screen:getHeight() * 0.75),
+        title_face = require("ui/font"):getFace(Library.fonts.title, 18), items_font_size = 16,
         item_table = items, show_parent = ui,
         close_callback = function() UIManager:close(dialog) end,
     }
@@ -159,53 +174,146 @@ end
 
 function Library.filters(ui)
     local settings = Library.settings()
+    local status, sorting = "全部", "最近阅读"
+    for _, option in ipairs(shelves) do if option[1] == settings.shelf then status = option[2] end end
+    for _, option in ipairs(sorts) do if option[1] == settings.sort then sorting = option[2] end end
     return Library.choose(ui, "筛选书库", {
+        { "shelf", "阅读状态：" .. status },
         { "format", "格式：" .. (settings.format ~= "" and settings.format:upper() or "全部") },
         { "author", "作者：" .. (settings.author ~= "" and settings.author or "全部") },
         { "source", "来源文件夹：" .. (settings.source ~= "" and settings.source or "全部") },
         { "collection", "书集：" .. (settings.collection ~= "" and settings.collection or "全部") },
+        { "sort", "排序：" .. sorting },
+        { "view", "显示方式：" .. (settings.view == "grid" and "封面网格" or "列表") },
         { "clear", "清除所有筛选" },
     }, function(field)
         if field == "clear" then Library.refresh(ui, { query = "", shelf = "all", format = "", author = "", source = "", collection = "" })
+        elseif field == "shelf" then return Library.choose(ui, "阅读状态", shelves, function(value) Library.refresh(ui, { shelf = value }) end)
+        elseif field == "sort" then return Library.choose(ui, "排序", sorts, function(value) Library.refresh(ui, { sort = value }) end)
+        elseif field == "view" then return Library.choose(ui, "显示方式", { { "grid", "封面网格" }, { "list", "列表" } },
+            function(value) Library.refresh(ui, { view = value }) end)
         elseif field == "collection" then Library.collections(ui)
         else Library.facet(ui, field, field == "format" and "格式" or field == "author" and "作者" or "来源文件夹") end
     end)
 end
 
-function Library.toolbar(ui)
+function Library.header(ui)
+    local Geom = require("ui/geometry")
+    local Font = require("ui/font")
+    local Button = require("ui/widget/button")
+    local TextWidget = require("ui/widget/textwidget")
     local HorizontalGroup = require("ui/widget/horizontalgroup")
     local VerticalGroup = require("ui/widget/verticalgroup")
-    local Button = require("ui/widget/button")
-    local Blitbuffer = require("ffi/blitbuffer")
-    local settings = Library.settings()
-    local width, height = Screen:getWidth(), Screen:scaleBySize(28)
-    local function button(text, size, callback, active)
-        return Button:new { text = text, width = size, height = height, bordersize = 0, padding = 0,
-            radius = 0, text_font_size = 12, text_font_bold = active or false, show_parent = ui,
-            background = active and Blitbuffer.COLOR_LIGHT_GRAY or Blitbuffer.COLOR_WHITE, callback = callback }
+    local FrameContainer = require("ui/widget/container/framecontainer")
+    local CenterContainer = require("ui/widget/container/centercontainer")
+    local InputContainer = require("ui/widget/container/inputcontainer")
+    local width, pad = Screen:getWidth(), Screen:scaleBySize(16)
+    local third = math.floor(width / 3)
+    local status_height = Screen:scaleBySize(22)
+    local battery = ""
+    if Device:isKindle() and Device:hasBattery() then
+        local power = Device:getPowerDevice()
+        local capacity = power:getCapacity()
+        battery = tostring(capacity) .. "% " .. power:getBatterySymbol(false, power:isCharging(), capacity)
     end
-    local sort_title = "最近阅读"
-    for _, option in ipairs(sorts) do if option[1] == settings.sort then sort_title = option[2] end end
-    local search_width = math.floor(width * 0.46)
-    local small = math.floor((width - search_width) / 3)
-    local tools = HorizontalGroup:new {
-        button(settings.query ~= "" and "搜索：" .. settings.query or "搜索书名或作者", search_width, function() Library.search(ui) end),
-        button("筛选", small, function() Library.filters(ui) end),
-        button(sort_title, small, function() Library.choose(ui, "排序", sorts, function(value) Library.refresh(ui, { sort = value }) end) end),
-        button(settings.view == "grid" and "列表" or "网格", width - search_width - small * 2,
-            function() Library.refresh(ui, { view = settings.view == "grid" and "list" or "grid" }) end),
+    local status = HorizontalGroup:new { align = "center",
+        require("ui/widget/container/leftcontainer"):new { dimen = Geom:new { w = third, h = status_height },
+            FrameContainer:new { padding = 0, padding_left = pad, bordersize = 0,
+                TextWidget:new { text = os.date("%H:%M"), face = Font:getFace(Library.fonts.ui, 9) } } },
+        CenterContainer:new { dimen = Geom:new { w = third, h = status_height },
+            require("ui/widget/iconbutton"):new { icon = "chevron.up", icon_rotation_angle = 180,
+                width = Screen:scaleBySize(18), height = Screen:scaleBySize(18), padding = 0,
+                callback = function() ui.menu:onShowMenu() end } },
+        require("ui/widget/container/rightcontainer"):new { dimen = Geom:new { w = width - third * 2, h = status_height },
+            FrameContainer:new { padding = 0, padding_right = pad, bordersize = 0,
+                TextWidget:new { text = battery, face = Font:getFace(Library.fonts.ui, 9) } } },
     }
-    local tabs = HorizontalGroup:new {}
-    local cell = math.floor(width / 6)
-    for index, option in ipairs(shelves) do
-        tabs[index] = button(option[2], cell, function() Library.refresh(ui, { shelf = option[1], collection = "" }) end,
-            settings.shelf == option[1] and settings.collection == "")
+    local search_width = width - pad * 2 - Screen:scaleBySize(36)
+    local query = ui.kindlespouse_tab == "Notebook" and (ui.kindlespouse_notebook_query or "") or Library.settings().query
+    local search_label = TextWidget:new { text = query ~= "" and query or (ui.kindlespouse_tab == "Notebook" and "搜索笔记本" or "搜索 Kindle"),
+        face = Font:getFace(Library.fonts.ui, 12), max_width = search_width - Screen:scaleBySize(48) }
+    ui.kindlespouse_search_label = search_label
+    local search = InputContainer:new {
+        FrameContainer:new { width = search_width, padding = Screen:scaleBySize(6), padding_left = Screen:scaleBySize(12),
+            margin = 0, bordersize = 1, radius = Screen:scaleBySize(20),
+            HorizontalGroup:new { align = "center",
+                require("ui/widget/iconwidget"):new { icon = "appbar.search", width = Screen:scaleBySize(14), height = Screen:scaleBySize(14) },
+                require("ui/widget/horizontalspan"):new { width = Screen:scaleBySize(10) },
+                search_label,
+            } },
+    }
+    search.dimen = search[1]:getSize():copy()
+    search.dimen.w = search_width
+    search.ges_events = { Search = { require("ui/gesturerange"):new { ges = "tap", range = search.dimen } } }
+    search.onSearch = function()
+        if ui.kindlespouse_tab == "Notebook" and ui.kindlespouse_notebook_search then return ui.kindlespouse_notebook_search() end
+        return Library.search(ui)
     end
-    tabs[6] = button(settings.collection ~= "" and settings.collection or "书集", width - cell * 5,
-        function() Library.collections(ui) end, settings.collection ~= "")
-    local toolbar = VerticalGroup:new { align = "left", tools, tabs }
-    ui.kindlespouse_toolbar = toolbar
-    return toolbar
+    ui.kindlespouse_search = search
+    local actions = Button:new { text = "⋮", text_font_face = Library.fonts.ui, text_font_size = 18,
+        width = Screen:scaleBySize(36), height = search:getSize().h, bordersize = 0, padding = 0,
+        callback = function() ui:onShowPlusMenu() end }
+    return VerticalGroup:new { align = "left", status,
+        FrameContainer:new { padding = 0, padding_left = pad, padding_right = pad, bordersize = 0,
+            HorizontalGroup:new { align = "center", search, actions } },
+        require("ui/widget/verticalspan"):new { width = Screen:scaleBySize(8) },
+    }
+end
+
+function Library.toolbar(ui)
+    local Button = require("ui/widget/button")
+    local HorizontalGroup = require("ui/widget/horizontalgroup")
+    local FrameContainer = require("ui/widget/container/framecontainer")
+    local Geom = require("ui/geometry")
+    local Blitbuffer = require("ffi/blitbuffer")
+    local width, size, pad = Screen:getWidth(), Screen:scaleBySize(32), Screen:scaleBySize(12)
+    local function button(kind, callback)
+        local glyph = require("ui/widget/widget"):new { dimen = Geom:new { w = size, h = size } }
+        glyph.paintTo = function(_, bb, x, y)
+            local function rect(px, py, w, h)
+                bb:paintRect(x + Screen:scaleBySize(px), y + Screen:scaleBySize(py),
+                    math.max(1, Screen:scaleBySize(w)), math.max(1, Screen:scaleBySize(h)), Blitbuffer.COLOR_BLACK)
+            end
+            if kind == "filter" then
+                for index, knob in ipairs({ 12, 21, 15 }) do
+                    local line_y = 8 + (index - 1) * 7
+                    rect(7, line_y, 19, 0.7)
+                    rect(knob, line_y - 2, 2, 5)
+                end
+            else
+                rect(12, 8, 0.8, 17)
+                rect(21, 8, 0.8, 17)
+                for step = 0, 4 do
+                    rect(12 - step, 8 + step, 0.8, 0.8)
+                    rect(12 + step, 8 + step, 0.8, 0.8)
+                    rect(21 - step, 24 - step, 0.8, 0.8)
+                    rect(21 + step, 24 - step, 0.8, 0.8)
+                end
+            end
+        end
+        local control = require("ui/widget/container/inputcontainer"):new { glyph }
+        control.dimen = Geom:new { w = size, h = size }
+        control.callback, control.kindlespouse_action = callback, kind
+        control.ges_events = { Activate = { require("ui/gesturerange"):new { ges = "tap", range = control.dimen } } }
+        control.onActivate = function() callback(); return true end
+        return control
+    end
+    local controls = HorizontalGroup:new { align = "center",
+        button("filter", function() return Library.filters(ui) end),
+        require("ui/widget/horizontalspan"):new { width = width - pad * 2 - size * 2 },
+        button("sort", function()
+            return Library.choose(ui, "排序与显示", {
+                { "recent", "最近阅读" }, { "added", "最近添加" }, { "title", "书名" },
+                { "author", "作者" }, { "progress", "阅读进度" }, { "grid", "封面网格" }, { "list", "列表" },
+            }, function(value)
+                if value == "grid" or value == "list" then Library.refresh(ui, { view = value })
+                else Library.refresh(ui, { sort = value }) end
+            end)
+        end),
+    }
+    ui.kindlespouse_toolbar = controls
+    return require("ui/widget/container/underlinecontainer"):new { linesize = 1, padding = 0, color = Blitbuffer.COLOR_GRAY,
+        FrameContainer:new { width = width, padding = 0, padding_left = pad, padding_right = pad, bordersize = 0, controls } }
 end
 
 return Library

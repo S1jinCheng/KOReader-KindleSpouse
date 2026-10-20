@@ -25,6 +25,10 @@ return function(engine, companion, height)
         return true
     end
     gallery._layout = function(current)
+        companion.ui.kindlespouse_notebook_query = current.query or ""
+        if companion.ui.kindlespouse_search_label then
+            companion.ui.kindlespouse_search_label:setText(current.query and current.query ~= "" and current.query or "搜索笔记本")
+        end
         if current.shelf then current.shelf:onCloseWidget() end
         current:_freeWidgets()
         local filtered = {}
@@ -62,7 +66,14 @@ return function(engine, companion, height)
                 { text = "排序", callback = function() current:_chooseOrder() end },
             }
         end
-        for _, action in ipairs(actions) do action.font_size = 12 end
+        if not current.selection then
+            companion.ui.kindlespouse_notebook_search = table.remove(actions, 1).callback
+        end
+        for _, action in ipairs(actions) do
+            action.font_size = 12
+            action.font_face = require("library").fonts.ui
+            action.font_bold = false
+        end
         local toolbar = ButtonTable:new { width = Screen:getWidth(), buttons = { actions } }
         local attempted, queue = {}, {}
         local key = table.concat({ current.folder, current.query or "", tostring(Screen:getWidth()), tostring(Screen:getHeight()) }, "\0")

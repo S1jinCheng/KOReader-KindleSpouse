@@ -2,6 +2,7 @@ local Device = require("device")
 local UIManager = require("ui/uimanager")
 local Geom = require("ui/geometry")
 local Font = require("ui/font")
+local fonts = require("library").fonts
 local InputContainer = require("ui/widget/container/inputcontainer")
 local ScrollableContainer = require("ui/widget/container/scrollablecontainer")
 local CenterContainer = require("ui/widget/container/centercontainer")
@@ -25,34 +26,62 @@ function Card:init()
             scale_factor = math.min(self.cover_w / data.image:getWidth(), self.cover_h / data.image:getHeight()) }
     elseif data.file then
         picture = ImageWidget:new { file = data.file, width = self.cover_w, height = self.cover_h }
+    elseif self.list_view then
+        picture = FrameContainer:new { padding = 0, margin = 0, bordersize = 1,
+            CenterContainer:new { dimen = Geom:new { w = self.cover_w - 2, h = self.cover_h - 2 },
+                require("ui/widget/iconwidget"):new { icon = "book.opened", width = Screen:scaleBySize(22), height = Screen:scaleBySize(22) } } }
     else
         picture = FrameContainer:new { width = self.cover_w, height = self.cover_h,
             padding = Screen:scaleBySize(12), margin = 0, bordersize = 1,
             CenterContainer:new { dimen = Geom:new { w = self.cover_w - Screen:scaleBySize(24), h = self.cover_h - Screen:scaleBySize(24) },
                 TextBoxWidget:new { text = data.title, width = self.cover_w - Screen:scaleBySize(32),
-                    face = Font:getFace("cfont", 16), alignment = "center" } } }
+                    face = Font:getFace(fonts.title, 16), alignment = "center" } } }
     end
     if data.image or data.file then
         picture = FrameContainer:new { padding = 0, margin = 0, bordersize = 1,
             CenterContainer:new { dimen = Geom:new { w = self.cover_w, h = self.cover_h }, picture } }
     end
-    local text_width = self.list_view and self.width - self.cover_w - Screen:scaleBySize(20) or self.width
+    local text_width = self.list_view and self.width - self.cover_w - Screen:scaleBySize(54) or self.width
     self.caption = TextBoxWidget:new { text = (data.selected and "✓ " or "") .. data.title, width = text_width,
-        face = Font:getFace("cfont", 13), alignment = "left", height = Screen:scaleBySize(36), height_adjust = true,
+        face = Font:getFace(fonts.title, self.list_view and 12 or 13), bold = self.list_view or false, alignment = "left", height = Screen:scaleBySize(self.list_view and 24 or 36), height_adjust = true,
         height_overflow_show_ellipsis = true }
     if self.list_view then
-        self[1] = require("ui/widget/horizontalgroup"):new { align = "center",
-            CenterContainer:new { dimen = Geom:new { w = self.cover_w, h = self.cover_h }, picture },
-            require("ui/widget/horizontalspan"):new { width = Screen:scaleBySize(20) },
+        local HorizontalGroup = require("ui/widget/horizontalgroup")
+        local HorizontalSpan = require("ui/widget/horizontalspan")
+        local Blitbuffer = require("ffi/blitbuffer")
+        local progress
+        if data.status == "new" or not data.status then
+            progress = FrameContainer:new { padding = Screen:scaleBySize(1), margin = 0, bordersize = 0, background = Blitbuffer.COLOR_BLACK,
+                TextWidget:new { text = "未读", face = Font:getFace(fonts.ui, 9), fgcolor = Blitbuffer.COLOR_WHITE } }
+        else
+            progress = HorizontalGroup:new { align = "center",
+                require("ui/widget/progresswidget"):new { width = Screen:scaleBySize(50), height = Screen:scaleBySize(3),
+                    percentage = math.max(0, math.min(1, data.progress or 0)), bordersize = 0, margin_v = 0, margin_h = 0 },
+                HorizontalSpan:new { width = Screen:scaleBySize(6) },
+                TextWidget:new { text = string.format("%d%% 已读", math.floor((data.progress or 0) * 100)), face = Font:getFace(fonts.ui, 9) },
+            }
+        end
+        self.actions = require("ui/widget/button"):new { text = "⋮", width = Screen:scaleBySize(26), height = Screen:scaleBySize(38),
+            bordersize = 0, padding = 0, text_font_face = fonts.ui, text_font_size = 15, text_font_bold = false,
+            callback = function() self:onHold() end }
+        self[1] = HorizontalGroup:new { align = "center",
+            CenterContainer:new { dimen = Geom:new { w = self.cover_w, h = self.height - Screen:scaleBySize(8) }, picture },
+            HorizontalSpan:new { width = Screen:scaleBySize(12) },
             VerticalGroup:new { align = "left", self.caption,
-                TextWidget:new { text = data.subtitle or "", face = Font:getFace("cfont", 10), max_width = text_width } },
+                TextWidget:new { text = data.subtitle or "", face = Font:getFace(fonts.ui, 10), max_width = text_width },
+                VerticalSpan:new { width = Screen:scaleBySize(3) }, progress,
+                TextWidget:new { text = data.format == "pdf" and "文档" or "图书", face = Font:getFace(fonts.ui, 9) },
+            },
+            HorizontalSpan:new { width = Screen:scaleBySize(16) },
+            VerticalGroup:new { align = "center", self.actions,
+                TextWidget:new { text = "✓", face = Font:getFace(fonts.ui, 10), fgcolor = Blitbuffer.COLOR_DARK_GRAY } },
         }
     else
         self[1] = VerticalGroup:new { align = "left",
             CenterContainer:new { dimen = Geom:new { w = self.width, h = self.cover_h }, picture },
             VerticalSpan:new { width = Screen:scaleBySize(8) },
             self.caption,
-            TextWidget:new { text = data.subtitle or "", face = Font:getFace("cfont", 10), max_width = text_width },
+            TextWidget:new { text = data.subtitle or "", face = Font:getFace(fonts.ui, 10), max_width = text_width },
         }
     end
     self.dimen = Geom:new { w = self.width, h = self.height }
@@ -60,6 +89,11 @@ function Card:init()
         Tap = { GestureRange:new { ges = "tap", range = self.dimen } },
         Hold = { GestureRange:new { ges = "hold", range = self.dimen } },
     }
+end
+
+function Card:paintTo(bb, x, y)
+    InputContainer.paintTo(self, bb, x, y)
+    if self.list_view then bb:paintRect(x, y + self.height - 1, self.width, 1, require("ffi/blitbuffer").COLOR_GRAY) end
 end
 
 function Card:onTap()
@@ -115,7 +149,7 @@ function Shelf:init()
     self.cover_h = math.floor(self.cover_w * 1.43)
     self.row_h = self.cover_h + Screen:scaleBySize(78)
     if self.list_view then
-        self.cover_w, self.cover_h, self.row_h = Screen:scaleBySize(60), Screen:scaleBySize(86), Screen:scaleBySize(110)
+        self.cover_w, self.cover_h, self.row_h = Screen:scaleBySize(46), Screen:scaleBySize(68), Screen:scaleBySize(82)
     end
     self[1] = Content:new { owner = self, dimen = Geom:new { w = self.dimen.w,
         h = math.max(self.dimen.h, math.ceil(#self.items / self.columns) * self.row_h) } }
@@ -168,10 +202,12 @@ function Shelf.library(ui, height)
         items = ui.file_chooser.item_table, show_parent = ui,
         provider = function(item, view)
             local info = manager:getBookInfo(item.path, true)
-            if not info or not info.cover_fetched then pending[item.path] = true end
+            if not info or not info.cover_fetched or info.has_cover and manager.isCachedCoverInvalid(info,
+                { max_cover_w = view.cover_w, max_cover_h = view.cover_h }) then pending[item.path] = true end
             local data = item.kindlespouse
             return { image = info and info.cover_bb, title = info and info.title or data.title,
-                subtitle = info and info.authors or (data.author ~= "未提供作者" and data.author or "") }
+                subtitle = info and info.authors or (data.author ~= "未提供作者" and data.author or ""),
+                status = data.status, progress = data.progress, format = data.format }
         end,
         on_open = function(item) ui.file_chooser:onFileSelect(item) end,
         on_hold = function(item) ui.file_chooser:onFileHold(item) end,

@@ -96,38 +96,27 @@ function Home.layout(ui, companion)
     local selected = ui.kindlespouse_tab or "Library"
     if ui.kindlespouse_shelf then ui.kindlespouse_shelf:onCloseWidget(); ui.kindlespouse_shelf = nil end
     ui.cropping_widget = nil
-    local previous = ui.title_bar
-    ui.title_bar = require("ui/widget/titlebar"):new {
-        width = Screen:getWidth(), fullscreen = true, align = "left", title = selected,
-        subtitle = selected == "Library" and Home.count(ui) or "Notebook",
-        title_face = require("ui/font"):getFace("cfont", 18), subtitle_face = require("ui/font"):getFace("cfont", 11),
-        left_icon = previous.left_icon, right_icon = previous.right_icon,
-        left_icon_size_ratio = 0.38, right_icon_size_ratio = 0.38,
-        button_padding = Screen:scaleBySize(8),
-        left_icon_tap_callback = previous.left_icon_tap_callback,
-        left_icon_hold_callback = previous.left_icon_hold_callback,
-        right_icon_tap_callback = previous.right_icon_tap_callback,
-        right_icon_hold_callback = previous.right_icon_hold_callback,
-    }
+    local header = Library.header(ui)
+    ui.kindlespouse_header = header
     local body = ui[1]
     local focus = {}
     if selected == "Notebook" then
-        local height = Screen:getHeight() - Home.navigationHeight() - ui.title_bar:getHeight()
-        body = VerticalGroup:new { align = "left", ui.title_bar, Home.notebook(companion, height) }
+        local height = Screen:getHeight() - Home.navigationHeight() - header:getSize().h
+        body = VerticalGroup:new { align = "left", header, Home.notebook(companion, height) }
         focus = {}
     else
         local toolbar = Library.toolbar(ui)
-        local height = Screen:getHeight() - Home.navigationHeight() - ui.title_bar:getHeight() - toolbar:getSize().h
+        local height = Screen:getHeight() - Home.navigationHeight() - header:getSize().h - toolbar:getSize().h
         ui.kindlespouse_shelf = require("shelf").library(ui, height)
         ui.cropping_widget = ui.kindlespouse_shelf
-        body = VerticalGroup:new { align = "left", ui.title_bar, toolbar, ui.kindlespouse_shelf }
+        body = VerticalGroup:new { align = "left", header, toolbar, ui.kindlespouse_shelf }
     end
     local navigation = HorizontalGroup:new { align = "center" }
     for index, tab in ipairs({ "Library", "Notebook" }) do
         navigation[index] = Button:new {
-            text = tab, width = index == 1 and half or Screen:getWidth() - half,
+            text = tab == "Notebook" and "Notebooks" or tab, width = index == 1 and half or Screen:getWidth() - half,
             height = Home.navigationHeight(), bordersize = 0, padding = 0,
-            text_font_size = 13, text_font_bold = selected == tab, radius = 0,
+            text_font_face = Library.fonts.ui, text_font_size = 12, text_font_bold = false, radius = 0,
             background = Blitbuffer.COLOR_WHITE,
             show_parent = ui,
             callback = function()
@@ -137,6 +126,23 @@ function Home.layout(ui, companion)
                 UIManager:setDirty(ui, "ui")
             end,
         }
+    end
+    for index, tab in ipairs({ "Library", "Notebook" }) do
+        local button = navigation[index]
+        local original_paint = button.paintTo
+        button.paintTo = function(widget, bb, x, y)
+            original_paint(widget, bb, x, y)
+            if selected == tab then
+                local label = widget.label_widget:getSize()
+                bb:paintRect(x + math.floor((widget.width - label.w) / 2),
+                    y + math.floor((widget.height + label.h) / 2) + Screen:scaleBySize(3), label.w, 2, Blitbuffer.COLOR_BLACK)
+            end
+        end
+    end
+    local original_paint = navigation.paintTo
+    navigation.paintTo = function(widget, bb, x, y)
+        original_paint(widget, bb, x, y)
+        bb:paintRect(x, y, Screen:getWidth(), 1, Blitbuffer.COLOR_GRAY)
     end
     ui[1] = FrameContainer:new {
         padding = 0, margin = 0, bordersize = 0, background = Blitbuffer.COLOR_WHITE,
@@ -219,6 +225,14 @@ function Home.count(ui)
 end
 
 function Home.prepareStart()
+    Library.prepareFonts()
+    if not G_reader_settings:isTrue("kindlespouse_native_library") then
+        local settings = Library.settings()
+        settings.sort = "recent"
+        settings.view = "list"
+        Library.save(settings)
+        G_reader_settings:saveSetting("kindlespouse_native_library", true)
+    end
     if not G_reader_settings:readSetting("kindlespouse_home_start_saved") then
         G_reader_settings:saveSetting("kindlespouse_home_previous_start", G_reader_settings:readSetting("start_with") or false)
         G_reader_settings:saveSetting("kindlespouse_home_start_saved", true)
