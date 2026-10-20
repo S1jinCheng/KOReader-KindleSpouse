@@ -47,10 +47,21 @@ local function fixture(name, value)
     file:write(require("json").encode(value)); file:close()
 end
 fixture("config.json", { version = 1, name = "Kindle Scribe" })
+local reading = { asOf = os.date("!%Y-%m-%d", os.time() + 28800), totalSeconds = 0, todaySeconds = 2820, readingDays = 0, bookCount = 18, days = {} }
+local year, month, day = reading.asOf:match("^(%d+)%-(%d+)%-(%d+)$")
+local today = os.time { year = tonumber(year), month = tonumber(month), day = tonumber(day), hour = 12 }
+for offset = 0, 363 do
+    if offset % 5 ~= 0 or offset == 0 then
+        local seconds = offset == 0 and reading.todaySeconds or ({ 300, 900, 1800, 3600, 4800 })[offset % 5 + 1]
+        reading.days[#reading.days + 1] = { date = os.date("%Y-%m-%d", today - offset * 86400), seconds = seconds }
+        reading.totalSeconds = reading.totalSeconds + seconds
+        reading.readingDays = reading.readingDays + 1
+    end
+end
 fixture("sleep-profile.json", { version = 1, displayName = "KindleSpouse 读者", avatar = "KS", clouds = {
     { id = "reading", name = "阅读书库", provider = "drive", connected = true },
     { id = "backup", name = "笔记备份", provider = "onedrive", connected = false },
-} })
+}, reading = reading })
 fixture("progress.json", { state = "completed", completedAt = os.time(), received = 3, files = 28 })
 function companion:status() return Profile.read(self.directory, "progress.json") end
 function companion:syncProfile() fixture("progress.json", { state = "running", stage = "receiving_local_profile", profileOnly = true, done = 0, total = 1 }) end
@@ -125,7 +136,19 @@ UIManager:scheduleIn(6, function() check(function()
     ui.kindlespouse_profile:onProfile()
     local panel = assert(companion.profile_panel)
     assert(panel.data.paired and panel.data.name == "KindleSpouse 读者" and #panel.data.clouds == 2)
+    assert(panel.data.reading.readingDays == reading.readingDays and panel.metrics[1][2] == "47 分钟")
     shot(panel, "profile")
+    local calendar = assert(panel.calendar)
+    assert(#calendar.cells == 364 and calendar.dimen.y + calendar.dimen.h < Screen:getHeight())
+    local selected
+    for index, cell in ipairs(calendar.cells) do if cell.date == reading.asOf then selected = index end end
+    assert(selected and calendar.cells[selected].level == 3)
+    panel:handleEvent(Event:new("Gesture", { ges = "tap", pos = Geom:new {
+        x = calendar.dimen.x + calendar.left + math.floor((selected - 1) / 7) * calendar.step + 2,
+        y = calendar.dimen.y + calendar.top + (selected - 1) % 7 * calendar.step + 2 } }))
+    assert(calendar.selected == selected and calendar.detail.text == reading.asOf .. "\n阅读 47 分钟", "Calendar taps must show the correct date and duration")
+    shot(calendar.detail, "profile-day")
+    UIManager:close(calendar.detail)
     panel.actions:getButtonById("profile").callback()
     assert(panel.data.state == "running" and not panel.actions:getButtonById("sync").enabled)
     shot(panel, "profile-syncing")
@@ -145,6 +168,16 @@ UIManager:scheduleIn(6, function() check(function()
     assert(not unpaired.data.paired and not unpaired.actions:getButtonById("profile").enabled and not unpaired.actions:getButtonById("sync").enabled)
     UIManager:close(unpaired)
     assert(os.rename(companion.directory .. "/config.saved", companion.directory .. "/config.json"))
+    local original_profile = Profile.read(companion.directory, "sleep-profile.json")
+    fixture("sleep-profile.json", { version = 1, displayName = "尚无统计的读者" })
+    local missing = Profile.open(companion)
+    assert(not missing.data.reading and not missing.calendar and not missing.metrics)
+    UIManager:close(missing)
+    fixture("sleep-profile.json", { version = 1, reading = { asOf = reading.asOf, totalSeconds = 0, todaySeconds = 0, readingDays = 0, bookCount = 0, days = {} } })
+    local empty = Profile.open(companion)
+    assert(empty.metrics[2][2] == "0 分钟" and empty.metrics[4][2] == "0 天" and #empty.calendar.cells == 364)
+    UIManager:close(empty)
+    fixture("sleep-profile.json", original_profile)
     require("library").refresh(ui, { view = "grid" })
     shot(ui, "library-grid")
     assert(ui.kindlespouse_shelf.columns == 3)

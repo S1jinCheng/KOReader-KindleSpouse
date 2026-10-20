@@ -8,6 +8,7 @@ local json = require("json")
 local Screen = Device.screen
 local Profile = {}
 local Panel = InputContainer:extend { covers_fullscreen = true }
+local Calendar = InputContainer:extend {}
 local stages = {
     checking_pairing = "检查网盘连接", checking_local_profile = "连接 KindleSpouse",
     receiving_local_profile = "通过局域网同步资料", receiving_profile = "通过网盘同步资料",
@@ -58,9 +59,93 @@ function Profile.snapshot(companion)
     return { paired = config ~= nil, name = type(person.displayName) == "string" and person.displayName or "尚未同步个人资料",
         initials = type(person.avatar) == "string" and person.avatar or "K", avatar = avatar,
         device = config and config.name or "Kindle", clouds = type(person.clouds) == "table" and person.clouds or nil,
+        reading = type(person.reading) == "table" and type(person.reading.days) == "table" and person.reading or nil,
         state = state, status = labels[state] or "等待同步", detail = detail, route = route,
         profile_received = receipt and receipt.receivedAt or nil,
         last_sync = synced and os.date("%Y-%m-%d %H:%M", synced) or nil }
+end
+
+function Profile.duration(seconds)
+    local minutes = math.floor((tonumber(seconds) or 0) / 60)
+    if minutes == 0 then return (tonumber(seconds) or 0) > 0 and "不足 1 分钟" or "0 分钟" end
+    if minutes < 60 then return minutes .. " 分钟" end
+    return math.floor(minutes / 60) .. " 小时" .. (minutes % 60 > 0 and " " .. minutes % 60 .. " 分钟" or "")
+end
+
+function Calendar:init()
+    local TextWidget = require("ui/widget/textwidget")
+    local function label(value, size)
+        return TextWidget:new { text = value, face = Font:getFace(require("library").fonts.ui, size) }
+    end
+    self.labels, self.cells = {}, {}
+    self.left, self.top = Screen:scaleBySize(20), Screen:scaleBySize(20)
+    self.step = math.floor((self.width - self.left) / 52)
+    self.cell = math.max(2, self.step - Screen:scaleBySize(2))
+    self.dimen = Geom:new { w = self.width, h = self.top + self.step * 7 + Screen:scaleBySize(28) }
+    local year, month, day = tostring(self.reading.asOf):match("^(%d%d%d%d)%-(%d%d)%-(%d%d)$")
+    local today = year and os.time { year = tonumber(year), month = tonumber(month), day = tonumber(day), hour = 12 }
+    today = today or os.time()
+    local ending = today + ((7 - tonumber(os.date("%w", today))) % 7) * 86400
+    local seconds = {}
+    for _, entry in ipairs(self.reading.days) do seconds[entry.date] = tonumber(entry.seconds) or 0 end
+    local previous_month
+    for index = 1, 364 do
+        local epoch = ending - (364 - index) * 86400
+        local date, current_month = os.date("%Y-%m-%d", epoch), os.date("%m", epoch)
+        local value = seconds[date] or 0
+        self.cells[index] = { date = date, seconds = value, future = epoch > today,
+            level = value >= 3600 and 4 or value >= 1800 and 3 or value >= 900 and 2 or value > 0 and 1 or 0 }
+        if (index - 1) % 7 == 0 and current_month ~= previous_month then
+            if index > 1 or tonumber(os.date("%d", epoch)) <= 7 then
+                self.labels[#self.labels + 1] = { widget = label(tonumber(current_month) .. "月", 8), x = self.left + math.floor((index - 1) / 7) * self.step, y = 0 }
+            end
+            previous_month = current_month
+        end
+    end
+    for _, entry in ipairs({ { "一", 0 }, { "三", 2 }, { "日", 6 } }) do
+        self.labels[#self.labels + 1] = { widget = label(entry[1], 8), x = 0, y = self.top + entry[2] * self.step }
+    end
+    self.labels[#self.labels + 1] = { widget = label("少", 8), x = self.width - Screen:scaleBySize(98), y = self.top + self.step * 7 + Screen:scaleBySize(8) }
+    self.labels[#self.labels + 1] = { widget = label("多", 8), x = self.width - Screen:scaleBySize(12), y = self.top + self.step * 7 + Screen:scaleBySize(8) }
+    self.ges_events = { Day = { require("ui/gesturerange"):new { ges = "tap", range = self.dimen } } }
+end
+
+function Calendar:paintTo(bb, x, y)
+    local BB = require("ffi/blitbuffer")
+    self.dimen.x, self.dimen.y = x, y
+    self.colors = self.colors or { BB.Color8(245), BB.Color8(195), BB.Color8(145), BB.Color8(85), BB.Color8(25) }
+    for index, cell in ipairs(self.cells) do
+        local cx = x + self.left + math.floor((index - 1) / 7) * self.step
+        local cy = y + self.top + (index - 1) % 7 * self.step
+        if not cell.future then
+            bb:paintRect(cx, cy, self.cell, self.cell, self.colors[cell.level + 1])
+            bb:paintBorder(cx, cy, self.cell, self.cell, 1, BB.COLOR_GRAY)
+            if self.selected == index then bb:paintBorder(cx - 2, cy - 2, self.cell + 4, self.cell + 4, 2, BB.COLOR_BLACK) end
+        end
+    end
+    for _, entry in ipairs(self.labels) do entry.widget:paintTo(bb, x + entry.x, y + entry.y) end
+    for level = 0, 4 do
+        bb:paintRect(x + self.width - Screen:scaleBySize(80) + level * Screen:scaleBySize(13),
+            y + self.top + self.step * 7 + Screen:scaleBySize(8), Screen:scaleBySize(10), Screen:scaleBySize(10), self.colors[level + 1])
+    end
+end
+
+function Calendar:onDay(_, gesture)
+    local x, y = gesture.pos.x - self.dimen.x - self.left, gesture.pos.y - self.dimen.y - self.top
+    if x < 0 or y < 0 or x >= self.step * 52 or y >= self.step * 7 then return true end
+    local index = math.floor(x / self.step) * 7 + math.floor(y / self.step) + 1
+    local cell = self.cells[index]
+    if cell and not cell.future then
+        self.selected = index
+        self.detail = require("ui/widget/infomessage"):new { text = cell.date .. "\n阅读 " .. Profile.duration(cell.seconds) }
+        UIManager:setDirty(self.owner, "ui")
+        UIManager:show(self.detail)
+    end
+    return true
+end
+
+function Calendar:free()
+    for _, entry in ipairs(self.labels) do entry.widget:free() end
 end
 
 function Profile.avatar(data, size)
@@ -99,10 +184,43 @@ function Panel:render(data)
         content[#content + 1] = VerticalSpan:new { width = Screen:scaleBySize(10) }
     end
     content[#content + 1] = VerticalSpan:new { width = Screen:scaleBySize(16) }
-    content[#content + 1] = Profile.avatar(data, Screen:scaleBySize(68))
-    content[#content + 1] = VerticalSpan:new { width = Screen:scaleBySize(12) }
-    text(data.name, 19, true)
-    text("KindleSpouse · " .. (data.paired and (tostring(data.device) .. " 已配对") or "尚未配对"), 11)
+    content[#content + 1] = require("ui/widget/horizontalgroup"):new { align = "center",
+        Profile.avatar(data, Screen:scaleBySize(52)),
+        require("ui/widget/horizontalspan"):new { width = Screen:scaleBySize(14) },
+        VerticalGroup:new { align = "left",
+            TextBoxWidget:new { text = data.name, width = width - pad * 2 - Screen:scaleBySize(66), face = Font:getFace(require("library").fonts.ui, 19), bold = true },
+            VerticalSpan:new { width = Screen:scaleBySize(5) },
+            TextBoxWidget:new { text = "KindleSpouse · " .. (data.paired and (tostring(data.device) .. " 已配对") or "尚未配对"),
+                width = width - pad * 2 - Screen:scaleBySize(66), face = Font:getFace(require("library").fonts.ui, 10) } } }
+    content[#content + 1] = VerticalSpan:new { width = Screen:scaleBySize(22) }
+    if data.reading then
+        local reading = data.reading
+        local metrics = require("ui/widget/horizontalgroup"):new { align = "top" }
+        local current = reading.asOf == os.date("!%Y-%m-%d", os.time() + 28800)
+        self.metrics = { { "今日阅读", current and Profile.duration(reading.todaySeconds) or "待同步" },
+            { "累计阅读", Profile.duration(reading.totalSeconds) }, { "读过的书", tostring(reading.bookCount or 0) .. " 本" },
+            { "阅读天数", tostring(reading.readingDays or 0) .. " 天" } }
+        for _, metric in ipairs(self.metrics) do
+            local column = VerticalGroup:new { align = "left" }
+            column[1] = TextBoxWidget:new { text = metric[1], width = math.floor((width - pad * 2) / 4), face = Font:getFace(require("library").fonts.ui, 10) }
+            column[2] = VerticalSpan:new { width = Screen:scaleBySize(8) }
+            column[3] = TextBoxWidget:new { text = metric[2], width = math.floor((width - pad * 2) / 4), face = Font:getFace(require("library").fonts.ui, 13), bold = true }
+            metrics[#metrics + 1] = column
+        end
+        content[#content + 1] = metrics
+        content[#content + 1] = VerticalSpan:new { width = Screen:scaleBySize(22) }
+        text("阅读日历", 14, true)
+        text("最近 52 周 · 按阅读分钟数", 10)
+        self.calendar = Calendar:new { width = width - pad * 2, reading = reading, owner = self }
+        content[#content + 1] = self.calendar
+        text("点击方块查看当天时长 · 记录截至 " .. tostring(reading.asOf), 9)
+        text(reading.readingDays == 0 and "尚无阅读记录，请开启 KOReader 阅读统计并同步。" or "来自 KindleSpouse 已同步的 KOReader 阅读记录。", 9)
+    else
+        self.metrics, self.calendar = nil, nil
+        text("阅读统计待同步", 14, true)
+        text("同步个人资料后显示阅读时间、天数和阅读日历。", 11)
+    end
+    content[#content + 1] = VerticalSpan:new { width = Screen:scaleBySize(8) }
     text("同步情况", 14, true)
     text(data.status, 12)
     if data.detail ~= "" then text(data.detail, 11) end
