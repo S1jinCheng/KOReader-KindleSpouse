@@ -43,7 +43,7 @@ function Card:init()
     end
     local text_width = self.list_view and self.width - self.cover_w - Screen:scaleBySize(54) or self.width
     self.caption = TextBoxWidget:new { text = (data.selected and "✓ " or "") .. data.title, width = text_width,
-        face = Font:getFace(fonts.title, self.list_view and 12 or 13), bold = self.list_view or false, alignment = "left", height = Screen:scaleBySize(self.list_view and 24 or 36), height_adjust = true,
+        face = Font:getFace(fonts.title, self.list_view and 12 or 13), alignment = "left", height = Screen:scaleBySize(self.list_view and 24 or 36), height_adjust = true,
         height_overflow_show_ellipsis = true }
     if self.list_view then
         local HorizontalGroup = require("ui/widget/horizontalgroup")

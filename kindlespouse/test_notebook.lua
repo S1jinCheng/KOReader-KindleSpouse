@@ -118,6 +118,7 @@ end
 UIManager:tickAfterNext(function()
 UIManager:scheduleIn(6, function() check(function()
     ui = assert(FileManager.instance)
+    assert(require("library").fonts.title == "NotoSerifCJKsc-Regular.otf" and require("library").fonts.ui == "NotoSansCJKsc-Regular.otf")
     shot(ui, "library")
     assert(ui.kindlespouse_shelf and ui.kindlespouse_shelf.list_view and ui.kindlespouse_shelf.columns == 1)
     assert(ui.kindlespouse_recent.file == recent_file)

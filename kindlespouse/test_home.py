@@ -2,6 +2,7 @@ import argparse
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import zipfile
 from pathlib import Path
@@ -21,6 +22,9 @@ output = root / 'kindlespouse' / 'build' / 'artifacts'
 (books / '.notebooks' / 'private.txt').write_text('Excluded fixture', encoding='utf-8')
 output.mkdir(parents=True, exist_ok=True)
 (test / 'patches').mkdir(parents=True, exist_ok=True)
+(test / 'fonts').mkdir(parents=True, exist_ok=True)
+for name in ('NotoSerifCJKsc-Regular.otf', 'NotoSansCJKsc-Regular.otf'):
+    shutil.copyfile(fonts / name, test / 'fonts' / name)
 manifest = json.loads((root / 'kindlespouse' / 'fonts.json').read_text(encoding='utf-8'))
 for asset in manifest['assets']:
     data = (fonts / asset['filename']).read_bytes()
@@ -45,7 +49,7 @@ disabled = ','.join('[' + json.dumps(path.name.removesuffix('.koplugin')) + ']=t
 settings = f'return {{language="en", last_migration_date=20260701, quickstart_shown_version=99999999, home_dir={json.dumps(str(books))}, start_with="filemanager", disable_network_connection=true, auto_suspend_timeout_seconds=0, plugins_disabled={{{disabled}}}}}'
 (test / 'settings.reader.lua').write_text(settings, encoding='utf-8')
 (test / 'patches' / '2-home-test.lua').write_text((root / 'kindlespouse' / 'test_home.lua').read_text(encoding='utf-8'), encoding='utf-8')
-environment = dict(os.environ, SDL_VIDEODRIVER='dummy', SDL_AUDIODRIVER='dummy', KO_HOME=str(test), KINDLESPOUSE_TEST_ROOT=str(root), KINDLESPOUSE_TEST_FONTS=str(fonts), KINDLESPOUSE_TEST_OUTPUT=str(output), EMULATE_READER_W='1860', EMULATE_READER_H='2480', EMULATE_READER_DPI='300', LD_LIBRARY_PATH='libs')
+environment = dict(os.environ, SDL_VIDEODRIVER='dummy', SDL_AUDIODRIVER='dummy', XDG_DATA_HOME=str(test), KO_HOME=str(test), KINDLESPOUSE_TEST_ROOT=str(root), KINDLESPOUSE_TEST_FONTS=str(fonts), KINDLESPOUSE_TEST_OUTPUT=str(output), EMULATE_READER_W='1860', EMULATE_READER_H='2480', EMULATE_READER_DPI='300', LD_LIBRARY_PATH='libs')
 for filename in (root / 'plugins' / 'kindlespouse.koplugin').glob('*.lua'):
     result = subprocess.run([str(runtime / 'luajit'), '-e', f'assert(loadfile({json.dumps(str(filename))}))'], cwd=runtime, env=environment, capture_output=True, text=True)
     assert result.returncode == 0, result.stderr

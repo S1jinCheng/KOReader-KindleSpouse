@@ -14,6 +14,7 @@ root = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser()
 parser.add_argument("--runtime", type=Path, required=True)
 parser.add_argument("--engine", type=Path)
+parser.add_argument("--fonts", type=Path)
 args = parser.parse_args()
 runtime = args.runtime.resolve()
 fork = (root / "plugins/kindlespouse.koplugin").is_dir()
@@ -43,6 +44,10 @@ if not args.engine:
 test = Path(tempfile.mkdtemp(prefix="notebook-embedded-", dir=build))
 (test / "patches").mkdir()
 (test / "books").mkdir()
+(test / "fonts").mkdir()
+fonts = args.fonts.resolve() if args.fonts else root / ("kindlespouse/build/cache" if fork else "native/tools/reader-fonts")
+for name in ("NotoSerifCJKsc-Regular.otf", "NotoSansCJKsc-Regular.otf"):
+    shutil.copyfile(fonts / name, test / "fonts" / name)
 shutil.copytree(engine / "icons", test / "icons")
 titles = ["阅读的四季", "山间来信", "一日三餐", "慢慢走", "生活的形状", "一间自己的书房", "寻常故事", "昨日书简", "漫长的旅途", "春日来信", "理想的下午", "此时此地"]
 for index, title in enumerate(titles):
@@ -62,7 +67,7 @@ points = [{"x": 1000, "y": 1000, "width": 30}, {"x": 2000, "y": 2000, "width": 4
 strokes = [{"brushType": 0, "opacity": 1, "points": points}, {"brushType": 0, "opacity": 1, "points": [dict(point, y=point["y"] + 3000) for point in points]}]
 (test / "native-vectors.json").write_text(json.dumps({"version": 1, "source": {"format": "synthetic-native-vector-fixture"}, "pages": [{"width": 18600, "height": 24800, "strokes": strokes}, {"width": 18600, "height": 24800, "strokes": []}]}), encoding="utf-8")
 plugin = root / ("plugins/kindlespouse.koplugin" if fork else "native/companion/plugin")
-environment = dict(os.environ, SDL_VIDEODRIVER="dummy", SDL_AUDIODRIVER="dummy", KO_HOME=str(test), KINDLESPOUSE_TEST_ROOT=str(root), KINDLESPOUSE_NOTEBOOK_TEST_ROOT=str(test), KINDLESPOUSE_TEST_PLUGIN=str(plugin), KINDLESPOUSE_NOTEBOOK_ENGINE=str(engine), KINDLESPOUSE_NOTEBOOK_EXPERIMENT=str(root / "experiments/notebook"), KINDLESPOUSE_TEST_OUTPUT=str(output), EMULATE_READER_W="1860", EMULATE_READER_H="2480", EMULATE_READER_DPI="300", LD_LIBRARY_PATH="libs")
+environment = dict(os.environ, SDL_VIDEODRIVER="dummy", SDL_AUDIODRIVER="dummy", XDG_DATA_HOME=str(test), KO_HOME=str(test), KINDLESPOUSE_TEST_ROOT=str(root), KINDLESPOUSE_NOTEBOOK_TEST_ROOT=str(test), KINDLESPOUSE_TEST_PLUGIN=str(plugin), KINDLESPOUSE_NOTEBOOK_ENGINE=str(engine), KINDLESPOUSE_NOTEBOOK_EXPERIMENT=str(root / "experiments/notebook"), KINDLESPOUSE_TEST_OUTPUT=str(output), EMULATE_READER_W="1860", EMULATE_READER_H="2480", EMULATE_READER_DPI="300", LD_LIBRARY_PATH="libs")
 result = subprocess.run([str(runtime / "luajit"), "reader.lua", str(test / "books")], cwd=runtime, env=environment, capture_output=True, text=True, timeout=180)
 (test / "runtime.log").write_text(result.stdout + result.stderr, encoding="utf-8")
 shutil.copyfile(test / "runtime.log", output / "notebook-runtime.log")

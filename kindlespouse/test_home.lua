@@ -42,6 +42,7 @@ local output = assert(os.getenv("KINDLESPOUSE_TEST_OUTPUT")) .. "/koreader-home-
 UIManager:tickAfterNext(function()
 UIManager:scheduleIn(3, function() check(function()
     local ui = assert(FileManager.instance)
+    assert(Library.fonts.title == "NotoSerifCJKsc-Regular.otf" and Library.fonts.ui == "NotoSansCJKsc-Regular.otf")
     assert(#ui.file_chooser.item_table == 8, "Nested books must be included and notebooks excluded")
     assert(ui.kindlespouse_shelf and ui.kindlespouse_shelf.list_view, "Scrollable cover shelf must be active")
     assert(ui.file_chooser.height == Screen:getHeight() - Home.navigationHeight())

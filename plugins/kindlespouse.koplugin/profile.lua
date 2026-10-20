@@ -137,7 +137,7 @@ function Calendar:onDay(_, gesture)
     local cell = self.cells[index]
     if cell and not cell.future then
         self.selected = index
-        self.detail = require("ui/widget/infomessage"):new { text = cell.date .. "\n阅读 " .. Profile.duration(cell.seconds) }
+        self.detail = require("ui/widget/infomessage"):new { text = cell.date .. "\n阅读 " .. Profile.duration(cell.seconds), face = Font:getFace(require("library").fonts.ui, 20) }
         UIManager:setDirty(self.owner, "ui")
         UIManager:show(self.detail)
     end
@@ -175,12 +175,12 @@ function Panel:render(data)
     if self[1] then self[1]:free() end
     self.data = data
     local title = require("ui/widget/titlebar"):new { title = "个人资料", fullscreen = true, width = width,
-        title_face = Font:getFace(require("library").fonts.ui, 17), left_icon = "chevron.left", right_icon = "close",
+        title_face = Font:getFace(require("library").fonts.title, 17), left_icon = "chevron.left", right_icon = "close",
         left_icon_tap_callback = function() UIManager:close(self) end, right_icon_tap_callback = function() UIManager:close(self) end }
     local content = VerticalGroup:new { align = "left" }
-    local function text(value, size, bold)
+    local function text(value, size, bold, literary)
         content[#content + 1] = TextBoxWidget:new { text = value, width = width - pad * 2,
-            face = Font:getFace(require("library").fonts.ui, size), bold = bold or false }
+            face = Font:getFace(require("library").fonts[literary and "title" or "ui"], size), bold = bold or false }
         content[#content + 1] = VerticalSpan:new { width = Screen:scaleBySize(10) }
     end
     content[#content + 1] = VerticalSpan:new { width = Screen:scaleBySize(16) }
@@ -188,7 +188,7 @@ function Panel:render(data)
         Profile.avatar(data, Screen:scaleBySize(52)),
         require("ui/widget/horizontalspan"):new { width = Screen:scaleBySize(14) },
         VerticalGroup:new { align = "left",
-            TextBoxWidget:new { text = data.name, width = width - pad * 2 - Screen:scaleBySize(66), face = Font:getFace(require("library").fonts.ui, 19), bold = true },
+            TextBoxWidget:new { text = data.name, width = width - pad * 2 - Screen:scaleBySize(66), face = Font:getFace(require("library").fonts.title, 19) },
             VerticalSpan:new { width = Screen:scaleBySize(5) },
             TextBoxWidget:new { text = "KindleSpouse · " .. (data.paired and (tostring(data.device) .. " 已配对") or "尚未配对"),
                 width = width - pad * 2 - Screen:scaleBySize(66), face = Font:getFace(require("library").fonts.ui, 10) } } }
@@ -204,12 +204,12 @@ function Panel:render(data)
             local column = VerticalGroup:new { align = "left" }
             column[1] = TextBoxWidget:new { text = metric[1], width = math.floor((width - pad * 2) / 4), face = Font:getFace(require("library").fonts.ui, 10) }
             column[2] = VerticalSpan:new { width = Screen:scaleBySize(8) }
-            column[3] = TextBoxWidget:new { text = metric[2], width = math.floor((width - pad * 2) / 4), face = Font:getFace(require("library").fonts.ui, 13), bold = true }
+            column[3] = TextBoxWidget:new { text = metric[2], width = math.floor((width - pad * 2) / 4), face = Font:getFace(require("library").fonts.title, 13) }
             metrics[#metrics + 1] = column
         end
         content[#content + 1] = metrics
         content[#content + 1] = VerticalSpan:new { width = Screen:scaleBySize(22) }
-        text("阅读日历", 14, true)
+        text("阅读日历", 14, false, true)
         text("最近 52 周 · 按阅读分钟数", 10)
         self.calendar = Calendar:new { width = width - pad * 2, reading = reading, owner = self }
         content[#content + 1] = self.calendar
@@ -217,18 +217,18 @@ function Panel:render(data)
         text(reading.readingDays == 0 and "尚无阅读记录，请开启 KOReader 阅读统计并同步。" or "来自 KindleSpouse 已同步的 KOReader 阅读记录。", 9)
     else
         self.metrics, self.calendar = nil, nil
-        text("阅读统计待同步", 14, true)
+        text("阅读统计待同步", 14, false, true)
         text("同步个人资料后显示阅读时间、天数和阅读日历。", 11)
     end
     content[#content + 1] = VerticalSpan:new { width = Screen:scaleBySize(8) }
-    text("同步情况", 14, true)
+    text("同步情况", 14, false, true)
     text(data.status, 12)
     if data.detail ~= "" then text(data.detail, 11) end
     if data.last_sync then text("上次同步：" .. data.last_sync, 10) end
     if data.profile_received then
         text("资料更新：" .. tostring(data.profile_received):gsub("T", " "):gsub("%.%d+Z$", " UTC"):gsub("Z$", " UTC") .. " · " .. data.route, 10)
     end
-    text("绑定的网盘", 14, true)
+    text("绑定的网盘", 14, false, true)
     if data.clouds == nil then text("尚未收到网盘资料，请同步个人资料。", 11)
     elseif #data.clouds == 0 then text("KindleSpouse 尚未绑定网盘。", 11)
     else
@@ -247,7 +247,7 @@ function Panel:render(data)
             callback = function() self.companion:sync(false); self:refreshNow() end },
         { id = "pause", text = "暂停", enabled = data.paired and data.state == "running", callback = function() self.companion:pause(); self:refreshNow() end },
     }
-    for _, button in ipairs(buttons) do button.font_size = 12 end
+    for _, button in ipairs(buttons) do button.font_size = 12; button.font_face = require("library").fonts.ui; button.font_bold = false end
     self.actions = require("ui/widget/buttontable"):new { width = width, buttons = { buttons } }
     self.scroll = require("ui/widget/container/scrollablecontainer"):new { swipe_full_view = false,
         dimen = Geom:new { w = width, h = Screen:getHeight() - title:getHeight() - self.actions:getSize().h },

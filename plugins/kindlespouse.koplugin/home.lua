@@ -72,11 +72,11 @@ function Home.notebook(companion, height)
         VerticalGroup:new {
             align = "center",
             TextBoxWidget:new { text = "Scribe 手写笔记本", width = width,
-                alignment = "center", face = Font:getFace("cfont", 28) },
+                alignment = "center", face = Font:getFace(Library.fonts.title, 28) },
             VerticalSpan:new { width = Screen:scaleBySize(24) },
             TextBoxWidget:new {
                 text = "手写笔记本由 Kindle 系统打开和编辑。\n返回 Kindle 后，点击底部的“笔记本”继续书写。",
-                width = width, alignment = "center", face = Font:getFace("cfont", 20),
+                width = width, alignment = "center", face = Font:getFace(Library.fonts.ui, 20),
             },
             VerticalSpan:new { width = Screen:scaleBySize(32) },
             Button:new { text = "返回 Kindle，打开手写笔记本", width = width,

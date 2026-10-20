@@ -13,13 +13,10 @@ local sorts = { { "recent", "最近阅读" }, { "added", "最近添加" }, { "ti
 function Library.prepareFonts()
     if Library.fonts_ready then return end
     Library.fonts_ready = true
-    if not Device:isKindle() then return end
     for _, filename in ipairs(require("fontlist"):getFontList()) do
         local name = filename:match("([^/]+)$")
-        if name and name:lower():gsub("[-_]", "") == "amazonemberregular.ttf" then
-            Library.fonts.title, Library.fonts.ui = name, name
-            break
-        end
+        if name == "NotoSerifCJKsc-Regular.otf" then Library.fonts.title = name end
+        if name == "NotoSansCJKsc-Regular.otf" then Library.fonts.ui = name end
     end
 end
 
