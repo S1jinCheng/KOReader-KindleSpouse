@@ -1,0 +1,40 @@
+name: Notebook computer simulation
+
+on:
+  push:
+    branches: [codex/notebook-embedded]
+    paths:
+      - experiments/notebook/**
+      - kindlespouse/test_notebook.lua
+      - .github/workflows/kindlespouse-notebook.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notebook:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Fetch verified KOReader runtime
+        run: |
+          mkdir -p kindlespouse/build/runtime
+          cd kindlespouse/build/runtime
+          curl --fail --location --retry 3 --output koreader.AppImage https://github.com/koreader/koreader/releases/download/v2026.07.1/koreader-v2026.07.1-x86_64.AppImage
+          printf '%s  %s\n' e60ed106cf4e824d50394a259b3aa6c46fb1daee189df73a1734e5732b5dc245 koreader.AppImage | sha256sum --check
+          chmod +x koreader.AppImage
+          ./koreader.AppImage --appimage-extract >/dev/null
+      - name: Run Notebook in the actual KOReader emulator
+        run: python3 experiments/notebook/simulate.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Notebook-Computer-Simulation
+          path: |
+            kindlespouse/build/artifacts/notebook-embedded-*.png
+            kindlespouse/build/artifacts/notebook-runtime.log
+          if-no-files-found: error
