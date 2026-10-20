@@ -1,0 +1,22 @@
+KindleSpouse for Kindle Scribe — preview 0.1
+Base: official KOReader v2026.07.1; Kindle Scribe first generation.
+
+This package adds the KindleSpouse home and four static Chinese fonts to an existing KOReader installation. It does not contain a complete KOReader runtime or Kindle firmware.
+
+1. Save and exit KOReader.
+2. Extract this package into the Kindle USB root. Merge koreader and kindlespouse into the existing folders.
+3. Preserve config.json, rclone.conf, sleep-profile.json, all books and notebooks, and sync pause markers.
+4. Eject USB and reopen KOReader. Library displays covers from the configured home book folder, or /mnt/us/documents, including subfolders.
+5. In a book, select Noto Serif CJK SC, Noto Sans CJK SC, LXGW WenKai or FandolFang from the font menu. Noto is recommended for uncommon or traditional characters.
+
+Notebook provides a normal exit to Kindle. After returning, tap the Kindle Notebooks tab to write in native Scribe notebooks. This preview does not open a native notebook directly or edit Amazon notebook files inside KOReader.
+
+The original top menus, file operations, reader settings and book files remain available. To restore the original file browser, open the top menu, KindleSpouse, and disable Use KindleSpouse home.
+
+Existing KindleSpouse cloud pairing, book receipt, profile, annotation sync and sleep-cover settings continue to use the companion installed by the KindleSpouse desktop app. This overlay contains no cloud credentials or companion binaries; pair with the desktop app to enable synchronization.
+
+Source: https://github.com/S1jinCheng/KOReader-KindleSpouse
+Desktop: https://github.com/S1jinCheng/KindleSpouse
+License: GNU AGPLv3 for KOReader and the KindleSpouse plugin. Original font licenses and the upstream Fandol archive are included under kindlespouse/licenses/reader-fonts.
+
+Desktop emulator validation is provided. First-generation Scribe touch, handwriting handoff and refresh behavior still require device acceptance.

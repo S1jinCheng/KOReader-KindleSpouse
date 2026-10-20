@@ -1,0 +1,44 @@
+name: KindleSpouse Scribe
+
+on:
+  push:
+    branches: [codex/kindlespouse-scribe]
+    paths:
+      - plugins/kindlespouse.koplugin/**
+      - kindlespouse/**
+      - .github/workflows/kindlespouse.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  overlay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Build verified home and font package
+        run: python3 kindlespouse/build.py
+      - name: Fetch pinned KOReader runtime
+        run: |
+          mkdir -p kindlespouse/build/runtime
+          cd kindlespouse/build/runtime
+          curl --fail --location --retry 3 --output koreader.AppImage https://github.com/koreader/koreader/releases/download/v2026.07.1/koreader-v2026.07.1-x86_64.AppImage
+          printf '%s  %s\n' e60ed106cf4e824d50394a259b3aa6c46fb1daee189df73a1734e5732b5dc245 koreader.AppImage | sha256sum --check
+          chmod +x koreader.AppImage
+          ./koreader.AppImage --appimage-extract >/dev/null
+      - name: Verify native home and Chinese fonts
+        run: python3 kindlespouse/test_home.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader
+      - uses: actions/upload-artifact@v7
+        with:
+          name: KindleSpouse-Scribe-Preview
+          path: |
+            kindlespouse/build/KindleSpouse-Scribe-Overlay.zip
+            kindlespouse/build/KindleSpouse-Scribe-Overlay.zip.sha256
+            kindlespouse/build/artifacts/*.png
+            kindlespouse/build/test/runtime.log
+          if-no-files-found: error

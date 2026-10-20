@@ -13,6 +13,7 @@ defaults:
 jobs:
 
   macos:
+    if: github.repository == 'koreader/koreader' || github.event_name == 'workflow_dispatch'
 
     strategy:
       fail-fast: false

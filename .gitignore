@@ -1,4 +1,5 @@
 .DS_*
+/kindlespouse/build/
 ._*
 *.AppImage
 *.app
