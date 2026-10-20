@@ -129,6 +129,12 @@ function Embedded:install(Home)
         original_layout(ui, companion)
         if instance.gallery then ui.title_bar:setSubTitle(string.format("%d 本笔记", #instance.gallery.items)) end
     end
+    local original_toggle = Home.toggle
+    Home.toggle = function(companion)
+        if instance.gallery and not instance.gallery.closed then instance.gallery:onCloseWidget() end
+        instance.gallery = nil
+        return original_toggle(companion)
+    end
 end
 
 return Embedded
