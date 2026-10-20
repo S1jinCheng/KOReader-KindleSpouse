@@ -42,4 +42,4 @@ with zipfile.ZipFile(package, 'w', compression=zipfile.ZIP_DEFLATED, compresslev
     archive.write(root / 'kindlespouse' / 'INSTALL.txt', 'KindleSpouse-INSTALL.txt')
 digest = hashlib.sha256(package.read_bytes()).hexdigest()
 package.with_suffix('.zip.sha256').write_text(digest + '\n', encoding='ascii')
-print(json.dumps({'file': str(package), 'bytes': package.stat().st_size, 'sha256': digest, 'fonts': 4, 'containsCredentials': False}))
+print(json.dumps({'file': str(package), 'bytes': package.stat().st_size, 'sha256': digest, 'fonts': sum(bool(asset.get('style')) for asset in manifest['assets']), 'containsCredentials': False}))

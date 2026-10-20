@@ -52,6 +52,6 @@ for filename in (root / 'plugins' / 'kindlespouse.koplugin').glob('*.lua'):
 result = subprocess.run([str(runtime / 'luajit'), 'reader.lua', str(books)], cwd=runtime, env=environment, capture_output=True, text=True, timeout=180)
 (test / 'runtime.log').write_text(result.stdout + result.stderr, encoding='utf-8')
 assert result.returncode == 0 and 'KindleSpouse home acceptance passed' in result.stdout, (result.stdout + result.stderr)[-6000:]
-for name in ['library', 'notebook', 'landscape']:
+for name in ['library', 'list', 'notebook', 'landscape']:
     assert (output / ('koreader-home-' + name + '.png')).stat().st_size > 1000
-print('Passed: native cover grid, nested books, two tabs, original menus, four static Chinese fonts, portrait, landscape, native exit and reversible settings.')
+print('Passed: search, status/author/format/folder filters, favorites, collections, sorting, grid/list, ten fonts, native menus, two tabs, portrait/landscape and reversible settings.')

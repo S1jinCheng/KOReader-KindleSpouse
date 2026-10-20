@@ -1,15 +1,16 @@
-KindleSpouse for Kindle Scribe — preview 0.1
+KindleSpouse for Kindle Scribe — preview 0.2
 Base: official KOReader v2026.07.1; Kindle Scribe first generation.
 
-This package adds the KindleSpouse home and four static Chinese fonts to an existing KOReader installation. It does not contain a complete KOReader runtime or Kindle firmware.
+This package adds the KindleSpouse library and ten static Chinese fonts to an existing KOReader installation. It does not contain a complete KOReader runtime or Kindle firmware.
 
 1. Save and exit KOReader.
 2. Extract this package into the Kindle USB root. Merge koreader and kindlespouse into the existing folders.
 3. Preserve config.json, rclone.conf, sleep-profile.json, all books and notebooks, and sync pause markers.
 4. Eject USB and reopen KOReader. Library displays covers from the configured home book folder, or /mnt/us/documents, including subfolders.
-5. In a book, select Noto Serif CJK SC, Noto Sans CJK SC, LXGW WenKai or FandolFang from the font menu. Noto is recommended for uncommon or traditional characters.
+5. Use the Library toolbar to search by title or author, filter unread/reading/finished/favorites/collections, combine format/author/folder filters, sort books, or switch grid/list. Preferences are saved. The folder filter describes device folders, not desktop cloud accounts.
+6. In a book, choose from Noto Serif CJK SC, Noto Sans CJK SC, LXGW WenKai, FandolFang, FandolSong, FandolHei, FandolKai, LXGW WenKai GB, LXGW Neo ZhiSong and LXGW ZhenKai Slab GB. Noto is recommended for uncommon or traditional characters.
 
-Notebook provides a normal exit to Kindle. After returning, tap the Kindle Notebooks tab to write in native Scribe notebooks. This preview does not open a native notebook directly or edit Amazon notebook files inside KOReader.
+Notebook provides a normal exit to Kindle. After returning, tap the Kindle Notebooks tab to keep editing existing Scribe notebooks. Editing Amazon's original notebooks inside KOReader is not implemented. Standalone handwriting plugins use their own formats and are not installed as a replacement for the original notebooks.
 
 The original top menus, file operations, reader settings and book files remain available. To restore the original file browser, open the top menu, KindleSpouse, and disable Use KindleSpouse home.
 
