@@ -129,22 +129,24 @@ end
 function Companion:installReaderExperience()
     if not self.ui or not self.ui.document then return end
     return Guard.install(self.ui, function()
-        local reader = package.loaded["reader/init"] or package.loaded["reader.init"]
-        if type(reader) == "table" and type(reader.install) == "function" then return reader.install(self.ui) end
-        local highlight = require("reader/highlight_bar")
-        if highlight.settings().highlight_bar then highlight.install(self.ui) else highlight.uninstall(self.ui) end
+        return require("reader/init").install(self.ui)
     end)
 end
 
 function Companion:readerMenuItems()
     local highlight = require("reader/highlight_bar")
-    return { { text = T("reader.highlight_bar"), checked_func = function() return highlight.settings().highlight_bar end,
-        callback = function()
-            local settings = highlight.settings()
-            settings.highlight_bar = not settings.highlight_bar
-            G_reader_settings:saveSetting("kindlespouse_reader", settings)
-            self:installReaderExperience()
-        end } }
+    local entries = {}
+    for _, name in ipairs({ "highlight_bar", "reader_bar" }) do
+        local key = name
+        entries[#entries+1] = { text = T("reader." .. key), checked_func = function() return highlight.settings()[key] end,
+            callback = function()
+                local settings = highlight.settings()
+                settings[key] = not settings[key]
+                G_reader_settings:saveSetting("kindlespouse_reader", settings)
+                self:installReaderExperience()
+            end }
+    end
+    return entries
 end
 
 function Companion:init()

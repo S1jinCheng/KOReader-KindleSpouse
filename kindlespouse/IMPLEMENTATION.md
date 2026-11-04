@@ -15,7 +15,7 @@ Integration base: codex/improvement-baseline-v1. The existing notebook experimen
 | 08 | P2 localized menus and status dialog | Verified 251 translation keys, native dialogs and loaded plugin in EN/ZH; device pending |
 | 09 | P4 version guard and main module split | Verified lifecycle/version/rollback and extracted package; device pending |
 | 10 | P3 highlight bar | Verified real selections, saved annotations, More/restoration and automatic plugin wiring; device pending |
-| 11 | P3 reader toolbar | Pending |
+| 11 | P3 reader toolbar | Verified loaded plugin, real navigation/actions, statistics and reversible toggles; device pending |
 | 12 | P3 annotation notebook and navigation | Pending |
 
 Each unit is a separate stacked PR and is verified in the pinned AppImage runtime before the next dependent unit. PRs remain unmerged for user review. Device checks are reported separately from simulator checks. Repository migration, core changes, firmware updates, Amazon NBK editing, DRM work and desktop changes are outside this implementation.

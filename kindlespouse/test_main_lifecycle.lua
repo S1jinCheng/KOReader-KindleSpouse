@@ -161,15 +161,14 @@ check("deferred PostInit failures are guarded and do not stop sync", function()
     host:onCloseWidget()
 end)
 
-check("reader hook is optional until its module is explicitly loaded", function()
+check("reader hook passes the ReaderUI instance to its adapter", function()
     local env = fixture({ reading = true })
+    local installed, seen = 0
+    package.loaded["reader/init"] = { install = function(current) seen = current; installed = installed + 1 end }
     local host = env.host({})
+    assert(seen == host.ui and installed == 1)
     host:onReaderReady()
-    assert(package.loaded["reader/init"] == nil)
-    local installed = 0
-    package.loaded["reader/init"] = { install = function(current) assert(current == host.ui); installed = installed + 1 end }
-    host:onReaderReady()
-    assert(installed == 1 and env.syncAttached())
+    assert(seen == host.ui and installed == 2 and env.syncAttached())
     host:onCloseWidget()
 end)
 

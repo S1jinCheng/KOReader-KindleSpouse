@@ -14,7 +14,7 @@ parser.add_argument('--fonts', type=Path)
 parser.add_argument('--statistics', action='store_true')
 parser.add_argument('--integrated', action='store_true')
 parser.add_argument('--package', type=Path)
-parser.add_argument('--feature', choices=['highlight'], default='highlight')
+parser.add_argument('--feature', choices=['highlight', 'reader', 'all'], default='all')
 args = parser.parse_args()
 if args.package:
     args.integrated = True
