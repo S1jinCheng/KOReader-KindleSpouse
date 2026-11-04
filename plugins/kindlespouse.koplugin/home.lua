@@ -30,6 +30,7 @@ function Home.observeCatalog(ui)
     if ui.kindlespouse_catalog_task then return end
     ui.kindlespouse_catalog_task = function()
         if ui.kindlespouse_patched and Home.enabled() and ui.file_chooser then
+            if ui.kindlespouse_tab == "Notebook" then ui.kindlespouse_catalog_dirty = true; return end
             if ui.kindlespouse_shelf then ui.kindlespouse_shelf:setScanning(nil) end
             Library.refresh(ui, {})
         end
@@ -39,7 +40,9 @@ function Home.observeCatalog(ui)
         if not ui.kindlespouse_patched or not Home.enabled() then return end
         if event.scanning then
             if ui.kindlespouse_shelf then ui.kindlespouse_shelf:setScanning(event.count or 0) end
-            if ui.title_bar then ui.title_bar:setSubTitle(string.format("正在整理书库…（已找到 %d 本）", event.count or 0)) end
+            if ui.title_bar and ui.kindlespouse_tab ~= "Notebook" then
+                ui.title_bar:setSubTitle(string.format("正在整理书库…（已找到 %d 本）", event.count or 0))
+            end
             return
         end
         UIManager:unschedule(ui.kindlespouse_catalog_task)
@@ -170,6 +173,74 @@ function Home.recentButton(companion, width)
     return button
 end
 
+function Home.pauseBody(ui)
+    if ui.kindlespouse_tab == "Notebook" then
+        local notebook = ui.kindlespouse_notebook_body
+        if notebook and not ui.kindlespouse_notebook_paused then
+            if notebook.onCloseWidget and not notebook.closed then notebook:onCloseWidget() end
+            ui.kindlespouse_notebook_paused = true
+        end
+    elseif ui.kindlespouse_shelf then
+        local shelf = ui.kindlespouse_shelf
+        if shelf.on_close then shelf:on_close() end
+        shelf.queued = false
+        shelf[1]:free()
+        require("ui/widget/container/scrollablecontainer").onCloseWidget(shelf)
+    end
+end
+
+function Home.releaseLayout(ui)
+    Home.pauseBody(ui)
+    if ui.kindlespouse_shelf then ui.kindlespouse_shelf:onCloseWidget() end
+    if ui.kindlespouse_library_group then ui.kindlespouse_library_group[2]:free() end
+    if ui.kindlespouse_notebook_body then ui.kindlespouse_notebook_body:free() end
+    if ui.kindlespouse_header then ui.kindlespouse_header:free() end
+    if ui.kindlespouse_recent then ui.kindlespouse_recent:free() end
+    if ui.kindlespouse_navigation then
+        ui.kindlespouse_navigation[1]:free()
+        ui.kindlespouse_navigation[3]:free()
+    end
+    for _, name in ipairs({ "shelf", "library_group", "notebook_group", "notebook_body", "notebook_paused",
+            "notebook_search", "header", "recent", "navigation", "content", "search", "search_label", "toolbar", "profile" }) do
+        ui["kindlespouse_" .. name] = nil
+    end
+    ui.cropping_widget = nil
+end
+
+function Home.switchTab(ui, companion, tab)
+    if not ui.kindlespouse_content then return false end
+    local changed = ui.kindlespouse_tab ~= tab
+    if changed then Home.pauseBody(ui) end
+    ui.kindlespouse_tab = tab
+    if tab == "Notebook" then
+        if not ui.kindlespouse_notebook_body then
+            local height = Screen:getHeight() - Home.navigationHeight() - ui.kindlespouse_header:getSize().h
+            local body = Home.notebook(companion, height)
+            ui.kindlespouse_notebook_body = body
+            ui.kindlespouse_notebook_group = require("ui/widget/verticalgroup"):new {
+                align = "left", ui.kindlespouse_header, body,
+            }
+        elseif ui.kindlespouse_notebook_paused then
+            if ui.kindlespouse_notebook_body.refresh then ui.kindlespouse_notebook_body:refresh() end
+        end
+        ui.kindlespouse_notebook_paused = nil
+        ui.kindlespouse_content[1] = ui.kindlespouse_notebook_group
+        ui.cropping_widget = nil
+    else
+        ui.kindlespouse_content[1] = ui.kindlespouse_library_group
+        ui.cropping_widget = ui.kindlespouse_shelf
+        if ui.kindlespouse_catalog_dirty then
+            ui.kindlespouse_catalog_dirty = nil
+            Library.refresh(ui, {})
+        end
+    end
+    Library.updateSearch(ui)
+    ui.title_bar:setTitle(tab)
+    ui.title_bar:setSubTitle(tab == "Library" and Home.count(ui) or "Kindle Scribe")
+    UIManager:setDirty(ui, changed and "flashui" or "ui", ui.dimen)
+    return true
+end
+
 function Home.layout(ui, companion)
     local VerticalGroup = require("ui/widget/verticalgroup")
     local HorizontalGroup = require("ui/widget/horizontalgroup")
@@ -181,26 +252,13 @@ function Home.layout(ui, companion)
     local side_width = math.floor((Screen:getWidth() - center_width) / 2)
     Patches.revertPrefix(Patches.scope(ui) .. "render:")
     local selected = ui.kindlespouse_tab or "Library"
-    if ui.kindlespouse_shelf then ui.kindlespouse_shelf:onCloseWidget(); ui.kindlespouse_shelf = nil end
-    if ui.kindlespouse_recent then ui.kindlespouse_recent:free() end
-    if ui.kindlespouse_header then ui.kindlespouse_header:free() end
-    ui.cropping_widget = nil
+    Home.releaseLayout(ui)
     local header = Library.header(ui, companion)
     ui.kindlespouse_header = header
-    local body
-    local focus = {}
-    if selected == "Notebook" then
-        local height = Screen:getHeight() - Home.navigationHeight() - header:getSize().h
-        body = VerticalGroup:new { align = "left", header, Home.notebook(companion, height) }
-        focus = {}
-    else
-        local toolbar = Library.toolbar(ui)
-        local height = Screen:getHeight() - Home.navigationHeight() - header:getSize().h - toolbar:getSize().h
-        ui.kindlespouse_shelf = require("shelf").library(ui, height)
-        ui.cropping_widget = ui.kindlespouse_shelf
-        body = VerticalGroup:new { align = "left", header, toolbar, ui.kindlespouse_shelf }
-        ui.kindlespouse_library_group = body
-    end
+    local toolbar = Library.toolbar(ui)
+    local height = Screen:getHeight() - Home.navigationHeight() - header:getSize().h - toolbar:getSize().h
+    ui.kindlespouse_shelf = require("shelf").library(ui, height)
+    ui.kindlespouse_library_group = VerticalGroup:new { align = "left", header, toolbar, ui.kindlespouse_shelf }
     local navigation = HorizontalGroup:new { align = "center" }
     for index, tab in ipairs({ "Library", "Notebook" }) do
         navigation[index == 1 and 1 or 3] = Button:new {
@@ -211,9 +269,7 @@ function Home.layout(ui, companion)
             show_parent = ui,
             callback = function()
                 if ui.kindlespouse_tab == tab then return end
-                ui.kindlespouse_tab = tab
-                ui:reinit(ui.file_chooser.path)
-                UIManager:setDirty(ui, "ui")
+                Home.switchTab(ui, companion, tab)
             end,
         }
     end
@@ -223,7 +279,7 @@ function Home.layout(ui, companion)
         local button = navigation[index == 1 and 1 or 3]
         Patches.wrap(Patches.scope(ui) .. "render:tab" .. index, button, "paintTo", function(original, widget, bb, x, y)
             original(widget, bb, x, y)
-            if selected == tab then
+            if ui.kindlespouse_tab == tab then
                 local label = widget.label_widget:getSize()
                 bb:paintRect(x + math.floor((widget.width - label.w) / 2),
                     y + math.floor((widget.height + label.h) / 2) + Screen:scaleBySize(3), label.w, 2, Blitbuffer.COLOR_BLACK)
@@ -237,10 +293,15 @@ function Home.layout(ui, companion)
         bb:paintRect(x, y, left, 1, Blitbuffer.COLOR_GRAY)
         bb:paintRect(x + left + gap, y, Screen:getWidth() - left - gap, 1, Blitbuffer.COLOR_GRAY)
     end)
+    ui.kindlespouse_navigation = navigation
+    ui.kindlespouse_content = LeftContainer:new {
+        dimen = require("ui/geometry"):new { w = Screen:getWidth(), h = Screen:getHeight() - Home.navigationHeight() },
+        ui.kindlespouse_library_group,
+    }
     ui[1] = FrameContainer:new {
         padding = 0, margin = 0, bordersize = 0, background = Blitbuffer.COLOR_WHITE,
         VerticalGroup:new { align = "left",
-            LeftContainer:new { dimen = require("ui/geometry"):new { w = Screen:getWidth(), h = Screen:getHeight() - Home.navigationHeight() }, body },
+            ui.kindlespouse_content,
             navigation },
     }
     Patches.wrap(Patches.scope(ui) .. "render:events", ui[1], "propagateEvent", function(original, widget, event)
@@ -250,10 +311,8 @@ function Home.layout(ui, companion)
         return original(widget, event)
     end)
     ui.layout = {}
-    for _, row in ipairs(focus or {}) do ui.layout[#ui.layout + 1] = row end
     ui.layout[#ui.layout + 1] = { navigation[1], navigation[3] }
-    ui.title_bar:setTitle(selected)
-    ui.title_bar:setSubTitle(selected == "Library" and Home.count(ui) or "Kindle Scribe")
+    Home.switchTab(ui, companion, selected)
     ui:registerKeyEvents()
 end
 
@@ -286,10 +345,16 @@ function Home.install(companion)
     end)
     Patches.wrap(Patches.scope(ui) .. "home", ui, "onHome", function(original, manager)
         if not Home.enabled() then return original(manager) end
-        manager.kindlespouse_tab = "Library"
-        manager:reinit(Home.root(manager))
-        UIManager:setDirty(manager, "ui")
+        if Home.switchTab(manager, companion, "Library") then
+            Library.refresh(manager, {})
+        else
+            manager:reinit(Home.root(manager))
+        end
         return true
+    end)
+    Patches.wrap(Patches.scope(ui) .. "close", ui, "onCloseWidget", function(original, manager, ...)
+        Home.uninstall(manager)
+        return original(manager, ...)
     end)
     Patches.wrap(Patches.scope(ui) .. "title", ui, "updateTitleBarPath", function(original, manager, path)
         if not Home.enabled() then return original(manager, path) end
@@ -385,6 +450,7 @@ function Home.prepareStart()
 end
 
 function Home.uninstall(ui)
+    Home.releaseLayout(ui)
     Catalog.unsubscribe(ui)
     if not next(Catalog.subscribers) and Catalog.root then Catalog.cancel(Catalog.root) end
     if ui.kindlespouse_catalog_task then UIManager:unschedule(ui.kindlespouse_catalog_task); ui.kindlespouse_catalog_task = nil end
@@ -402,8 +468,6 @@ function Home.toggle(companion)
         Home.prepare(ui)
         Home.install(companion)
     else
-        if ui.kindlespouse_shelf then ui.kindlespouse_shelf:onCloseWidget(); ui.kindlespouse_shelf = nil end
-        if ui.cropping_widget then ui.cropping_widget = nil end
         Home.uninstall(ui)
         Patches.revert("home:filechooser")
         if ui.coverbrowser then
