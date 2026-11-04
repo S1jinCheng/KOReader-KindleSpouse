@@ -1,3 +1,4 @@
+local T = require("i18n").T
 local Device = require("device")
 local FileChooser = require("ui/widget/filechooser")
 local UIManager = require("ui/uimanager")
@@ -41,7 +42,7 @@ function Home.observeCatalog(ui)
         if event.scanning then
             if ui.kindlespouse_shelf then ui.kindlespouse_shelf:setScanning(event.count or 0) end
             if ui.title_bar and ui.kindlespouse_tab ~= "Notebook" then
-                ui.title_bar:setSubTitle(string.format("正在整理书库…（已找到 %d 本）", event.count or 0))
+                ui.title_bar:setSubTitle(T("catalog_scanning", event.count or 0))
             end
             return
         end
@@ -69,7 +70,7 @@ end
 
 function Home.returnToKindle(companion)
     if not Device:isKindle() then
-        companion:notify("Scribe notebooks are available on the Kindle Scribe.")
+        companion:notify(T("scribe_available"))
         return
     end
     companion.ui:onClose()
@@ -88,15 +89,15 @@ function Home.notebook(companion, height)
         dimen = require("ui/geometry"):new { w = Screen:getWidth(), h = height },
         VerticalGroup:new {
             align = "center",
-            TextBoxWidget:new { text = "Scribe 手写笔记本", width = width,
+            TextBoxWidget:new { text = T("scribe_notebooks"), width = width,
                 alignment = "center", face = Font:getFace(Library.fonts.title, 28) },
             VerticalSpan:new { width = Screen:scaleBySize(24) },
             TextBoxWidget:new {
-                text = "手写笔记本由 Kindle 系统打开和编辑。\n返回 Kindle 后，点击底部的“笔记本”继续书写。",
+                text = T("scribe_instructions"),
                 width = width, alignment = "center", face = Font:getFace(Library.fonts.ui, 20),
             },
             VerticalSpan:new { width = Screen:scaleBySize(32) },
-            Button:new { text = "返回 Kindle，打开手写笔记本", width = width,
+            Button:new { text = T("return_kindle"), width = width,
                 callback = function() Home.returnToKindle(companion) end },
         },
     }
@@ -117,9 +118,9 @@ function Home.lastBook()
 end
 
 function Home.openRecent(companion, filename)
-    if not filename then companion:notify("还没有阅读记录，请先打开一本书。"); return end
+    if not filename then companion:notify(T("no_reading_history")); return end
     if lfs.attributes(filename, "mode") ~= "file" then
-        companion:notify("上次阅读的图书已移动或删除。")
+        companion:notify(T("recent_book_missing"))
         companion.ui:reinit(companion.ui.file_chooser.path)
         return
     end
@@ -140,7 +141,7 @@ function Home.recentButton(companion, width)
     else
         picture = require("ui/widget/iconwidget"):new { icon = "book.opened", width = cover_w - 12, height = cover_h - 12 }
     end
-    local title = info and info.title or file and file:match("([^/]+)$") or "继续阅读"
+    local title = info and info.title or file and file:match("([^/]+)$") or T("continue_reading")
     local button = InputContainer:new { file = file, title = title, cover_loaded = info and info.cover_bb ~= nil,
         dimen = Geom:new { w = width, h = cover_h },
         require("ui/widget/container/centercontainer"):new { dimen = Geom:new { w = width, h = cover_h },
@@ -235,8 +236,8 @@ function Home.switchTab(ui, companion, tab)
         end
     end
     Library.updateSearch(ui)
-    ui.title_bar:setTitle(tab)
-    ui.title_bar:setSubTitle(tab == "Library" and Home.count(ui) or "Kindle Scribe")
+    ui.title_bar:setTitle(T(tab == "Notebook" and "notebook_tab" or "library_tab"))
+    ui.title_bar:setSubTitle(tab == "Library" and Home.count(ui) or T("device_scribe"))
     UIManager:setDirty(ui, changed and "flashui" or "ui", ui.dimen)
     return true
 end
@@ -262,7 +263,7 @@ function Home.layout(ui, companion)
     local navigation = HorizontalGroup:new { align = "center" }
     for index, tab in ipairs({ "Library", "Notebook" }) do
         navigation[index == 1 and 1 or 3] = Button:new {
-            text = tab == "Notebook" and "Notebooks" or tab, width = index == 1 and side_width or Screen:getWidth() - side_width - center_width,
+            text = T(tab == "Notebook" and "notebook_tab" or "library_tab"), width = index == 1 and side_width or Screen:getWidth() - side_width - center_width,
             height = Home.navigationHeight(), bordersize = 0, padding = 0,
             text_font_face = Library.fonts.ui, text_font_size = 12, text_font_bold = false, radius = 0,
             background = Blitbuffer.COLOR_WHITE,
@@ -358,7 +359,7 @@ function Home.install(companion)
     end)
     Patches.wrap(Patches.scope(ui) .. "title", ui, "updateTitleBarPath", function(original, manager, path)
         if not Home.enabled() then return original(manager, path) end
-        manager.title_bar:setSubTitle(manager.kindlespouse_tab == "Notebook" and "Kindle Scribe" or Home.count(manager))
+        manager.title_bar:setSubTitle(manager.kindlespouse_tab == "Notebook" and T("brand_scribe") or Home.count(manager))
     end)
     Patches.wrap(Patches.scope(ui) .. "path", ui, "onPathChanged", function(_, manager, path) return manager:updateTitleBarPath(path) end)
     if ui.kindlespouse_post_init_registered then return end
@@ -430,7 +431,7 @@ end
 
 function Home.count(ui)
     local total, visible = #(ui.kindlespouse_catalog or {}), #ui.file_chooser.item_table
-    return visible == total and string.format("%d 本图书", total) or string.format("%d / %d 本图书 · 已筛选", visible, total)
+    return visible == total and string.format(T("library_count"), total) or string.format(T("library_filtered_count"), visible, total)
 end
 
 function Home.prepareStart()

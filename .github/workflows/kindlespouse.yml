@@ -42,6 +42,14 @@ jobs:
         run: |
           python3 kindlespouse/test_plugin.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --test annotation
           python3 kindlespouse/test_plugin.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --test patches
+      - name: Verify localized UI and native status dialog
+        run: |
+          python3 kindlespouse/check_i18n.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --all-ui
+          python3 kindlespouse/test_plugin.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --test services
+      - name: Verify loaded plugin in both languages
+        run: |
+          python3 kindlespouse/test_home.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --integrated --language en
+          python3 kindlespouse/test_home.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --integrated --language zh_CN
       - name: Verify scheduler and launcher contracts
         run: |
           python3 kindlespouse/test_plugin.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --test scheduler
@@ -59,8 +67,10 @@ jobs:
           path: |
             kindlespouse/build/KindleSpouse-Scribe-Overlay.zip
             kindlespouse/build/KindleSpouse-Scribe-Overlay.zip.sha256
+            kindlespouse/build/artifacts/**/*.png
             kindlespouse/build/artifacts/*.png
             kindlespouse/build/test/runtime.log
             kindlespouse/build/test500/runtime.log
             kindlespouse/build/checks/**/runtime.log
+            kindlespouse/build/integrated-*/runtime.log
           if-no-files-found: error

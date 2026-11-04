@@ -1,3 +1,4 @@
+local T = require("i18n").T
 local Device = require("device")
 local UIManager = require("ui/uimanager")
 local Geom = require("ui/geometry")
@@ -53,13 +54,13 @@ function Card:init()
         local progress
         if data.status == "new" or not data.status then
             progress = FrameContainer:new { padding = Screen:scaleBySize(1), margin = 0, bordersize = 0, background = Blitbuffer.COLOR_BLACK,
-                TextWidget:new { text = "未读", face = Font:getFace(fonts.ui, 9), fgcolor = Blitbuffer.COLOR_WHITE } }
+                TextWidget:new { text = T("unread"), face = Font:getFace(fonts.ui, 9), fgcolor = Blitbuffer.COLOR_WHITE } }
         else
             progress = HorizontalGroup:new { align = "center",
                 require("ui/widget/progresswidget"):new { width = Screen:scaleBySize(50), height = Screen:scaleBySize(3),
                     percentage = math.max(0, math.min(1, data.progress or 0)), bordersize = 0, margin_v = 0, margin_h = 0 },
                 HorizontalSpan:new { width = Screen:scaleBySize(6) },
-                TextWidget:new { text = string.format("%d%% 已读", math.floor((data.progress or 0) * 100)), face = Font:getFace(fonts.ui, 9) },
+                TextWidget:new { text = string.format(T("percent_read"), math.floor((data.progress or 0) * 100)), face = Font:getFace(fonts.ui, 9) },
             }
         end
         self.actions = require("ui/widget/button"):new { text = "⋮", width = Screen:scaleBySize(26), height = Screen:scaleBySize(38),
@@ -71,7 +72,7 @@ function Card:init()
             VerticalGroup:new { align = "left", self.caption,
                 TextWidget:new { text = data.subtitle or "", face = Font:getFace(fonts.ui, 10), max_width = text_width },
                 VerticalSpan:new { width = Screen:scaleBySize(3) }, progress,
-                TextWidget:new { text = data.format == "pdf" and "文档" or "图书", face = Font:getFace(fonts.ui, 9) },
+                TextWidget:new { text = data.format == "pdf" and T("document") or T("book"), face = Font:getFace(fonts.ui, 9) },
             },
             HorizontalSpan:new { width = Screen:scaleBySize(16) },
             VerticalGroup:new { align = "center", self.actions,
@@ -170,7 +171,7 @@ end
 function Shelf:setScanning(count)
     if self.scanning_label then self.scanning_label:free(); self.scanning_label = nil end
     if count then
-        self.scanning_label = TextBoxWidget:new { text = string.format("正在整理书库…（已找到 %d 本）", count),
+        self.scanning_label = TextBoxWidget:new { text = string.format(T("catalog_scanning"), count),
             width = self.dimen.w - self.margin * 2, face = Font:getFace(fonts.ui, 16) }
     end
     UIManager:setDirty(self.show_parent, "ui", self.dimen)
@@ -230,7 +231,7 @@ function Shelf.library(ui, height)
             if Extractor.needs(info, item.attr, { max_cover_w = view.cover_w, max_cover_h = view.cover_h }) then pending[item.path] = true end
             local data = item.kindlespouse
             return { image = info and info.cover_bb, title = info and info.title or data.title,
-                subtitle = info and info.authors or (data.author ~= "未提供作者" and data.author or ""),
+                subtitle = info and info.authors or (data.author ~= T("author_missing") and data.author or ""),
                 status = data.status, progress = data.progress, format = data.format }
         end,
         on_open = function(item) ui.file_chooser:onFileSelect(item) end,

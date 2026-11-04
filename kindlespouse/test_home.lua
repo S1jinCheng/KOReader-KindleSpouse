@@ -12,6 +12,7 @@ local Home = require("home")
 local Library = require("library")
 G_reader_settings:saveSetting("kindlespouse_library", { sort = "title" })
 G_reader_settings:delSetting("kindlespouse_native_library")
+if os.getenv("KINDLESPOUSE_TEST_INTEGRATED") ~= "1" then
 local original_init = FileManager.init
 function FileManager:init()
     local original_setup = self.setupLayout
@@ -24,6 +25,7 @@ function FileManager:init()
         return original_setup(manager)
     end
     original_init(self)
+end
 end
 local function check(callback)
     local ok, failure = pcall(callback)
@@ -48,7 +50,7 @@ UIManager:scheduleIn(3, function() check(function()
     assert(ui.file_chooser.height == Screen:getHeight() - Home.navigationHeight())
     assert(ui[1]:getSize().h <= Screen:getHeight(), "Navigation must fit on screen")
     local navigation = ui.layout[#ui.layout]
-    assert(#navigation == 2 and navigation[1].text == "Library" and navigation[2].text == "Notebooks")
+    assert(#navigation == 2 and navigation[1].text == require("i18n").T("library_tab") and navigation[2].text == require("i18n").T("notebook_tab"))
     assert(ui.title_bar.right_icon_tap_callback and ui.title_bar.left_icon_tap_callback)
     local FileChooser = require("ui/widget/filechooser")
     local original_shelf = ui.kindlespouse_shelf
@@ -178,7 +180,7 @@ UIManager:scheduleIn(3, function() check(function()
     for index = 1, 20 do
         ui.layout[#ui.layout][2].callback()
         assert(ui.kindlespouse_content == content and content[1] == ui.kindlespouse_notebook_group)
-        assert(ui.kindlespouse_search_label.text == "搜索笔记本")
+        assert(ui.kindlespouse_search_label.text == require("i18n").T("search_notebooks"))
         assert(not ui.cropping_widget and not shelf.closed and not shelf.queued)
         assert(ui.title_bar.subtitle_widget.text == "Kindle Scribe")
         Library.refresh(ui, {})
@@ -186,7 +188,7 @@ UIManager:scheduleIn(3, function() check(function()
         UIManager:widgetRepaint(ui, 0, 0)
         ui.layout[#ui.layout][1].callback()
         assert(content[1] == library and ui.cropping_widget == shelf)
-        assert(ui.kindlespouse_search_label.text == "搜索 Kindle")
+        assert(ui.kindlespouse_search_label.text == require("i18n").T("search_kindle"))
         assert(ui.file_chooser == chooser and ui.kindlespouse_shelf == shelf and ui.kindlespouse_header == header)
         assert(ui[1] == frame and ui.kindlespouse_navigation == navigation)
         assert(shelf:getScrolledOffset().y == scroll, "Tab changes must preserve the scrolled shelf")

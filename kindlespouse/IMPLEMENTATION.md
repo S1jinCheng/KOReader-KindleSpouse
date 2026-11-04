@@ -12,7 +12,7 @@ Integration base: codex/improvement-baseline-v1. The existing notebook experimen
 | 05 | P1 local shelf refresh and display-mode changes | Verified 8/500-book UI and real reader return; device pending |
 | 06 | P1 body-only tab switching | Verified 20 round trips, scroll, rotation and cleanup; device pending |
 | 07 | P2 shared event scheduler | Verified 19 scenarios, launcher/integration and real 600-second idle; device pending |
-| 08 | P2 localized menus and status dialog | Pending |
+| 08 | P2 localized menus and status dialog | Verified 251 translation keys, native dialogs and loaded plugin in EN/ZH; device pending |
 | 09 | P4 version guard and main module split | Pending |
 | 10 | P3 highlight bar | Pending |
 | 11 | P3 reader toolbar | Pending |

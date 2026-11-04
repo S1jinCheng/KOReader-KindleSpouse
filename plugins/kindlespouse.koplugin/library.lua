@@ -1,3 +1,4 @@
+local T = require("i18n").T
 local ReadCollection = require("readcollection")
 local UIManager = require("ui/uimanager")
 local Device = require("device")
@@ -6,8 +7,8 @@ local Screen = Device.screen
 local Library = {}
 Library.fonts = { title = "cfont", ui = "cfont" }
 local defaults = { query = "", shelf = "all", format = "", author = "", source = "", collection = "", sort = "recent", view = "list" }
-local shelves = { { "all", "全部" }, { "new", "未读" }, { "reading", "在读" }, { "complete", "已读" }, { "favorites", "收藏" } }
-local sorts = { { "recent", "最近阅读" }, { "added", "最近添加" }, { "title", "书名" }, { "author", "作者" }, { "progress", "阅读进度" } }
+local shelves = { { "all", T("all") }, { "new", T("unread") }, { "reading", T("reading") }, { "complete", T("complete") }, { "favorites", T("favorites") } }
+local sorts = { { "recent", T("recent") }, { "added", T("added") }, { "title", T("title") }, { "author", T("author") }, { "progress", T("progress") } }
 
 function Library.prepareFonts()
     if Library.fonts_ready then return end
@@ -69,7 +70,7 @@ function Library.updateSearch(ui)
     if not ui.kindlespouse_search_label then return end
     local notebook = ui.kindlespouse_tab == "Notebook"
     local query = notebook and (ui.kindlespouse_notebook_query or "") or Library.settings().query
-    ui.kindlespouse_search_label:setText(query ~= "" and query or (notebook and "搜索笔记本" or "搜索 Kindle"))
+    ui.kindlespouse_search_label:setText(query ~= "" and query or (notebook and T("search_notebooks") or T("search_kindle")))
     UIManager:setDirty(ui, "ui", ui.kindlespouse_search.dimen)
 end
 
@@ -120,11 +121,11 @@ end
 function Library.search(ui)
     local dialog
     dialog = require("ui/widget/inputdialog"):new {
-        title = "搜索书名或作者", input = Library.settings().query, input_hint = "输入书名、作者或文件名",
+        title = T("search_title"), input = Library.settings().query, input_hint = T("search_hint"),
         buttons = { {
-            { text = "取消", callback = function() UIManager:close(dialog) end },
-            { text = "清除", callback = function() UIManager:close(dialog); Library.refresh(ui, { query = "" }) end },
-            { text = "搜索", is_enter_default = true, callback = function()
+            { text = T("cancel"), callback = function() UIManager:close(dialog) end },
+            { text = T("clear"), callback = function() UIManager:close(dialog); Library.refresh(ui, { query = "" }) end },
+            { text = T("search"), is_enter_default = true, callback = function()
                 local query = dialog:getInputText()
                 UIManager:close(dialog)
                 Library.refresh(ui, { query = query })
@@ -142,45 +143,45 @@ function Library.facet(ui, field, title)
     local names = {}
     for name in pairs(values) do if name ~= "" then names[#names + 1] = name end end
     table.sort(names, require("ffi/util").strcoll)
-    local options = { { "", "全部" } }
+    local options = { { "", T("all") } }
     for _, name in ipairs(names) do options[#options + 1] = { name, field == "format" and name:upper() or name } end
     return Library.choose(ui, title, options, function(value) Library.refresh(ui, { [field] = value }) end)
 end
 
 function Library.collections(ui)
-    local options = { { "", "全部书集" } }
+    local options = { { "", T("all_collections") } }
     local names = {}
     for name in pairs(ReadCollection.coll) do names[#names + 1] = name end
     table.sort(names, require("ffi/util").strcoll)
-    for _, name in ipairs(names) do options[#options + 1] = { name, name == ReadCollection.default_collection_name and "收藏" or name } end
-    options[#options + 1] = { false, "管理书集…" }
-    return Library.choose(ui, "书集", options, function(value)
+    for _, name in ipairs(names) do options[#options + 1] = { name, name == ReadCollection.default_collection_name and T("favorites") or name } end
+    options[#options + 1] = { false, T("manage_collections") }
+    return Library.choose(ui, T("collection"), options, function(value)
         if value == false then ui.collections:onShowCollList() else Library.refresh(ui, { collection = value }) end
     end)
 end
 
 function Library.filters(ui)
     local settings = Library.settings()
-    local status, sorting = "全部", "最近阅读"
+    local status, sorting = T("all"), T("recent")
     for _, option in ipairs(shelves) do if option[1] == settings.shelf then status = option[2] end end
     for _, option in ipairs(sorts) do if option[1] == settings.sort then sorting = option[2] end end
-    return Library.choose(ui, "筛选书库", {
-        { "shelf", "阅读状态：" .. status },
-        { "format", "格式：" .. (settings.format ~= "" and settings.format:upper() or "全部") },
-        { "author", "作者：" .. (settings.author ~= "" and settings.author or "全部") },
-        { "source", "来源文件夹：" .. (settings.source ~= "" and settings.source or "全部") },
-        { "collection", "书集：" .. (settings.collection ~= "" and settings.collection or "全部") },
-        { "sort", "排序：" .. sorting },
-        { "view", "显示方式：" .. (settings.view == "grid" and "封面网格" or "列表") },
-        { "clear", "清除所有筛选" },
+    return Library.choose(ui, T("filter_library"), {
+        { "shelf", T("status_label") .. status },
+        { "format", T("format_label") .. (settings.format ~= "" and settings.format:upper() or T("all")) },
+        { "author", T("author_label") .. (settings.author ~= "" and settings.author or T("all")) },
+        { "source", T("source_label") .. (settings.source ~= "" and settings.source or T("all")) },
+        { "collection", T("collection_label") .. (settings.collection ~= "" and settings.collection or T("all")) },
+        { "sort", T("sort_label") .. sorting },
+        { "view", T("view_label") .. (settings.view == "grid" and T("grid") or T("list")) },
+        { "clear", T("clear_filters") },
     }, function(field)
         if field == "clear" then Library.refresh(ui, { query = "", shelf = "all", format = "", author = "", source = "", collection = "" })
-        elseif field == "shelf" then return Library.choose(ui, "阅读状态", shelves, function(value) Library.refresh(ui, { shelf = value }) end)
-        elseif field == "sort" then return Library.choose(ui, "排序", sorts, function(value) Library.refresh(ui, { sort = value }) end)
-        elseif field == "view" then return Library.choose(ui, "显示方式", { { "grid", "封面网格" }, { "list", "列表" } },
+        elseif field == "shelf" then return Library.choose(ui, T("reading_status"), shelves, function(value) Library.refresh(ui, { shelf = value }) end)
+        elseif field == "sort" then return Library.choose(ui, T("sort"), sorts, function(value) Library.refresh(ui, { sort = value }) end)
+        elseif field == "view" then return Library.choose(ui, T("view"), { { "grid", T("grid") }, { "list", T("list") } },
             function(value) Library.refresh(ui, { view = value }) end)
         elseif field == "collection" then Library.collections(ui)
-        else Library.facet(ui, field, field == "format" and "格式" or field == "author" and "作者" or "来源文件夹") end
+        else Library.facet(ui, field, field == "format" and T("format") or field == "author" and T("author") or T("source")) end
     end)
 end
 
@@ -221,7 +222,7 @@ function Library.header(ui, companion)
     }
     local search_width = width - pad * 2 - Screen:scaleBySize(36)
     local query = ui.kindlespouse_tab == "Notebook" and (ui.kindlespouse_notebook_query or "") or Library.settings().query
-    local search_label = TextWidget:new { text = query ~= "" and query or (ui.kindlespouse_tab == "Notebook" and "搜索笔记本" or "搜索 Kindle"),
+    local search_label = TextWidget:new { text = query ~= "" and query or (ui.kindlespouse_tab == "Notebook" and T("search_notebooks") or T("search_kindle")),
         face = Font:getFace(Library.fonts.ui, 12), max_width = search_width - Screen:scaleBySize(48) }
     ui.kindlespouse_search_label = search_label
     local search = InputContainer:new {
@@ -292,9 +293,9 @@ function Library.toolbar(ui)
         button("filter", function() return Library.filters(ui) end),
         require("ui/widget/horizontalspan"):new { width = width - pad * 2 - size * 2 },
         button("sort", function()
-            return Library.choose(ui, "排序与显示", {
-                { "recent", "最近阅读" }, { "added", "最近添加" }, { "title", "书名" },
-                { "author", "作者" }, { "progress", "阅读进度" }, { "grid", "封面网格" }, { "list", "列表" },
+            return Library.choose(ui, T("sort_view"), {
+                { "recent", T("recent") }, { "added", T("added") }, { "title", T("title") },
+                { "author", T("author") }, { "progress", T("progress") }, { "grid", T("grid") }, { "list", T("list") },
             }, function(value)
                 if value == "grid" or value == "list" then Library.refresh(ui, { view = value })
                 else Library.refresh(ui, { sort = value }) end

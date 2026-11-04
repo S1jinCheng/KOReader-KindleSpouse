@@ -1,7 +1,8 @@
 local lfs = require("libs/libkoreader-lfs")
 local json = require("json")
 local logger = require("logger")
-local T = require("i18n").T
+local I18n = require("i18n")
+local T = I18n.T
 local Status = { directory = "/mnt/us/kindlespouse/" }
 local clock = os.time
 local proc_directory = "/proc/"
@@ -197,10 +198,12 @@ function Status.summary(value)
         if selected == "titles" then return T("sync_titles_complete") end
         return T("sync_complete", math.floor(number(value.received) or 0), math.floor(number(value.files) or 0))
     end
-    if value.state == "failed" then return T("sync_stopped", T(value.error or "sync_retry_hint")) end
+    if value.state == "failed" then
+        local error = value.error and (I18n.keys[value.error] and T(value.error) or value.error) or T("sync_retry_hint")
+        return T("sync_stopped", error)
+    end
     local stage = "stage_" .. tostring(value.stage or "")
-    local text = T(stage)
-    if text == stage then text = T("sync_starting") end
+    local text = T(I18n.en[stage] and stage or "sync_starting")
     local done, total = number(value.done) or 0, number(value.total) or 0
     if total > 0 then text = text .. string.format(" (%d/%d)", done, total)
     elseif done > 0 then text = text .. T("sync_file_count", done) end
