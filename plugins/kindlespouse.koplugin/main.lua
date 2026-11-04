@@ -3,15 +3,18 @@ local UIManager = require("ui/uimanager")
 local Notification = require("ui/widget/notification")
 local NetworkMgr = require("ui/network/manager")
 local lfs = require("libs/libkoreader-lfs")
-local json = require("json")
 local logger = require("logger")
 
 local directory = "/mnt/us/kindlespouse/"
 local Status = require("sync_status")
 local Scheduler = require("scheduler")
 local Launcher = require("launcher")
+local Sleep = require("sleep_cover")
 local Menu = require("menu")
+local Guard = require("version_guard")
+local Patches = require("patches")
 local T = require("i18n").T
+local current_host
 local synchronization_configured = false
 local Companion = WidgetContainer:extend { name = "kindlespouse", is_doc_only = false, directory = directory }
 
@@ -25,6 +28,7 @@ local function configureSynchronization(host)
     local root = host.directory or directory
     Status.configure { directory = root, logger = logger }
     Launcher.configure { directory = root, status = Status, logger = logger }
+    Sleep.configure { settings = G_reader_settings, status = Status, logger = logger }
     Scheduler.configure {
         now = os.time,
         read = function(key, default) return G_reader_settings:readSetting(key, default) end,
@@ -111,16 +115,49 @@ function Companion:syncProfile()
     return self:requestSync("profile", true)
 end
 
+function Companion:guardPostInit(ui)
+    local id = "kindlespouse:" .. tostring(ui) .. ":postinit"
+    if Patches.applied[id] then return id end
+    Patches.wrap(id, ui, "registerPostInitCallback", function(original, manager, callback, ...)
+        return original(manager, function(...)
+            if not self.closed then return Guard.run(callback, ...) end
+        end, ...)
+    end)
+    return id
+end
+
+function Companion:installReaderExperience()
+    local reader = package.loaded["reader/init"] or package.loaded["reader.init"]
+    if type(reader) == "table" and type(reader.install) == "function" then
+        return Guard.install(self.ui, function() return reader.install(self.ui) end)
+    end
+end
+
 function Companion:init()
-    self.ui.menu:registerToMainMenu(self)
-    if self.ui.registerPostInitCallback then require("home").install(self) end
+    self.closed = false
     configureSynchronization(self)
     self.scheduler_token = Scheduler.attach(self)
+    current_host = self
     self:queueAnnotationApply(2)
-    if G_reader_settings then self:applySleepProfile() end
-    if lfs.attributes(directory .. "catalog.requested", "mode") then
-        os.remove(directory .. "catalog.requested")
-        UIManager:scheduleIn(1, function() self:collectTitles() end)
+    self:applySleepProfile()
+    local menu = self.ui and self.ui.menu
+    if menu and type(menu.registerToMainMenu) == "function" then
+        local ok, failure = pcall(menu.registerToMainMenu, menu, self)
+        if not ok then logger.warn("KindleSpouse:", "cannot register synchronization menu", tostring(failure)) end
+    end
+    Guard.install(self.ui, function(ui)
+        if ui and ui.registerPostInitCallback then
+            local postinit = self:guardPostInit(ui)
+            require("home").install(self)
+            Patches.revert(postinit)
+        end
+        if ui and ui.document then self:installReaderExperience() end
+    end)
+    local title_request = self.directory .. "/catalog.requested"
+    if lfs.attributes(title_request, "mode") then
+        os.remove(title_request)
+        self.title_request_task = function() if not self.closed then self:collectTitles() end end
+        UIManager:scheduleIn(1, self.title_request_task)
     end
 end
 
@@ -161,69 +198,45 @@ function Companion:receiveBooks(silent)
 end
 
 function Companion:onSuspend()
+    if current_host ~= self then return end
     Scheduler.suspend()
+    Sleep.cancel()
+    Menu.closeStatus(self)
 end
 
 function Companion:onResume()
+    if current_host ~= self then return end
     Scheduler.resume()
 end
 
 function Companion:onNetworkConnected()
+    if current_host ~= self then return end
     Scheduler.networkConnected()
 end
 
 function Companion:onNetworkDisconnected()
+    if current_host ~= self then return end
     Scheduler.networkDisconnected()
 end
 
 function Companion:applySleepProfile()
-    local profile = readJSON("sleep-profile.json")
-    if not profile or type(profile.revision) ~= "string" or profile.version ~= 1 then return end
-    if G_reader_settings:readSetting("kindlespouse_sleep_revision") == profile.revision then return end
-    self.sleep_cover_requested = profile.enabled
-    if self:setSleepCover(profile.enabled) == false then return end
-    G_reader_settings:saveSetting("kindlespouse_sleep_revision", profile.revision)
-    self:prepareSleepCover()
-end
-
-function Companion:sleepPreset()
-    local ok, preset = pcall(require, "spouse_preset")
-    if not ok or type(preset) ~= "table" or type(preset.prepare) ~= "function" then
-        if not Companion.preset_missing then logger.warn("KindleSpouse:", "sleep cover preset is not installed") end
-        Companion.preset_missing = true
-        return
-    end
-    Companion.preset_missing = false
-    return preset
+    return Sleep.applyProfile()
 end
 
 function Companion:prepareSleepCover()
-    local preset = self:sleepPreset()
-    if not preset then return end
-    UIManager:scheduleIn(0.5, function()
-        local reader = package.loaded["apps/reader/readerui"]
-        reader = reader and reader.instance
-        if reader and reader.document then
-            local ok, error = pcall(preset.prepare, reader)
-            if not ok then logger.warn("KindleSpouse:", "sleep cover preparation failed", tostring(error)) end
-        end
-    end)
+    if not self.closed then return Sleep.prepare() end
 end
 
 function Companion:onReaderReady()
     self:prepareSleepCover()
+    self:installReaderExperience()
     self:onPageUpdate(0)
 end
 
 function Companion:setSleepCover(enabled)
-    local current = G_reader_settings:readSetting("screensaver_type")
-    if enabled then
-        if not self:sleepPreset() then return false end
-        if current ~= "customisable_ss" then G_reader_settings:saveSetting("kindlespouse_previous_screensaver", current or "cover") end
-        G_reader_settings:saveSetting("screensaver_type", "customisable_ss")
-    elseif current == "customisable_ss" then
-        G_reader_settings:saveSetting("screensaver_type", G_reader_settings:readSetting("kindlespouse_previous_screensaver", "cover"))
-    end
+    local saved = Sleep.savePreference(enabled, { directory = self.directory })
+    if not saved then self:notify(T("sleep_save_failed")) end
+    return saved
 end
 
 function Companion:queueAnnotationApply(delay)
@@ -237,7 +250,7 @@ function Companion:queueAnnotationApply(delay)
 end
 
 function Companion:applyAnnotations()
-    local ok, count, retry = pcall(function() return require("annotation_apply").run(directory) end)
+    local ok, count, retry = pcall(function() return require("annotation_apply").run(self.directory) end)
     if not ok then logger.warn("KindleSpouse:", "annotation queue failed", tostring(count)) end
     if ok and count > 0 then
         self:queueAutomaticSync()
@@ -247,20 +260,24 @@ function Companion:applyAnnotations()
 end
 
 function Companion:collectTitles()
+    if self.closed then return false end
+    if self.title_check then UIManager:unschedule(self.title_check) end
     local started = os.time()
     os.execute("sh /mnt/us/kindlespouse/catalog.sh < /dev/null > /dev/null 2>&1 &")
     self:notify(T("catalog_started"))
     local attempts = 0
-    local check
-    check = function()
+    self.title_check = function()
+        if self.closed then return end
         attempts = attempts + 1
         local result = readJSON("catalog-result.json")
         if result and tonumber(result.completedAt) and result.completedAt >= started then
+            self.title_check = nil
             self:notify(result.ok and T("catalog_ready") or T("catalog_failed"))
-        elseif attempts < 15 then UIManager:scheduleIn(2, check)
-        else self:notify(T("catalog_timeout")) end
+        elseif attempts < 15 then UIManager:scheduleIn(2, self.title_check)
+        else self.title_check = nil; self:notify(T("catalog_timeout")) end
     end
-    UIManager:scheduleIn(2, check)
+    UIManager:scheduleIn(2, self.title_check)
+    return true
 end
 
 function Companion:pause()
@@ -271,25 +288,6 @@ end
 
 function Companion:showStatus()
     return Menu.showStatus(self)
-end
-
-function Companion:saveSleepPreference(enabled)
-    local profile = readJSON("sleep-profile.json") or { version = 1, displayName = "Reader", avatar = "R" }
-    profile.enabled = enabled
-    local file = io.open(directory .. "sleep-profile.json.partial", "wb")
-    if not file then self:notify(T("sleep_save_failed")); return false end
-    local written = file:write(json.encode(profile))
-    local closed = file:close()
-    if not written or not closed or not os.rename(directory .. "sleep-profile.json.partial", directory .. "sleep-profile.json") then
-        self:notify(T("sleep_save_failed")); return false
-    end
-    return self:setSleepCover(enabled)
-end
-
-function Companion:sleepWarning()
-    if Companion.preset_missing and (self.sleep_cover_requested or G_reader_settings:readSetting("screensaver_type") == "customisable_ss") then
-        return T("sleep_missing")
-    end
 end
 
 function Companion:sync(silent)
@@ -316,21 +314,30 @@ function Companion:setAutoReceiveEnabled(enabled)
     return true
 end
 
-function Companion:refreshLibrary()
-    if self.ui.document then return end
-    require("catalog").rescan(require("home").root(self.ui))
+function Companion:toggleHome()
+    return Guard.install(self.ui, function() return require("home").toggle(self) end)
 end
 
-function Companion:toggleHome()
-    require("home").toggle(self)
+function Companion:refreshLibrary()
+    if not self.ui or self.ui.document then return false end
+    return Guard.install(self.ui, function(ui)
+        local Catalog = require("catalog")
+        local Home = require("home")
+        Catalog.rescan(Home.root(ui))
+    end)
 end
 
 function Companion:openProfile()
-    require("profile").open(self)
+    return Guard.install(self.ui, function() return require("profile").open(self) end)
 end
 
 function Companion:addToMainMenu(menu_items)
     menu_items.kindlespouse = Menu.build(self)
+end
+
+function Companion:onInvalidateMetadataCache(file)
+    local catalog = package.loaded.catalog
+    if catalog and type(file) == "string" then catalog.touch(file, true) end
 end
 
 function Companion:onCloseDocument()
@@ -345,11 +352,20 @@ function Companion:onCloseDocument()
 end
 
 function Companion:onCloseWidget()
-    if self.ui and not self.ui.document then require("home").uninstall(self.ui) end
+    self.closed = true
     Scheduler.detach(self.scheduler_token)
     self.scheduler_token = nil
-    if self.annotation_task then UIManager:unschedule(self.annotation_task) end
+    for _, name in ipairs({ "annotation_task", "title_check", "title_request_task" }) do
+        if self[name] then UIManager:unschedule(self[name]); self[name] = nil end
+    end
     Menu.closeStatus(self)
+    Patches.revertPrefix("kindlespouse:" .. tostring(self.ui) .. ":")
+    local home = package.loaded.home
+    if type(home) == "table" and type(home.uninstall) == "function" and self.ui and not self.ui.document then
+        local ok, failure = pcall(home.uninstall, self.ui)
+        if not ok then logger.warn("KindleSpouse:", "cannot restore home interface", tostring(failure)) end
+    end
+    if current_host == self then current_host = nil; Sleep.cancel() end
 end
 
 return Companion

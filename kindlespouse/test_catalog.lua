@@ -155,6 +155,14 @@ local function verifyIncremental()
             info[files[2]] = { been_opened = true, status = "reading", percent_finished = 0.42 }
             require("readhistory").hist = { { file = files[2], time = 4242 } }
             Catalog.touch(files[2])
+            local fake = { getDocProps = function(_, file, _, cached_only)
+                assert(file == files[2] and cached_only == true)
+                return { title = "Updated fixture title", authors = "Updated fixture author" }
+            end }
+            Catalog.attachBookInfo(fake)
+            Catalog.touch(files[2], true)
+            assert(Catalog.entries[files[2]].title == "Updated fixture title" and Catalog.entries[files[2]].author == "Updated fixture author")
+            Catalog.attachBookInfo(require("apps/filemanager/filemanager").instance.bookinfo)
             assert(Catalog.entries[files[2]].progress == 0.42 and Catalog.entries[files[2]].recent == 4242)
             assert(scans == previous_scans)
             local extra = root .. "/event.epub"

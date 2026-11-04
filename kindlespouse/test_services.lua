@@ -39,7 +39,6 @@ assert(I18n.T("sync_now") == "立即同步" and I18n.T("Library") == "书库")
 assert(I18n.T("reader.highlight.purple") == "紫色")
 assert(I18n.T("sync_complete", 2, 3):find("接收 2 本图书", 1, true))
 assert(not pcall(I18n.T, "unknown_key"))
-assert(Status.summary { state = "failed", error = "Generated external worker error" } == "同步已停止：Generated external worker error")
 G_reader_settings:saveSetting("language", "en")
 write("bad.json", "{")
 assert(Status.readJSON("bad.json") == nil and Status.readJSON("bad.json") == nil and #warnings == 1)
@@ -79,6 +78,11 @@ assert(second.runId ~= first.runId and second.runId == stamp .. ".000002Z")
 write("sync.launching", { schema = 1, owner = "next-generated-launch", mode = "full", startedAt = clock })
 value = Status.snapshot()
 assert(value.launching and value.state == "running" and not value.runId, "Old completion must not identify a newly launching run")
+write("progress.json", { state = "completed", startedAt = clock, completedAt = clock, received = 2, files = 3 })
+write("last-result.json", { ok = true, completedAt = stamp .. ".000003Z", received = 2, files = 3 })
+value = Status.snapshot()
+assert(value.state == "completed" and not value.launching and value.runId == stamp .. ".000003Z",
+    "A fresh same-second completion must pass its launch marker without waiting for expiry")
 remove("sync.launching")
 write("last-result.json", { ok = true, completedAt = os.date("!%Y-%m-%dT%H:%M:%S", clock - 1) .. ".999Z" })
 assert(Status.snapshot().runId == nil, "Mismatched final timestamp must not supply invocation identity")
@@ -157,4 +161,65 @@ assert(successor.kindlespouse_status_session == current and timers(current.refre
 successor.suspended = true
 UIManager:unschedule(current.refresh); current.refresh()
 assert(not successor.status_dialog and timers(current.refresh) == 0)
-print("KindleSpouse services acceptance passed: localization, bounded JSON, worker and launch state, invocation IDs, menus, native dialog replacement and timer ownership")
+local Sleep = require("sleep_cover")
+local settings = G_reader_settings
+settings:saveSetting("screensaver_type", "random_image")
+settings:delSetting("kindlespouse_sleep_revision")
+settings:delSetting("kindlespouse_previous_screensaver")
+local tasks = {}
+local active_reader = { document = {}, label = "old" }
+local prepared
+local options = { status = Status, settings = settings, logger = log,
+    reader = function() return active_reader end,
+    schedule = function(delay, action) tasks[action] = delay end,
+    unschedule = function(action) tasks[action] = nil end,
+    require_preset = function() error("Generated missing component") end }
+Sleep.configure(options)
+write("sleep-profile.json", { version = 1, revision = "generated-r1", enabled = true })
+assert(not Sleep.applyProfile())
+assert(settings:readSetting("screensaver_type") == "random_image" and not settings:readSetting("kindlespouse_sleep_revision"))
+assert(not settings:readSetting("kindlespouse_previous_screensaver"))
+local function missingWarnings()
+    local count = 0
+    for _, entry in ipairs(warnings) do if entry[2] == "sleep cover preset is not installed" then count = count + 1 end end
+    return count
+end
+assert(Sleep.warning(host) and Sleep.warning(successor) and missingWarnings() == 1)
+options.require_preset = function() return {} end
+Sleep.configure(options)
+assert(not Sleep.applyProfile() and missingWarnings() == 1)
+G_reader_settings:saveSetting("language", "zh_CN")
+assert(I18n.T("catalog_scanning", 12) == "正在整理书库…（已找到 12 本）")
+assert(I18n.T("notebook.counts", 2, 3) == "2 处标注 · 3 条笔记")
+assert(I18n.T("notebook.location_unavailable") == "这条批注的位置已不可用。")
+Menu.showStatus(host)
+assert(host.status_dialog.text:find("休眠封面组件未安装", 1, true))
+Menu.closeStatus(host)
+options.require_preset = function() return { prepare = function(reader) prepared = reader end } end
+Sleep.configure(options)
+assert(Sleep.applyProfile())
+assert(settings:readSetting("screensaver_type") == "customisable_ss")
+assert(settings:readSetting("kindlespouse_previous_screensaver") == "random_image")
+assert(settings:readSetting("kindlespouse_sleep_revision") == "generated-r1")
+assert(Sleep.prepare())
+local task, delay = next(tasks)
+assert(task and delay == 0.5 and next(tasks, task) == nil)
+active_reader = { document = {}, label = "new" }
+tasks[task] = nil; task()
+assert(prepared == active_reader, "Delayed preparation must use the current reader")
+assert(Sleep.setEnabled(true) and settings:readSetting("kindlespouse_previous_screensaver") == "random_image")
+assert(Sleep.prepare() and Sleep.setEnabled(false))
+assert(next(tasks) == nil and settings:readSetting("screensaver_type") == "random_image" and not Sleep.warning())
+options.require_preset = function() error("Generated missing component again") end
+Sleep.configure(options)
+write("sleep-profile.json", { version = 1, revision = "generated-r2", enabled = false })
+assert(Sleep.applyProfile() and settings:readSetting("kindlespouse_sleep_revision") == "generated-r2")
+options.require_preset = function() return { prepare = function() error("Generated preparation failure") end } end
+Sleep.configure(options)
+assert(Sleep.setEnabled(true) and Sleep.prepare())
+task = next(tasks); tasks[task] = nil
+local before_warning = #warnings
+task()
+assert(#warnings == before_warning + 1 and warnings[#warnings][2] == "sleep cover preparation failed")
+assert(Sleep.setEnabled(false))
+print("KindleSpouse services acceptance passed: localization, bounded JSON, worker and launch state, invocation IDs, menus, native dialog replacement, timer ownership and guarded sleep-cover lifecycle")

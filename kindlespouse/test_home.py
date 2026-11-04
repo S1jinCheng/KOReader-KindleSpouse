@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import subprocess
+import tempfile
 import zipfile
 from pathlib import Path
 
@@ -14,14 +15,19 @@ parser.add_argument('--fonts', type=Path)
 parser.add_argument('--scale', action='store_true')
 parser.add_argument('--integrated', action='store_true')
 parser.add_argument('--language', default='en')
+parser.add_argument('--package', type=Path)
 args = parser.parse_args()
+if args.package:
+    args.integrated = True
 runtime = args.runtime.resolve()
 fonts = (args.fonts or root / 'kindlespouse' / 'build' / 'cache').resolve()
-test = root / 'kindlespouse' / 'build' / (('integrated500-' if args.scale else 'integrated-') + args.language if args.integrated else ('test500' if args.scale else 'test'))
+test = root / 'kindlespouse' / 'build' / ((('packaged-' if args.package else 'integrated500-' if args.scale else 'integrated-') + args.language) if args.integrated else ('test500' if args.scale else 'test'))
+if args.package:
+    test = Path(tempfile.mkdtemp(prefix='packaged-' + args.language + '-', dir=root / 'kindlespouse/build'))
 books = test / 'books'
 output = root / 'kindlespouse' / 'build' / 'artifacts'
 if args.integrated:
-    output = output / ('integrated-' + args.language)
+    output = output / (('packaged-' if args.package else 'integrated-') + args.language)
 (books / 'nested').mkdir(parents=True, exist_ok=True)
 (books / '.notebooks').mkdir(parents=True, exist_ok=True)
 (books / '.notebooks' / 'private.txt').write_text('Excluded fixture', encoding='utf-8')
@@ -64,12 +70,16 @@ if args.integrated:
     plugins = test / 'plugins'
     plugins.mkdir(exist_ok=True)
     target = plugins / 'kindlespouse.koplugin'
-    if target.exists():
+    if args.package:
+        from package_test import install_plugin
+        assert not target.is_symlink()
+        install_plugin(args.package, target)
+    elif target.exists():
         assert target.resolve() == root / 'plugins' / 'kindlespouse.koplugin'
     else:
         target.symlink_to(root / 'plugins' / 'kindlespouse.koplugin', target_is_directory=True)
 (test / 'patches' / '2-home-test.lua').write_text((root / 'kindlespouse' / ('test_shelf.lua' if args.scale else 'test_home.lua')).read_text(encoding='utf-8'), encoding='utf-8')
-environment = dict(os.environ, KINDLESPOUSE_TEST_INTEGRATED='1' if args.integrated else '0', SDL_VIDEODRIVER='dummy', SDL_AUDIODRIVER='dummy', XDG_DATA_HOME=str(test), KO_HOME=str(test), KINDLESPOUSE_TEST_ROOT=str(root), KINDLESPOUSE_TEST_FONTS=str(fonts), KINDLESPOUSE_TEST_OUTPUT=str(output), EMULATE_READER_W='1860', EMULATE_READER_H='2480', EMULATE_READER_DPI='300', LD_LIBRARY_PATH='libs')
+environment = dict(os.environ, KINDLESPOUSE_PLUGIN_DIR=str(test / 'plugins/kindlespouse.koplugin') if args.package else str(root / 'plugins/kindlespouse.koplugin'), KINDLESPOUSE_TEST_INTEGRATED='1' if args.integrated else '0', SDL_VIDEODRIVER='dummy', SDL_AUDIODRIVER='dummy', XDG_DATA_HOME=str(test), KO_HOME=str(test), KINDLESPOUSE_TEST_ROOT=str(root), KINDLESPOUSE_TEST_FONTS=str(fonts), KINDLESPOUSE_TEST_OUTPUT=str(output), EMULATE_READER_W='1860', EMULATE_READER_H='2480', EMULATE_READER_DPI='300', LD_LIBRARY_PATH='libs')
 for filename in (root / 'plugins' / 'kindlespouse.koplugin').glob('*.lua'):
     result = subprocess.run([str(runtime / 'luajit'), '-e', f'assert(loadfile({json.dumps(str(filename))}))'], cwd=runtime, env=environment, capture_output=True, text=True)
     assert result.returncode == 0, result.stderr

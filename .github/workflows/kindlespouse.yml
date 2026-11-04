@@ -42,6 +42,11 @@ jobs:
         run: |
           python3 kindlespouse/test_plugin.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --test annotation
           python3 kindlespouse/test_plugin.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --test patches
+      - name: Verify compatibility and lifecycle fallback
+        run: |
+          python3 kindlespouse/test_plugin.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --test main_lifecycle
+          python3 kindlespouse/test_version_guard.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader
+          python3 kindlespouse/test_home_guard.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --fonts kindlespouse/build/cache
       - name: Verify localized UI and native status dialog
         run: |
           python3 kindlespouse/check_i18n.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --all-ui
@@ -59,6 +64,8 @@ jobs:
         run: python3 kindlespouse/test_catalog.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader
       - name: Verify native home and Chinese fonts
         run: python3 kindlespouse/test_home.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader
+      - name: Verify the extracted installation package
+        run: python3 kindlespouse/test_home.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --package kindlespouse/build/KindleSpouse-Scribe-Overlay.zip --language zh_CN
       - name: Verify 500-book local shelf and reader return
         run: python3 kindlespouse/test_home.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --scale
       - uses: actions/upload-artifact@v7

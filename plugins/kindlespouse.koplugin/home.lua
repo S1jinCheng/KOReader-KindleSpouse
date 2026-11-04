@@ -8,9 +8,73 @@ local Home = {}
 local Library = require("library")
 local Patches = require("patches")
 local Catalog = require("catalog")
+local Guard = require("version_guard")
+local logger = require("logger")
 
 function Home.enabled()
-    return G_reader_settings:readSetting("kindlespouse_home") ~= false
+    local status = Guard.status()
+    return status.supported and not status.disabled and G_reader_settings:readSetting("kindlespouse_home") ~= false
+end
+
+local function cleanup(callback, ...)
+    local ok, failure = pcall(callback, ...)
+    if not ok then logger.err("KindleSpouse:", "cannot clean up Home interface", tostring(failure)) end
+end
+
+function Home.captureNative(ui)
+    local title = ui.title_bar
+    local keys = {}
+    for key, value in pairs(ui.key_events or {}) do keys[key] = value end
+    ui.kindlespouse_native = { widget = ui[1], layout = ui.layout, cropping = ui.cropping_widget,
+        title_bar = title, title = title and title.title_widget and title.title_widget.text,
+        subtitle = title and title.subtitle_widget and title.subtitle_widget.text,
+        chooser = ui.file_chooser, height = ui.file_chooser and ui.file_chooser.height, keys = keys,
+        update_items = ui.file_chooser and ui.file_chooser.updateItems }
+end
+
+function Home.restoreNative(ui)
+    local snapshot = ui.kindlespouse_native
+    local shelf = ui.kindlespouse_shelf
+    if shelf and shelf.on_close then cleanup(shelf.on_close, shelf) end
+    cleanup(Home.uninstall, ui)
+    cleanup(Catalog.unsubscribe, ui)
+    if not next(Catalog.subscribers) and Catalog.root then cleanup(Catalog.cancel, Catalog.root) end
+    if ui.kindlespouse_catalog_task then UIManager:unschedule(ui.kindlespouse_catalog_task); ui.kindlespouse_catalog_task = nil end
+    cleanup(Patches.revertPrefix, Patches.scope(ui))
+    cleanup(Patches.revert, "home:filechooser")
+    ui.kindlespouse_patched, ui.kindlespouse_home = nil, nil
+    if snapshot then
+        ui[1], ui.layout, ui.cropping_widget = snapshot.widget, snapshot.layout, snapshot.cropping
+        ui.title_bar, ui.file_chooser, ui.key_events = snapshot.title_bar, snapshot.chooser, snapshot.keys
+        if ui.file_chooser then
+            local chooser = ui.file_chooser
+            chooser.height = snapshot.height
+            if chooser.kindlespouse_native_generator and not chooser.kindlespouse_native_items then
+                local ok, items = pcall(chooser.kindlespouse_native_generator, chooser, chooser.path)
+                if ok then chooser.item_table = items; chooser.kindlespouse_native_items = true
+                else logger.err("KindleSpouse:", "cannot restore native directory items", tostring(items)) end
+            end
+            if snapshot.update_items then cleanup(snapshot.update_items, chooser) end
+            if snapshot.layout and chooser.layout ~= snapshot.layout then
+                for index = #snapshot.layout, 1, -1 do snapshot.layout[index] = nil end
+                for index, row in ipairs(chooser.layout) do snapshot.layout[index] = row end
+                chooser.layout = snapshot.layout
+            end
+        end
+        if snapshot.title ~= nil then cleanup(ui.title_bar.setTitle, ui.title_bar, snapshot.title, true) end
+        if snapshot.subtitle ~= nil then cleanup(ui.title_bar.setSubTitle, ui.title_bar, snapshot.subtitle, true) end
+        UIManager:setDirty(ui, "ui", ui.dimen)
+    end
+end
+
+function Home.safe(ui, callback, ...)
+    local function results(...) return { n = select("#", ...), ... } end
+    local result = results(Guard.run(callback, ...))
+    if not result[1] or Guard.status().disabled then
+        Home.restoreNative(ui)
+        return false, Guard.status().reason
+    end
+    return unpack(result, 1, result.n)
 end
 
 function Home.navigationHeight()
@@ -30,24 +94,28 @@ end
 function Home.observeCatalog(ui)
     if ui.kindlespouse_catalog_task then return end
     ui.kindlespouse_catalog_task = function()
-        if ui.kindlespouse_patched and Home.enabled() and ui.file_chooser then
-            if ui.kindlespouse_tab == "Notebook" then ui.kindlespouse_catalog_dirty = true; return end
-            if ui.kindlespouse_shelf then ui.kindlespouse_shelf:setScanning(nil) end
-            Library.refresh(ui, {})
-        end
+        Home.safe(ui, function()
+            if ui.kindlespouse_patched and Home.enabled() and ui.file_chooser then
+                if ui.kindlespouse_tab == "Notebook" then ui.kindlespouse_catalog_dirty = true; return end
+                if ui.kindlespouse_shelf then ui.kindlespouse_shelf:setScanning(nil) end
+                Library.refresh(ui, {})
+            end
+        end)
     end
     Catalog.attachBookInfo(ui.bookinfo)
     Catalog.subscribe(ui, function(event)
-        if not ui.kindlespouse_patched or not Home.enabled() then return end
-        if event.scanning then
-            if ui.kindlespouse_shelf then ui.kindlespouse_shelf:setScanning(event.count or 0) end
-            if ui.title_bar and ui.kindlespouse_tab ~= "Notebook" then
-                ui.title_bar:setSubTitle(T("catalog_scanning", event.count or 0))
+        Home.safe(ui, function()
+            if not ui.kindlespouse_patched or not Home.enabled() then return end
+            if event.scanning then
+                if ui.kindlespouse_shelf then ui.kindlespouse_shelf:setScanning(event.count or 0) end
+                if ui.title_bar and ui.kindlespouse_tab ~= "Notebook" then
+                    ui.title_bar:setSubTitle(string.format(T("catalog_scanning"), event.count or 0))
+                end
+                return
             end
-            return
-        end
-        UIManager:unschedule(ui.kindlespouse_catalog_task)
-        UIManager:scheduleIn(0.01, ui.kindlespouse_catalog_task)
+            UIManager:unschedule(ui.kindlespouse_catalog_task)
+            UIManager:scheduleIn(0.01, ui.kindlespouse_catalog_task)
+        end)
     end)
 end
 
@@ -55,14 +123,24 @@ function Home.patchChooser()
     if Patches.applied["home:filechooser"] then return end
     Patches.wrap("home:filechooser", FileChooser, "init", function(original, chooser, ...)
         if chooser.ui and chooser.ui.kindlespouse_home and Home.enabled() then
-            chooser.height = Screen:getHeight() - Home.navigationHeight()
-            chooser.kindlespouse_patch = Patches.scope(chooser) .. "items"
-            Patches.wrap(chooser.kindlespouse_patch, chooser, "genItemTableFromPath", function(_, current, root) return Home.books(current, root) end)
+            chooser.kindlespouse_native_generator = chooser.genItemTableFromPath
+            Home.safe(chooser.ui, function()
+                chooser.kindlespouse_patch = Patches.scope(chooser) .. "items"
+                Patches.wrap(chooser.kindlespouse_patch, chooser, "genItemTableFromPath", function(native, current, root)
+                    local ok, items = Home.safe(current.ui, Home.books, current, root)
+                    if ok then return items end
+                    Home.releaseChooser(current)
+                    local native_items = native(current, root)
+                    current.kindlespouse_native_items = true
+                    return native_items
+                end)
+            end)
         end
-        return original(chooser, ...)
+        local result = original(chooser, ...)
+        if chooser.kindlespouse_native_generator and not Home.enabled() then chooser.kindlespouse_native_items = true end
+        return result
     end)
 end
-Home.patchChooser()
 
 function Home.releaseChooser(chooser)
     if chooser and chooser.kindlespouse_patch then Patches.revert(chooser.kindlespouse_patch) end
@@ -191,15 +269,18 @@ function Home.pauseBody(ui)
 end
 
 function Home.releaseLayout(ui)
-    Home.pauseBody(ui)
-    if ui.kindlespouse_shelf then ui.kindlespouse_shelf:onCloseWidget() end
-    if ui.kindlespouse_library_group then ui.kindlespouse_library_group[2]:free() end
-    if ui.kindlespouse_notebook_body then ui.kindlespouse_notebook_body:free() end
-    if ui.kindlespouse_header then ui.kindlespouse_header:free() end
-    if ui.kindlespouse_recent then ui.kindlespouse_recent:free() end
+    cleanup(Home.pauseBody, ui)
+    if ui.kindlespouse_shelf then cleanup(ui.kindlespouse_shelf.onCloseWidget, ui.kindlespouse_shelf) end
+    local toolbar = ui.kindlespouse_library_group and ui.kindlespouse_library_group[2]
+    if toolbar then cleanup(toolbar.free, toolbar) end
+    if ui.kindlespouse_notebook_body then cleanup(ui.kindlespouse_notebook_body.free, ui.kindlespouse_notebook_body) end
+    if ui.kindlespouse_header then cleanup(ui.kindlespouse_header.free, ui.kindlespouse_header) end
+    if ui.kindlespouse_recent then cleanup(ui.kindlespouse_recent.free, ui.kindlespouse_recent) end
     if ui.kindlespouse_navigation then
-        ui.kindlespouse_navigation[1]:free()
-        ui.kindlespouse_navigation[3]:free()
+        for _, index in ipairs({ 1, 3 }) do
+            local button = ui.kindlespouse_navigation[index]
+            if button then cleanup(button.free, button) end
+        end
     end
     for _, name in ipairs({ "shelf", "library_group", "notebook_group", "notebook_body", "notebook_paused",
             "notebook_search", "header", "recent", "navigation", "content", "search", "search_label", "toolbar", "profile" }) do
@@ -237,7 +318,7 @@ function Home.switchTab(ui, companion, tab)
     end
     Library.updateSearch(ui)
     ui.title_bar:setTitle(T(tab == "Notebook" and "notebook_tab" or "library_tab"))
-    ui.title_bar:setSubTitle(tab == "Library" and Home.count(ui) or T("device_scribe"))
+    ui.title_bar:setSubTitle(tab == "Library" and Home.count(ui) or T("brand_scribe"))
     UIManager:setDirty(ui, changed and "flashui" or "ui", ui.dimen)
     return true
 end
@@ -270,7 +351,7 @@ function Home.layout(ui, companion)
             show_parent = ui,
             callback = function()
                 if ui.kindlespouse_tab == tab then return end
-                Home.switchTab(ui, companion, tab)
+                Home.safe(ui, Home.switchTab, ui, companion, tab)
             end,
         }
     end
@@ -317,10 +398,10 @@ function Home.layout(ui, companion)
     ui:registerKeyEvents()
 end
 
-function Home.install(companion)
+local function install(companion)
     local ui = companion.ui
-    if Home.enabled() then Home.prepareStart() end
-    if ui.document then return end
+    if not Home.enabled() or ui.document then return end
+    Home.prepareStart()
     ui.kindlespouse_home = true
     ui.kindlespouse_tab = "Library"
     if ui.kindlespouse_patched then return end
@@ -329,56 +410,84 @@ function Home.install(companion)
     Home.trackFiles(ui)
     Home.patchChooser()
     Patches.wrap(Patches.scope(ui) .. "layout", ui, "setupLayout", function(original, manager)
-        Home.releaseChooser(manager.file_chooser)
-        if manager.file_chooser and manager.file_chooser.onCloseWidget then manager.file_chooser:onCloseWidget() end
-        if manager.coverbrowser and (Home.enabled() or G_reader_settings:readSetting("kindlespouse_home_saved")) then
-            if Home.enabled() then Home.prepare(manager) end
-            local chooser = manager.file_chooser
-            manager.file_chooser = nil
-            local mode = G_reader_settings:readSetting("kindlespouse_home_previous_mode") or nil
-            if Home.enabled() then mode = nil end
-            if require("bookinfomanager"):getSetting("filemanager_display_mode") ~= mode then manager.coverbrowser:setDisplayMode(mode) end
-            manager.file_chooser = chooser
-        end
-        if Home.enabled() then manager.root_path = Home.root(manager) end
+        Home.safe(manager, function()
+            Home.releaseChooser(manager.file_chooser)
+            if manager.file_chooser and manager.file_chooser.onCloseWidget then manager.file_chooser:onCloseWidget() end
+            if manager.coverbrowser and (Home.enabled() or G_reader_settings:readSetting("kindlespouse_home_saved")) then
+                if Home.enabled() then Home.prepare(manager) end
+                local chooser = manager.file_chooser
+                local mode = G_reader_settings:readSetting("kindlespouse_home_previous_mode") or nil
+                if Home.enabled() then mode = nil end
+                if require("bookinfomanager"):getSetting("filemanager_display_mode") ~= mode then
+                    manager.file_chooser = nil
+                    local ok, failure = pcall(manager.coverbrowser.setDisplayMode, manager.coverbrowser, mode)
+                    manager.file_chooser = chooser
+                    if not ok then error(failure) end
+                end
+            end
+            if Home.enabled() then manager.root_path = Home.root(manager) end
+        end)
         original(manager)
-        if Home.enabled() then Home.layout(manager, companion) end
+        Home.captureNative(manager)
+        Home.safe(manager, function()
+            if Home.enabled() then
+                Home.layout(manager, companion)
+                manager.file_chooser.height = Screen:getHeight() - Home.navigationHeight()
+            end
+        end)
     end)
     Patches.wrap(Patches.scope(ui) .. "home", ui, "onHome", function(original, manager)
         if not Home.enabled() then return original(manager) end
-        if Home.switchTab(manager, companion, "Library") then
-            Library.refresh(manager, {})
-        else
-            manager:reinit(Home.root(manager))
-        end
+        Home.safe(manager, function()
+            if Home.switchTab(manager, companion, "Library") then Library.refresh(manager, {})
+            else manager:reinit(Home.root(manager)) end
+        end)
         return true
     end)
     Patches.wrap(Patches.scope(ui) .. "close", ui, "onCloseWidget", function(original, manager, ...)
-        Home.uninstall(manager)
+        Home.safe(manager, Home.uninstall, manager)
         return original(manager, ...)
     end)
     Patches.wrap(Patches.scope(ui) .. "title", ui, "updateTitleBarPath", function(original, manager, path)
         if not Home.enabled() then return original(manager, path) end
-        manager.title_bar:setSubTitle(manager.kindlespouse_tab == "Notebook" and T("brand_scribe") or Home.count(manager))
+        Home.safe(manager, function()
+            manager.title_bar:setSubTitle(manager.kindlespouse_tab == "Notebook" and T("brand_scribe") or Home.count(manager))
+        end)
     end)
-    Patches.wrap(Patches.scope(ui) .. "path", ui, "onPathChanged", function(_, manager, path) return manager:updateTitleBarPath(path) end)
+    Patches.wrap(Patches.scope(ui) .. "path", ui, "onPathChanged", function(original, manager, path)
+        if not Home.enabled() then return original(manager, path) end
+        Home.safe(manager, function() manager:updateTitleBarPath(path) end)
+    end)
     if ui.kindlespouse_post_init_registered then return end
     ui.kindlespouse_post_init_registered = true
-    ui:registerPostInitCallback(function()
-        if Home.enabled() then
-            Home.prepare(ui)
-            ui:reinit(Home.root(ui))
-        end
-    end)
+    ui.kindlespouse_post_init_callback = function()
+        ui.kindlespouse_post_init_running = true
+        Home.safe(ui, function()
+            if Home.enabled() then Home.prepare(ui); ui:reinit(Home.root(ui)) end
+        end)
+        ui.kindlespouse_post_init_running = nil
+        ui.kindlespouse_post_init_callback = nil
+    end
+    ui:registerPostInitCallback(ui.kindlespouse_post_init_callback)
+end
+
+function Home.install(companion)
+    local ok, failure = pcall(install, companion)
+    if not ok then
+        Home.restoreNative(companion.ui)
+        error(failure)
+    end
 end
 
 function Home.rebuild(ui)
-    ui:reinit(ui.file_chooser.path)
-    UIManager:setDirty(ui, "ui", ui.dimen)
+    return Home.safe(ui, function()
+        ui:reinit(ui.file_chooser.path)
+        UIManager:setDirty(ui, "ui", ui.dimen)
+    end)
 end
 
 function Home.refreshFiles(ui)
-    Catalog.rescan(Home.root(ui))
+    return Home.safe(ui, function() return Catalog.rescan(Home.root(ui)) end)
 end
 
 function Home.trackFiles(ui)
@@ -451,6 +560,13 @@ function Home.prepareStart()
 end
 
 function Home.uninstall(ui)
+    local callback = ui.kindlespouse_post_init_callback
+    if callback and ui.postInitCallback and not ui.kindlespouse_post_init_running then
+        for index = #ui.postInitCallback, 1, -1 do
+            if ui.postInitCallback[index] == callback then table.remove(ui.postInitCallback, index) end
+        end
+        ui.kindlespouse_post_init_callback = nil
+    end
     Home.releaseLayout(ui)
     Catalog.unsubscribe(ui)
     if not next(Catalog.subscribers) and Catalog.root then Catalog.cancel(Catalog.root) end
@@ -459,9 +575,12 @@ function Home.uninstall(ui)
     Patches.revertPrefix(Patches.scope(ui))
     ui.kindlespouse_patched = nil
     ui.kindlespouse_home = nil
+    ui.kindlespouse_native = nil
 end
 
 function Home.toggle(companion)
+    local status = Guard.status()
+    if not status.supported or status.disabled then return false end
     local ui = companion.ui
     local enabled = not Home.enabled()
     G_reader_settings:saveSetting("kindlespouse_home", enabled)
