@@ -1,4 +1,3 @@
-local BookList = require("ui/widget/booklist")
 local ReadCollection = require("readcollection")
 local UIManager = require("ui/uimanager")
 local Device = require("device")
@@ -35,36 +34,6 @@ function Library.normalize(text)
     return util.stringLower(tostring(text or "")):gsub("^%s+", ""):gsub("%s+$", "")
 end
 
-function Library.catalog()
-    if not Library.store then
-        Library.store = require("luasettings"):open(require("datastorage"):getSettingsDir() .. "/kindlespouse-library.lua")
-        Library.cache = Library.store:readSetting("books", {})
-    end
-    return Library.cache
-end
-
-function Library.record(ui, item, root, history)
-    local cache = Library.catalog()
-    local previous = cache[item.path]
-    local current = previous and previous.size == item.attr.size and previous.modified == item.attr.modification
-    local props = ui.bookinfo:getDocProps(item.path, nil, true)
-    local title = props.title or current and previous.title or props.display_title or item.text
-    local author = props.authors or current and previous.author or ""
-    local metadata = { title = title, author = author, size = item.attr.size, modified = item.attr.modification,
-        added = previous and previous.added or item.attr.change or os.time() }
-    if not current or previous.title ~= title or previous.author ~= author then cache[item.path] = metadata; Library.dirty = true end
-    local info = BookList.getBookInfo(item.path)
-    local relative = item.path:sub(#root + 2)
-    local source = relative:match("^([^/]+)/") or "书籍根目录"
-    item.kindlespouse = {
-        title = title, author = author ~= "" and author or "未提供作者",
-        format = item.path:lower():match("%.([^.]+)$") or "", source = source,
-        status = info.been_opened and info.status or "new", progress = info.percent_finished or 0,
-        recent = history[item.path] or 0, added = metadata.added,
-    }
-    return item
-end
-
 function Library.matches(item, settings)
     local data = item.kindlespouse
     local query = Library.normalize(settings.query)
@@ -93,11 +62,6 @@ function Library.apply(items, settings)
         if left.title ~= right.title then return strcoll(left.title, right.title) end
         return a.path < b.path
     end)
-    if Library.dirty then
-        Library.store:saveSetting("books", Library.cache)
-        Library.store:flush()
-        Library.dirty = false
-    end
     return result
 end
 

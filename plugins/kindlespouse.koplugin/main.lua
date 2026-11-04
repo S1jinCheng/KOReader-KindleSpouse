@@ -512,6 +512,12 @@ function Companion:addToMainMenu(menu_items)
 end
 
 function Companion:onCloseDocument()
+    local file = self.ui and self.ui.document and self.ui.document.file
+    if file then UIManager:scheduleIn(0.05, function()
+        require("ui/widget/booklist").resetBookInfoCache(file)
+        local catalog = package.loaded.catalog
+        if catalog then catalog.touch(file) end
+    end) end
     UIManager:scheduleIn(1, function() self:applyAnnotations() end)
     self:queueAutomaticSync(2)
 end

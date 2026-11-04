@@ -13,6 +13,7 @@ local TextBoxWidget = require("ui/widget/textboxwidget")
 local TextWidget = require("ui/widget/textwidget")
 local ImageWidget = require("ui/widget/imagewidget")
 local GestureRange = require("ui/gesturerange")
+local Extractor = require("extractor")
 local Screen = Device.screen
 local Shelf = ScrollableContainer:extend { swipe_full_view = false, scroll_bar_width = 0 }
 local Content = InputContainer:extend {}
@@ -109,6 +110,10 @@ end
 function Content:paintTo(bb, x, y)
     local owner = self.owner
     self.dimen.x, self.dimen.y = x, y
+    if owner.scanning_label then
+        owner.scanning_label:paintTo(bb, x + owner.margin, y + require("device").screen:scaleBySize(24))
+        return
+    end
     local top = owner._scroll_offset_y or 0
     local first = math.max(1, math.floor(top / owner.row_h) * owner.columns + 1)
     local last = math.min(#owner.items, (math.ceil((top + owner.dimen.h) / owner.row_h) + 1) * owner.columns)
@@ -162,6 +167,15 @@ function Shelf:initState()
     if self._h_scroll_bar then self._h_scroll_bar:free(); self._h_scroll_bar = nil end
 end
 
+function Shelf:setScanning(count)
+    if self.scanning_label then self.scanning_label:free(); self.scanning_label = nil end
+    if count then
+        self.scanning_label = TextBoxWidget:new { text = string.format("正在整理书库…（已找到 %d 本）", count),
+            width = self.dimen.w - self.margin * 2, face = Font:getFace(fonts.ui, 16) }
+    end
+    UIManager:setDirty(self.show_parent, "ui", self.dimen)
+end
+
 function Shelf:refreshCards()
     if self.closed then return end
     self[1]:free()
@@ -177,6 +191,7 @@ end
 function Shelf:onCloseWidget()
     if self.closed then return end
     self.closed = true
+    if self.scanning_label then self.scanning_label:free(); self.scanning_label = nil end
     if self.on_close then self:on_close() end
     self[1]:free()
     ScrollableContainer.onCloseWidget(self)
@@ -188,7 +203,7 @@ end
 
 function Shelf.library(ui, height)
     local manager = require("bookinfomanager")
-    local attempted, pending = {}, {}
+    local pending = {}
     local settings = require("library").settings()
     local key_parts = { ui.file_chooser.path, tostring(Screen:getWidth()), tostring(Screen:getHeight()) }
     for _, name in ipairs({ "query", "shelf", "format", "author", "source", "collection", "sort", "view" }) do
@@ -202,8 +217,7 @@ function Shelf.library(ui, height)
         items = ui.file_chooser.item_table, show_parent = ui,
         provider = function(item, view)
             local info = manager:getBookInfo(item.path, true)
-            if not info or not info.cover_fetched or info.has_cover and manager.isCachedCoverInvalid(info,
-                { max_cover_w = view.cover_w, max_cover_h = view.cover_h }) then pending[item.path] = true end
+            if Extractor.needs(info, item.attr, { max_cover_w = view.cover_w, max_cover_h = view.cover_h }) then pending[item.path] = true end
             local data = item.kindlespouse
             return { image = info and info.cover_bb, title = info and info.title or data.title,
                 subtitle = info and info.authors or (data.author ~= "未提供作者" and data.author or ""),
@@ -212,25 +226,19 @@ function Shelf.library(ui, height)
         on_open = function(item) ui.file_chooser:onFileSelect(item) end,
         on_hold = function(item) ui.file_chooser:onFileHold(item) end,
     }
-    local function collect()
-        if shelf.closed then return end
-        manager:collectSubprocesses()
-        if ui.kindlespouse_recent then ui.kindlespouse_recent:updateCover() end
-        shelf:refreshCards()
-        if manager:isExtractingInBackground() then UIManager:scheduleIn(1, collect) end
-    end
     local function extract()
         shelf.queued = false
         if shelf.closed then return end
         local files = {}
         for filename in pairs(pending) do
-            if not attempted[filename] then
-                attempted[filename] = true
-                files[#files + 1] = { filepath = filename, cover_specs = { max_cover_w = shelf.cover_w, max_cover_h = shelf.cover_h } }
-            end
+            files[#files+1] = { filepath = filename, cover_specs = { max_cover_w = shelf.cover_w, max_cover_h = shelf.cover_h } }
             pending[filename] = nil
         end
-        if #files > 0 then manager:extractInBackground(files); UIManager:scheduleIn(1, collect) end
+        if #files > 0 then Extractor.enqueue(shelf, files, function()
+            if shelf.closed then return end
+            if ui.kindlespouse_recent then ui.kindlespouse_recent:updateCover() end
+            shelf:refreshCards()
+        end) end
     end
     shelf.on_visible = function()
         if next(pending) and not shelf.queued then shelf.queued = true; UIManager:scheduleIn(0.2, extract) end
@@ -238,10 +246,10 @@ function Shelf.library(ui, height)
     shelf.on_close = function()
         ui.kindlespouse_positions[key] = shelf:getScrolledOffset()
         UIManager:unschedule(extract)
-        UIManager:unschedule(collect)
-        manager:terminateBackgroundJobs()
-        manager:collectSubprocesses()
+        Extractor.cancel(shelf)
     end
+    local state = require("catalog").roots[ui.file_chooser.path]
+    if state and state.scanning then shelf:setScanning(#require("catalog").records(state.root)) end
     shelf:setScrolledOffset(ui.kindlespouse_positions[key])
     return shelf
 end
