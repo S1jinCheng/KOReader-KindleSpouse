@@ -1,5 +1,6 @@
 local I18n = { keys = {}, en = {}, zh = {} }
 local definitions = {
+    { "notebook.disabled", "Notes and highlights are turned off. Enable them in the reading experience menu to search annotations.", "批注汇总已关闭。请在阅读体验菜单中开启，再搜索笔记和高亮。" },
     { "version.unsupported", "This KOReader version is not supported by the KindleSpouse interface. The original interface and synchronization remain available.", "当前 KOReader 版本暂不支持 KindleSpouse 界面。原有界面与同步功能仍可使用。" },
     { "version.install_failed", "The KindleSpouse interface could not start and has been disabled. The original interface and synchronization remain available.", "KindleSpouse 界面未能启动，已停用。原有界面与同步功能仍可使用。" },
     { "device_scribe", "Kindle Scribe", "Kindle Scribe" },

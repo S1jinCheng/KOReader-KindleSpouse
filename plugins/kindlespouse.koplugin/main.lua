@@ -146,6 +146,9 @@ function Companion:readerMenuItems()
                 self:installReaderExperience()
             end }
     end
+    local notebook = require("notebook/settings")
+    entries[#entries+1] = { text = T("notebook.summary"), checked_func = notebook.enabled,
+        callback = function() return Guard.install(self.ui, function() return notebook.toggle(self) end) end }
     return entries
 end
 
@@ -196,6 +199,9 @@ function Companion:queueAutomaticSync()
 end
 
 function Companion:onAnnotationsModified()
+    local index = package.loaded["notebook/index"]
+    local file = self.ui and self.ui.document and self.ui.document.file
+    if index and file then index.invalidate(file) end
     Scheduler.markDirty("annotations")
 end
 
@@ -362,6 +368,8 @@ function Companion:onCloseDocument()
         require("ui/widget/booklist").resetBookInfoCache(file)
         local catalog = package.loaded.catalog
         if catalog then catalog.touch(file) end
+        local index = package.loaded["notebook/index"]
+        if index then index.invalidate(file) end
     end) end
     self:queueAnnotationApply(1)
     Scheduler.markDirty("close")

@@ -42,6 +42,8 @@ jobs:
         run: |
           python3 kindlespouse/test_plugin.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --test annotation
           python3 kindlespouse/test_plugin.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --test patches
+      - name: Verify annotation notebook index and navigation
+        run: python3 kindlespouse/test_notebook_summary.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --fonts kindlespouse/build/cache
       - name: Verify compact highlight actions
         run: python3 kindlespouse/test_reader.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --fonts kindlespouse/build/cache --feature highlight --integrated
       - name: Verify loaded reading toolbar and optional statistics
@@ -70,6 +72,8 @@ jobs:
         run: python3 kindlespouse/test_home.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader
       - name: Verify the extracted installation package
         run: python3 kindlespouse/test_home.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --package kindlespouse/build/KindleSpouse-Scribe-Overlay.zip --language zh_CN
+      - name: Verify reader from the extracted installation package
+        run: python3 kindlespouse/test_reader.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --fonts kindlespouse/build/cache --feature all --statistics --package kindlespouse/build/KindleSpouse-Scribe-Overlay.zip
       - name: Verify 500-book local shelf and reader return
         run: python3 kindlespouse/test_home.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --scale
       - uses: actions/upload-artifact@v7
@@ -84,4 +88,11 @@ jobs:
             kindlespouse/build/test500/runtime.log
             kindlespouse/build/checks/**/runtime.log
             kindlespouse/build/integrated-*/runtime.log
+            kindlespouse/build/packaged-*/runtime.log
+            kindlespouse/build/reader-checks/**/*.png
+            kindlespouse/build/reader-checks/**/runtime.log
+            kindlespouse/build/notebook-summary-checks/**/*.png
+            kindlespouse/build/notebook-summary-checks/**/runtime.log
+            kindlespouse/build/home-guard-checks/**/*.png
+            kindlespouse/build/home-guard-checks/**/runtime.log
           if-no-files-found: error

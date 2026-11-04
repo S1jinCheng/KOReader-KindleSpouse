@@ -238,7 +238,11 @@ function Library.header(ui, companion)
     search.dimen.w = search_width
     search.ges_events = { Search = { require("ui/gesturerange"):new { ges = "tap", range = search.dimen } } }
     search.onSearch = function()
-        if ui.kindlespouse_tab == "Notebook" and ui.kindlespouse_notebook_search then return ui.kindlespouse_notebook_search() end
+        if ui.kindlespouse_tab == "Notebook" then
+            if ui.kindlespouse_notebook_search then return ui.kindlespouse_notebook_search() end
+            companion:notify(T("notebook.disabled"))
+            return true
+        end
         return Library.search(ui)
     end
     ui.kindlespouse_search = search
