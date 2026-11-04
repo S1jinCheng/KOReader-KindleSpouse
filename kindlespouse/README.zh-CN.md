@@ -33,7 +33,9 @@ python3 kindlespouse/build.py
 
 安装包、SHA-256 文件和经校验的字体缓存生成在 `kindlespouse/build`，不提交二进制到 Git。
 
-构建完整 KOReader 时，先按上游说明获取依赖和字体子模块，再准备额外字体，然后使用 KOReader 原有的 Kindle 构建目标：
+完整 KOReader 源码构建仅作为开发参考：分支构建可能带开发版本号，当前精确版本守卫不会自动把它视为已验证的官方版本。本轮预览请采用官方 v2026.07.1 加叠加包；完整定制二进制仍需单独适配和验收。
+
+开发者可先按上游说明获取依赖和字体子模块，再准备额外字体，使用 KOReader 原有的 Kindle 构建目标：
 
 ```sh
 make fetchthirdparty
