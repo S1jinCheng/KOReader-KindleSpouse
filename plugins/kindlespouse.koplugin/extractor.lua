@@ -106,14 +106,9 @@ local function complete(active)
             info = Extractor.cached(request.filepath)
         end
         if next(request.owners) then
-            if same and info and (Extractor.isFresh(info, attr) or info.unsupported) then
-                if not Extractor.needs(info, attr, request.cover_specs) or info.unsupported then
-                    notify(request, info, info.unsupported and "unsupported" or "ready")
-                elseif request.attempts < 3 then
-                    put(request)
-                else
-                    notify(request, info, "failed")
-                end
+            if same and info and (Extractor.isFresh(info, attr) or info.unsupported)
+                    and (not Extractor.needs(info, attr, request.cover_specs) or info.unsupported) then
+                notify(request, info, info.unsupported and "unsupported" or "ready")
             elseif attr and request.attempts < 3 then
                 put(request)
             else
@@ -190,7 +185,6 @@ end
 
 function Extractor.poll()
     UIManager:unschedule(pump)
-    Extractor.scheduled = false
     pump()
 end
 

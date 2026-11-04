@@ -12,12 +12,9 @@ local function normalize(root)
     return root == "/" and root or root:gsub("/+$", "")
 end
 
-local function inside(filepath, root)
-    return filepath:sub(1, #root + (root == "/" and 0 or 1)) == (root == "/" and root or root .. "/")
-end
-
 local function allowed(filepath, root)
-    if not inside(filepath, root) then return false end
+    local prefix = root == "/" and root or root .. "/"
+    if filepath:sub(1, #prefix) ~= prefix then return false end
     local relative = filepath:sub(#root + (root == "/" and 1 or 2))
     for part in relative:gmatch("[^/]+") do
         if part:sub(1, 1) == "." or part:match("%.sdr$") then return false end
@@ -54,6 +51,15 @@ local function saveLater()
     UIManager:scheduleIn(0.2, persist_task)
 end
 
+local function newState(root, complete)
+    local state = { root = root, entries = {}, complete = complete == true, startup_pending = complete == true, scanning = false }
+    for filepath, entry in pairs(Catalog.books) do
+        if allowed(filepath, root) then state.entries[filepath] = entry end
+    end
+    Catalog.roots[root] = state
+    return state
+end
+
 local function load()
     if store then return end
     store = require("luasettings"):open(require("datastorage"):getSettingsDir() .. "/kindlespouse-library.lua")
@@ -75,11 +81,7 @@ local function load()
     local roots = store:readSetting("roots", {})
     for root, complete in pairs(roots) do
         if type(root) == "string" then
-            local entries = {}
-            for filepath, entry in pairs(Catalog.books) do
-                if allowed(filepath, root) then entries[filepath] = entry end
-            end
-            Catalog.roots[root] = { root = root, entries = entries, complete = complete == true, startup_pending = complete == true, scanning = false }
+            newState(root, complete)
         end
     end
     if store:readSetting("schema") ~= 2 then saveLater() end
@@ -100,22 +102,10 @@ local function reading(entry, recent, cached_only)
     entry.recent = recent[entry.path] or 0
 end
 
-local function stateFor(root)
-    load()
-    local state = Catalog.roots[root]
-    if not state then
-        local entries = {}
-        for filepath, entry in pairs(Catalog.books) do
-            if allowed(filepath, root) then entries[filepath] = entry end
-        end
-        state = { root = root, entries = entries, complete = false, scanning = false }
-        Catalog.roots[root] = state
-    end
-    return state
-end
-
 local function selectRoot(root)
-    local state = stateFor(normalize(root))
+    load()
+    root = normalize(root)
+    local state = Catalog.roots[root] or newState(root)
     Catalog.root, Catalog.entries = state.root, state.entries
     return state
 end
@@ -186,17 +176,17 @@ local function record(state, filepath, attr, recent, pending)
     entry.size, entry.mtime, entry.modified = attr.size, attr.modification, attr.modification
     if changed then
         local info = Extractor.cached(filepath)
+        local fresh = Extractor.isFresh(info, attr)
         local props
-        if not Extractor.isFresh(info, attr) and bookinfo then props = bookinfo:getDocProps(filepath, nil, true) end
+        if not fresh and bookinfo then props = bookinfo:getDocProps(filepath, nil, true) end
         entry.title = props and props.title or previous and previous.title or fallback(filepath)
         entry.author = props and props.authors or previous and previous.author or ""
         entry.meta_ready, entry.meta_error = false, nil
-        if Extractor.isFresh(info, attr) then
+        if fresh then
             metadata(entry, info)
-        else
-            pending[#pending + 1] = entry
         end
-    elseif not entry.meta_ready then
+    end
+    if not entry.meta_ready then
         pending[#pending + 1] = entry
     end
     reading(entry, recent)
@@ -230,9 +220,9 @@ local function start(state, on_done)
         return state
     end
     state.startup_pending = nil
-    local scan = { directories = { state.root }, head = 1, seen = {}, recent = history(), callbacks = {}, generation = (state.generation or 0) + 1 }
+    local scan = { directories = { state.root }, head = 1, seen = {}, recent = history(), callbacks = {} }
     if on_done then scan.callbacks[1] = on_done end
-    state.scanning, state.scan, state.generation = true, scan, scan.generation
+    state.scanning, state.scan = true, scan
     scan.step = function()
         if state.scan ~= scan then return end
         local processed, pending = 0, {}
