@@ -4,7 +4,7 @@ All APIs use dot calls. Catalog and Extractor are process singletons. Book files
 
 ## Catalog
 
-- `ensure(root, on_done)` selects the root and starts its first scan. A complete cached root never scans, including after restart. Unfinished metadata resumes independently.
+- `ensure(root, on_done)` selects the root and schedules its first scan. Each process also schedules one incremental scan on the first ensure of a persisted complete root. This startup marker exists only in memory. Further ensures, filters and reader returns reuse the root without enumeration. Unfinished metadata resumes independently.
 - `rescan(root, on_done)` explicitly enumerates again. It updates changed files and removes missing files. Both scan methods return the root state. Their callbacks receive that state after enumeration, before metadata necessarily finishes. Concurrent calls join the existing scan.
 - `root` and `entries` expose the current root and its path-to-record map. `records(root)` returns a path-sorted array, defaulting to the current root. `items(chooser)` builds native FileChooser items with `getListItem` and a `kindlespouse` record. These reads never enumerate directories or stat books.
 - `touch(path)` refreshes one book and its reading state. `add(path)` adds a supported visible file to matching known roots. `remove(path)` removes its cache record. None enumerates directories.

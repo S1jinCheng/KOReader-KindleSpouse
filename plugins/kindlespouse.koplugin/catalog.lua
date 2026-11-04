@@ -79,7 +79,7 @@ local function load()
             for filepath, entry in pairs(Catalog.books) do
                 if allowed(filepath, root) then entries[filepath] = entry end
             end
-            Catalog.roots[root] = { root = root, entries = entries, complete = complete == true, scanning = false }
+            Catalog.roots[root] = { root = root, entries = entries, complete = complete == true, startup_pending = complete == true, scanning = false }
         end
     end
     if store:readSetting("schema") ~= 2 then saveLater() end
@@ -229,6 +229,7 @@ local function start(state, on_done)
         if on_done then state.scan.callbacks[#state.scan.callbacks + 1] = on_done end
         return state
     end
+    state.startup_pending = nil
     local scan = { directories = { state.root }, head = 1, seen = {}, recent = history(), callbacks = {}, generation = (state.generation or 0) + 1 }
     if on_done then scan.callbacks[1] = on_done end
     state.scanning, state.scan, state.generation = true, scan, scan.generation
@@ -277,7 +278,7 @@ end
 
 function Catalog.ensure(root, on_done)
     local state = selectRoot(root)
-    if not state.complete then return start(state, on_done) end
+    if state.scanning or not state.complete or state.startup_pending then return start(state, on_done) end
     if not state.metadata_requested then
         state.metadata_requested = true
         local pending = {}

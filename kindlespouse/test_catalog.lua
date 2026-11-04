@@ -129,14 +129,43 @@ end
 local function verifyReload()
     Catalog.entries[files[2]].meta_ready = false
     Catalog.flush()
-    local previous_scans = scans
+    local removed, changed, added = files[8], files[4], root .. "/restart-added.epub"
+    assert(os.remove(removed))
+    local source = assert(io.open(files[7], "rb"))
+    local bytes = source:read("*a"); source:close()
+    local output = assert(io.open(changed, "wb")); output:write(bytes .. "restart change"); output:close()
+    output = assert(io.open(added, "wb")); output:write(bytes); output:close()
+    local previous_scans, previous_extracted = scans, extracted
     package.loaded.catalog = nil
     Catalog = require("catalog")
-    Catalog.ensure(root, function()
-        assert(count() == 500 and scans == previous_scans, "Persisted complete root must be hot")
+    local completed = 0
+    local state = Catalog.ensure(root, function()
+        completed = completed + 1
+        assert(count() == 500 and scans > previous_scans, "A fresh module must rescan persisted roots at startup")
+        assert(not Catalog.entries[removed] and Catalog.entries[added], "Startup must find externally added and removed books")
         assert(Catalog.entries[files[1]].title == "迁移标题" and Catalog.entries[files[1]].added == 1234)
-        waitFor(function() return Catalog.entries[files[2]].meta_ready and idle() end, verifyQueue)
+        waitFor(function() return Catalog.entries[files[2]].meta_ready and idle() end, function()
+            assert(Catalog.entries[changed].title == "Fixture Book 006", "Startup must refresh changed file metadata")
+            assert(extracted - previous_extracted == 2, "Startup must extract only added and changed files")
+            local hot_scans = scans
+            local ui = require("apps/filemanager/filemanager").instance
+            local chooser, previous_path = ui.file_chooser, ui.file_chooser.path
+            chooser.path = root
+            for _ = 1, 4 do
+                Catalog.ensure(root)
+                assert(#Catalog.items(chooser) == 500 and #Catalog.records(root) == 500)
+            end
+            chooser.path = previous_path
+            later(function()
+                assert(scans == hot_scans and completed == 2, "Hot ensures and multiple hosts must share exactly one startup scan")
+                verifyQueue()
+            end)
+        end)
     end)
+    local scan = assert(state.scan)
+    assert(scans == previous_scans, "Startup enumeration must be scheduled in the background")
+    assert(Catalog.ensure(root, function() completed = completed + 1 end).scan == scan,
+        "Concurrent hosts must reuse the startup scan")
 end
 local function verifyIncremental()
     local before = extracted
