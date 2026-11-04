@@ -12,14 +12,6 @@ local function quote(value)
     return "'" .. value:gsub("'", "'\\''") .. "'"
 end
 
-local function valid(mode)
-    return type(mode) == "string" and modes[mode] == true
-end
-
-local function markerPath()
-    return configured.directory .. "sync.launching"
-end
-
 local function readMarker()
     return configured.status.readJSON("sync.launching")
 end
@@ -29,29 +21,29 @@ function Launcher.configure(options)
     assert(type(directory) == "string" and directory:sub(1, 1) == "/" and not directory:find("[%c\\]"), "Invalid synchronization directory")
     for part in directory:gmatch("[^/]+") do assert(part ~= "." and part ~= "..", "Invalid synchronization directory") end
     configured = { directory = directory:gsub("/+$", "") .. "/", status = assert(options.status),
-        now = options.now or os.time, execute = options.execute or os.execute, logger = options.logger or logger }
+        now = options.now or os.time, execute = options.execute or os.execute }
     logger = options.logger or logger
     return Launcher
 end
 
 function Launcher.reserve(mode)
-    if not valid(mode) then return nil, T("launcher_mode") end
+    if not modes[mode] then return nil, T("launcher_mode") end
     if configured.status.workerRunning() then return nil, T("launcher_running") end
     if configured.status.launchMarker() then return nil, T("launcher_reserved") end
     sequence = sequence + 1
     local owner = string.format("%d-%d-%s", configured.now(), sequence, tostring({}):gsub("[^%w]", ""))
-    local token = { owner = owner, mode = mode, startedAt = configured.now() }
+    local token = { version = 1, owner = owner, mode = mode, startedAt = configured.now() }
     local temporary = configured.directory .. "sync.launching." .. owner .. ".partial"
     local stream, failure = io.open(temporary, "wb")
     if not stream then logger.warn("KindleSpouse:", "cannot write launch marker: " .. tostring(failure)); return nil, T("launcher_reserve_failed") end
-    local written, write_error = stream:write(json.encode({ version = 1, owner = owner, mode = mode, startedAt = token.startedAt }))
+    local written, write_error = stream:write(json.encode(token))
     local closed, close_error = stream:close()
     if not written or not closed then
         os.remove(temporary)
         logger.warn("KindleSpouse:", "cannot save launch marker: " .. tostring(write_error or close_error))
         return nil, T("launcher_save_failed")
     end
-    local renamed, rename_error = os.rename(temporary, markerPath())
+    local renamed, rename_error = os.rename(temporary, configured.directory .. "sync.launching")
     if not renamed then
         os.remove(temporary)
         logger.warn("KindleSpouse:", "cannot publish launch marker: " .. tostring(rename_error))
@@ -67,14 +59,14 @@ function Launcher.release(token)
     if not token then return end
     local marker = readMarker()
     if marker and marker.owner == token.owner then
-        local removed, failure = os.remove(markerPath())
+        local removed, failure = os.remove(configured.directory .. "sync.launching")
         if not removed then logger.warn("KindleSpouse:", "cannot remove owned launch marker: " .. tostring(failure)) end
     end
     if reserved == token then reserved = nil end
 end
 
 function Launcher.manual(mode)
-    if not valid(mode) then return false, T("launcher_mode") end
+    if not modes[mode] then return false, T("launcher_mode") end
     local flags = mode == "full" and { "pause.requested", "books-pause.requested" }
         or { mode == "updates" and "pause.requested" or mode .. "-pause.requested" }
     for _, name in ipairs(flags) do
@@ -99,7 +91,7 @@ function Launcher.pause()
 end
 
 function Launcher.launch(mode, manual, host)
-    if not valid(mode) then return false, T("launcher_mode") end
+    if not modes[mode] then return false, T("launcher_mode") end
     local token = reserved
     local marker = readMarker()
     if not token or token.mode ~= mode or not marker or marker.owner ~= token.owner then return false, T("launcher_reservation_lost") end

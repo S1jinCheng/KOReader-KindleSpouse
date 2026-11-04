@@ -1,3 +1,5 @@
+local ffi = require("ffi")
+require("ffi/posix_h")
 local lfs = require("libs/libkoreader-lfs")
 local json = require("json")
 local logger = require("logger")
@@ -62,15 +64,9 @@ local function isoSeconds(value)
     local year, month, day, hour, minute, second = value:match("^(%d%d%d%d)%-(%d%d)%-(%d%d)T(%d%d):(%d%d):(%d%d)")
     local suffix = value:sub(20)
     if not year or suffix ~= "Z" and not suffix:match("^%.%d+Z$") then return end
-    year, month, day, hour, minute, second = tonumber(year), tonumber(month), tonumber(day), tonumber(hour), tonumber(minute), tonumber(second)
-    if month < 1 or month > 12 or day < 1 or day > 31 or hour > 23 or minute > 59 or second > 59 then return end
-    local adjusted = year - (month <= 2 and 1 or 0)
-    local era = math.floor(adjusted / 400)
-    local within = adjusted - era * 400
-    local shifted = month + (month > 2 and -3 or 9)
-    local days = math.floor((153 * shifted + 2) / 5) + day - 1
-    local epoch = (era * 146097 + within * 365 + math.floor(within / 4) - math.floor(within / 100) + days - 719468) * 86400
-        + hour * 3600 + minute * 60 + second
+    local date = ffi.new("struct tm", { tm_year = tonumber(year) - 1900, tm_mon = tonumber(month) - 1,
+        tm_mday = tonumber(day), tm_hour = tonumber(hour), tm_min = tonumber(minute), tm_sec = tonumber(second) })
+    local epoch = tonumber(ffi.C.timegm(date))
     if os.date("!%Y-%m-%dT%H:%M:%S", epoch) == value:sub(1, 19) then return epoch end
 end
 
@@ -138,8 +134,9 @@ local function finalResult(result)
     if not result or type(result.ok) ~= "boolean" then return end
     local value = normalized(result)
     value.state = result.paused and "paused" or result.ok and "completed" or "failed"
-    value.completedAt = number(result.completedAt) or isoSeconds(result.completedAt)
-    if type(result.completedAt) == "string" and isoSeconds(result.completedAt) then value.runId = result.completedAt end
+    local completed = isoSeconds(result.completedAt)
+    value.completedAt = number(result.completedAt) or completed
+    if completed then value.runId = result.completedAt end
     return value
 end
 

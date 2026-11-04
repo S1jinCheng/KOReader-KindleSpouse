@@ -3,7 +3,6 @@ local logger
 local Scheduler = {}
 local dependencies
 local owner
-local next_token = 0
 local booted = false
 local suspended = false
 local fallback_inactive_at
@@ -14,8 +13,6 @@ local active
 local failures = 0
 local retry_at = 0
 local last_result
-local tick
-local watch
 local arm
 local step
 local modes = { books = true, full = true, updates = true, profile = true, titles = true }
@@ -212,15 +209,11 @@ step = function()
     arm()
 end
 
-tick = function() step() end
-watch = function() step() end
-
 arm = function()
-    dependencies.unschedule(tick)
-    dependencies.unschedule(watch)
+    dependencies.unschedule(step)
     if not owner or suspended then return end
     if active then
-        dependencies.schedule(active.observed and 5 or 1, watch)
+        dependencies.schedule(active.observed and 5 or 1, step)
         return
     end
     if not dependencies.connected() then return end
@@ -235,14 +228,14 @@ arm = function()
             due = due and math.min(due, deadline) or deadline
         end
     end
-    if due then dependencies.schedule(math.max(0, due - now()), tick) end
+    if due then dependencies.schedule(math.max(0, due - now()), step) end
 end
 
 function Scheduler.configure(value)
     for _, key in ipairs({ "now", "read", "save", "connected", "reading", "paused", "running", "progress", "launch", "schedule", "unschedule" }) do
         assert(type(value[key]) == "function", "Missing scheduler dependency: " .. key)
     end
-    if dependencies then dependencies.unschedule(tick); dependencies.unschedule(watch) end
+    if dependencies then dependencies.unschedule(step) end
     dependencies = value
     logger = value.logger or require("logger")
     fallback_anchor = fallback_anchor or now()
@@ -253,8 +246,7 @@ end
 
 function Scheduler.attach(host)
     assert(dependencies, "Configure scheduler before attaching")
-    next_token = next_token + 1
-    local token = { id = next_token, host = host }
+    local token = { host = host }
     owner = token
     if not booted then
         booted = true
