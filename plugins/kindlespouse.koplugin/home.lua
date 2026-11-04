@@ -182,7 +182,7 @@ function Home.layout(ui, companion)
     ui.cropping_widget = nil
     local header = Library.header(ui, companion)
     ui.kindlespouse_header = header
-    local body = ui[1]
+    local body
     local focus = {}
     if selected == "Notebook" then
         local height = Screen:getHeight() - Home.navigationHeight() - header:getSize().h

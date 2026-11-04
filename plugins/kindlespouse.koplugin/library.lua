@@ -262,7 +262,6 @@ function Library.header(ui, companion)
 end
 
 function Library.toolbar(ui)
-    local Button = require("ui/widget/button")
     local HorizontalGroup = require("ui/widget/horizontalgroup")
     local FrameContainer = require("ui/widget/container/framecontainer")
     local Geom = require("ui/geometry")

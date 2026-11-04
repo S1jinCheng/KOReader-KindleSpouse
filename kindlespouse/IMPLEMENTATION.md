@@ -7,7 +7,7 @@ Integration base: codex/improvement-baseline-v1. The existing notebook experimen
 | --- | --- | --- |
 | 01 | P0 annotation isolation, alternate slots, optional sleep preset | Verified in AppImage; device check pending |
 | 02 | P4 reversible patch registry | Verified in AppImage; device check pending |
-| 03 | P4 plugin-only and lint CI guards | Pending |
+| 03 | P4 plugin-only and lint CI guards | Verified negative/positive checks and AppImage |
 | 04 | P1 asynchronous catalog and metadata queue | Pending |
 | 05 | P1 local shelf refresh and display-mode changes | Pending |
 | 06 | P1 body-only tab switching | Pending |

@@ -2,11 +2,8 @@ name: KindleSpouse Scribe
 
 on:
   push:
-    branches: [codex/kindlespouse-scribe]
-    paths:
-      - plugins/kindlespouse.koplugin/**
-      - kindlespouse/**
-      - .github/workflows/kindlespouse.yml
+    branches: [codex/kindlespouse-scribe, main, 'codex/improvement-**']
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -15,12 +12,22 @@ permissions:
 jobs:
   overlay:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
+      - name: Check pinned core and approved paths
+        run: |
+          git fetch --depth=1 https://github.com/koreader/koreader.git 9192014d8bd82a91dc1012473be0f238dedfdb54
+          python3 kindlespouse/check_scope.py
+          python3 kindlespouse/check_source.py
+      - name: Lint plugin modules
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua-check
+          luacheck plugins/kindlespouse.koplugin --config .luacheckrc
       - name: Build verified home and font package
         run: python3 kindlespouse/build.py
       - name: Fetch pinned KOReader runtime
@@ -31,6 +38,10 @@ jobs:
           printf '%s  %s\n' e60ed106cf4e824d50394a259b3aa6c46fb1daee189df73a1734e5732b5dc245 koreader.AppImage | sha256sum --check
           chmod +x koreader.AppImage
           ./koreader.AppImage --appimage-extract >/dev/null
+      - name: Verify annotation and patch contracts
+        run: |
+          python3 kindlespouse/test_plugin.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --test annotation
+          python3 kindlespouse/test_plugin.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --test patches
       - name: Verify native home and Chinese fonts
         run: python3 kindlespouse/test_home.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader
       - uses: actions/upload-artifact@v7
@@ -41,4 +52,5 @@ jobs:
             kindlespouse/build/KindleSpouse-Scribe-Overlay.zip.sha256
             kindlespouse/build/artifacts/*.png
             kindlespouse/build/test/runtime.log
+            kindlespouse/build/checks/**/runtime.log
           if-no-files-found: error
