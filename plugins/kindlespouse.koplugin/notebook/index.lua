@@ -2,6 +2,7 @@ local DocSettings = require("docsettings")
 local ReaderUI = require("apps/reader/readerui")
 local UIManager = require("ui/uimanager")
 local lfs = require("libs/libkoreader-lfs")
+local logger = require("logger")
 local natural = require("sort").natsort_cmp()
 local util = require("util")
 local Index = {}
@@ -56,35 +57,11 @@ local function annotations(data)
     return output
 end
 
-local function sidecars(filename)
-    local name = DocSettings.getSidecarFilename(filename)
-    local document = DocSettings:getSidecarDir(filename, "doc")
-    local directory = DocSettings:getSidecarDir(filename, "dir")
-    local paths = { document .. "/" .. name, document .. "/" .. name .. ".old",
-        document .. "/" .. filename:match("[^/]+$") .. ".lua", directory .. "/" .. name, directory .. "/" .. name .. ".old" }
-    if DocSettings.isHashLocationEnabled() then
-        local hashed = DocSettings:getSidecarDir(filename, "hash") .. "/" .. name
-        paths[#paths + 1], paths[#paths + 2] = hashed, hashed .. ".old"
-    end
-    local history = DocSettings:getHistoryPath(filename)
-    paths[#paths + 1], paths[#paths + 2] = history, history .. ".old"
-    paths[#paths + 1] = filename .. ".kpdfview.lua"
-    local candidates, signature, previous = {}, {}, nil
-    for priority, path in ipairs(paths) do
-        local info = lfs.attributes(path)
-        if info and info.mode == "file" then
-            local candidate = { path = path, mtime = info.modification, priority = priority, size = info.size }
-            if previous and path == previous.path .. ".old" and candidate.mtime > previous.mtime then previous.mtime = candidate.mtime end
-            candidates[#candidates + 1] = candidate
-            signature[#signature + 1] = table.concat({ path, info.modification, info.size, info.change }, "\0")
-            previous = candidate
-        else previous = nil end
-    end
-    table.sort(candidates, function(left, right)
-        if left.mtime ~= right.mtime then return left.mtime > right.mtime end
-        return left.priority < right.priority
-    end)
-    return candidates, table.concat(signature, "\0")
+local function sidecar(filename)
+    local path = DocSettings:findSidecarFile(filename)
+    local info = path and lfs.attributes(path)
+    if not info or info.mode ~= "file" then return nil, "" end
+    return path, table.concat({ path, info.modification, info.size, info.change }, "\0"), info.size
 end
 
 function Index.new(options)
@@ -102,23 +79,23 @@ function Index:invalidatePath(filename)
 end
 
 function Index:read(record)
+    if record.status == "new" then return {} end
     local filename = record.path
     local reader = ReaderUI.instance
     local data
     if reader and reader.document and reader.document.file == filename and reader.annotation then
         data = { annotations = reader.annotation.annotations }
     else
-        local candidates, signature = sidecars(filename)
+        local path, signature, size = sidecar(filename)
         local previous = self.cache[filename]
         if previous and previous.signature == signature then return previous.items end
         local settings
-        for _, candidate in ipairs(candidates) do
-            if candidate.size <= 10 * 1024 * 1024 then
-                local loaded, value = pcall(DocSettings.openSettingsFile, candidate.path)
-                if loaded and value and type(value.data) == "table" and next(value.data) ~= nil then
-                    settings = value.data
-                    break
-                end
+        if path and size <= 10 * 1024 * 1024 then
+            local loaded, value = pcall(DocSettings.openSettingsFile, path)
+            if loaded and value and type(value.data) == "table" and next(value.data) ~= nil then
+                settings = value.data
+            else
+                logger.warn("KindleSpouse: empty or invalid annotation sidecar", path)
             end
         end
         local items = annotations(settings)
@@ -140,7 +117,7 @@ function Index:refresh(callback, root)
     local records = self.catalog.records(root)
     local queued, seen = {}, {}
     for _, record in ipairs(type(records) == "table" and records or {}) do
-        if type(record) == "table" and type(record.path) == "string" and not seen[record.path] then
+        if type(record) == "table" and record.status ~= "new" and type(record.path) == "string" and not seen[record.path] then
             seen[record.path] = true
             queued[#queued + 1] = record
         end

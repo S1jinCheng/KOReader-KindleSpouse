@@ -67,7 +67,7 @@ UIManager:tickAfterNext(function()
         for number = 1, 120 do
             local filename = files .. "/fixture-" .. number .. ".txt"
             write(filename, "Generated annotation fixture")
-            records[#records + 1] = { path = filename, name = "Fixture " .. number, title = "Fixture " .. number, author = "Synthetic author", recent = number }
+            records[#records + 1] = { path = filename, name = "Fixture " .. number, title = "Fixture " .. number, author = "Synthetic author", recent = number, status = "reading" }
             local settings = DocSettings:open(filename)
             if number == 1 then
                 first = filename
@@ -106,16 +106,48 @@ UIManager:tickAfterNext(function()
         ui.annotation.annotations = { { page = pointer, pos0 = pointer, pos1 = pointer, text = "Unsaved quotation", note = "Memory-only note", drawer = "lighten", datetime = "2026-11-04 12:00:00" } }
         ui.doc_settings:saveSetting("annotations_rolling", { item(12, "Stale live-reader alternate") })
         ui.doc_settings:saveSetting("annotations_paging", { { page = 12, note = "Stale live-reader paging alternate" } })
-        records[#records + 1] = { path = ui.document.file, title = "Currently open book", recent = 999 }
+        records[#records + 1] = { path = ui.document.file, title = "Currently open book", recent = 999, status = "reading" }
+        local new_record = { path = files .. "/new.txt", title = "Unopened book", status = "new" }
+        write(new_record.path, "Generated unopened fixture")
+        local unopened = DocSettings:open(new_record.path)
+        unopened:saveSetting("annotations", { item(99, "Must skip unopened book") })
+        assert(unopened:flush(nil, true))
+        records[#records + 1] = new_record
+        local oversized_record = { path = files .. "/oversized.txt", status = "reading" }
+        write(oversized_record.path, "Generated oversized fixture")
+        local oversized = DocSettings:open(oversized_record.path)
+        oversized:saveSetting("annotations", { item(98, "Must not load oversized metadata") })
+        assert(oversized:flush(nil, true))
+        write(DocSettings:findSidecarFile(oversized_record.path), "return {}" .. string.rep(" ", 10 * 1024 * 1024))
         local catalog_calls = 0
         local catalog = { records = function() catalog_calls = catalog_calls + 1; return records end }
         local old_dir = lfs.dir
         lfs.dir = function(path, ...) assert(path ~= files, "Summary must not enumerate book folders"); return old_dir(path, ...) end
         local old_open = Registry.openDocument
         Registry.openDocument = function() error("Summary must never open a document") end
+        local old_full_open = DocSettings.open
+        DocSettings.open = function() error("Summary must not call mutating DocSettings.open") end
         local old_read, reads = DocSettings.openSettingsFile, 0
         DocSettings.openSettingsFile = function(...) reads = reads + 1; return old_read(...) end
+        local old_find, lookups = DocSettings.findSidecarFile, 0
+        DocSettings.findSidecarFile = function(self, filename, ...)
+            lookups = lookups + 1
+            assert(filename ~= new_record.path, "New books must not perform sidecar lookup")
+            return old_find(self, filename, ...)
+        end
+        local old_attributes, stats = lfs.attributes, 0
+        lfs.attributes = function(...) stats = stats + 1; return old_attributes(...) end
         local index = Index.new({ catalog = catalog })
+        local prior_reads, prior_lookups, prior_stats = reads, lookups, stats
+        assert(#index:read(new_record) == 0)
+        assert(reads == prior_reads and lookups == prior_lookups and stats == prior_stats,
+            "New status must skip sidecar lookup, stat and open")
+        assert(#index:read(oversized_record) == 0 and reads == prior_reads,
+            "Oversized sidecars must not be opened")
+        G_reader_settings:saveSetting("document_metadata_folder", "doc")
+        assert(index:read(records[3])[1].note == "", "Summary must use the API's preferred document location")
+        G_reader_settings:saveSetting("document_metadata_folder", "dir")
+        assert(index:read(records[3])[1].note == "Newest location note", "Summary must follow the API's configured directory location")
         local batches = {}
         index:refresh(function(_, complete)
             batches[#batches + 1] = index.processed
@@ -123,8 +155,9 @@ UIManager:tickAfterNext(function()
             check(function()
                 assert(#batches == 3 and batches[1] == 50 and batches[2] == 100 and batches[3] == 121)
                 assert(index.delay > 0 and index.batch_size == 50 and #index.books == 4)
-                assert(index.books[1].path == ui.document.file)
-                assert(#index:search("Newest location note") == 1, "Summary must choose the actual newest sidecar location")
+                assert(lookups >= 120 and index.books[1].path == ui.document.file)
+                assert(#index:search("Must skip unopened") == 0)
+                assert(#index:search("Newest location note") == 1, "Summary must use the API-selected configured sidecar location")
                 local found = index:search("thoughtful")
                 assert(#found == 1 and found[1].highlights == 2 and found[1].notes == 2)
                 local annotations = index:search("", first)
@@ -134,7 +167,7 @@ UIManager:tickAfterNext(function()
                     "Engine alternates must not duplicate, resurrect or supply missing primary annotations")
                 local live = ui.annotation.annotations
                 ui.annotation.annotations = {}
-                assert(#index:read(records[#records]) == 0, "An empty live primary must override saved engine alternates")
+                assert(#index:read(records[#records - 1]) == 0, "An empty live primary must override saved engine alternates")
                 ui.annotation.annotations = live
                 local no_highlight = index:search("Only a note")
                 assert(#no_highlight == 1 and no_highlight[1].highlights == 0 and no_highlight[1].notes == 1)
@@ -144,7 +177,7 @@ UIManager:tickAfterNext(function()
                     if not done then return end
                     check(function()
                         assert(reads == initial_reads, "Unchanged sidecars must use the cache")
-                        local settings = DocSettings:open(first)
+                        local settings = old_full_open(DocSettings, first)
                         settings:saveSetting("annotations", { item(3, "Changed note after refresh") })
                         settings:delSetting("annotations_rolling")
                         assert(settings:flush(nil, true))
@@ -212,6 +245,7 @@ UIManager:tickAfterNext(function()
                                         assert(read(root .. "/.notebooks/nbk") == "Untouched synthetic native notebook")
                                         assert(read(corrupt) == corrupt_bytes)
                                         Registry.openDocument, DocSettings.openSettingsFile, lfs.dir = old_open, old_read, old_dir
+                                        DocSettings.findSidecarFile, lfs.attributes, DocSettings.open = old_find, old_attributes, old_full_open
                                         assert(catalog_calls >= 4)
                                         ui:onClose()
                                         print("NOTEBOOK SUMMARY CHECK PASSED: real sidecars, memory annotations, bounded batches, cache invalidation, search, embedding, navigation and cancellation")
