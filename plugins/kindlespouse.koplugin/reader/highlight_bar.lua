@@ -4,6 +4,7 @@ local Device = require("device")
 local Patches = require("patches")
 local T = require("i18n").T
 local UIManager = require("ui/uimanager")
+local gettext = require("gettext")
 local Screen = Device.screen
 local Highlight = {}
 
@@ -79,18 +80,18 @@ function Highlight.install(ui)
         local dictionary = action(self, "06_dictionary", "reader.highlight.dictionary")
         if not note or not copy or not dictionary then return original(self, index) end
         closeDialog(self)
+        local choices = Screen:isColorScreen() and { "yellow", "blue", "purple", "orange" } or { false }
         local colors = {}
-        for _, color in ipairs({ "yellow", "blue", "purple", "orange" }) do
+        for _, color in ipairs(choices) do
             local name = color
             colors[#colors + 1] = {
-                id = "kindlespouse-color-" .. name,
-                text = T("reader.highlight." .. name),
-                background = Blitbuffer.colorFromName(name),
+                id = name and "kindlespouse-color-" .. name or "kindlespouse-highlight",
+                text = name and T("reader.highlight." .. name) or gettext("Highlight"),
+                background = name and Blitbuffer.colorFromName(name) or nil,
                 callback = function()
-                    closeDialog(self)
                     if self.selected_text ~= selected then return end
-                    selected.color = name
-                    selected.drawer = "lighten"
+                    closeDialog(self)
+                    if name then selected.color = name end
                     local saved = self:saveHighlight()
                     self:clear()
                     return saved
@@ -106,8 +107,9 @@ function Highlight.install(ui)
                 { note, copy, dictionary, {
                     id = "kindlespouse-highlight-more", text = T("reader.more"),
                     callback = function()
+                        if self.selected_text ~= selected then return end
                         closeDialog(self)
-                        if self.selected_text == selected then return original(self, nil) end
+                        return original(self, nil)
                     end,
                 } },
             },

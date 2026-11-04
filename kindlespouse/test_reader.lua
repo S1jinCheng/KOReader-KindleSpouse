@@ -85,27 +85,79 @@ local function highlights(ui)
     G_reader_settings:saveSetting("kindlespouse_reader", true)
     migrated = Highlight.settings()
     assert(migrated.schema == 1 and migrated.highlight_bar and migrated.reader_bar)
+    local color_screen = os.getenv("KINDLESPOUSE_READER_SCREEN") == "color"
+    assert(Screen:isColorScreen() == color_screen, "Profile must exercise the real screen capability API")
+    assert(not Screen:isColorEnabled(), "Screen capability must be independent of color rendering settings")
+    local global_drawer = G_reader_settings:readSetting("highlight_drawing_style")
+    local global_color = G_reader_settings:readSetting("highlight_color")
     local before = #ui.annotation.annotations
-    highlight.view.highlight.saved_drawer = "invert"
-    select(ui)
-    local dialog = assert(highlight.highlight_dialog)
-    assert(dialog.kindlespouse_highlight_bar)
-    paint(dialog, "highlight")
-    local rectangle = dialog:getContentSize()
-    assert(rectangle.x >= 0 and rectangle.y >= 0 and rectangle.x + rectangle.w <= Screen:getWidth() and rectangle.y + rectangle.h <= Screen:getHeight())
-    local yellow = assert(dialog:getButtonById("kindlespouse-color-yellow"))
-    tap(dialog, yellow)
-    assert(#ui.annotation.annotations == before + 1)
-    assert(ui.annotation.annotations[#ui.annotation.annotations].color == "yellow")
-    assert(ui.annotation.annotations[#ui.annotation.annotations].drawer == "lighten")
-    assert(highlight.selected_text == nil and highlight.highlight_dialog == nil)
-    yellow.callback()
-    assert(#ui.annotation.annotations == before + 1, "Repeated stale action must not save twice")
-    select(ui)
-    local purple_dialog = assert(highlight.highlight_dialog)
-    paint(purple_dialog, "highlight-purple")
-    tap(purple_dialog, purple_dialog:getButtonById("kindlespouse-color-purple"))
-    assert(ui.annotation.annotations[#ui.annotation.annotations].color == "purple")
+    local choices = color_screen and { "yellow", "blue", "purple", "orange" } or { false }
+    local stale
+    local function checkChoices(dialog)
+        assert(dialog.kindlespouse_highlight_bar)
+        assert(#dialog.buttons[1] == #choices)
+        assert((dialog:getButtonById("kindlespouse-highlight") ~= nil) == not color_screen)
+        for _, name in ipairs({ "yellow", "blue", "purple", "orange" }) do
+            assert((dialog:getButtonById("kindlespouse-color-" .. name) ~= nil) == color_screen)
+        end
+        if not color_screen then
+            assert(dialog:getButtonById("kindlespouse-highlight").text == require("gettext")("Highlight"))
+        end
+    end
+    local dialog
+    for _, drawer in ipairs({ "lighten", "underscore", "strikeout", "invert" }) do
+        highlight.view.highlight.saved_drawer = drawer
+        highlight.view.highlight.saved_color = "green"
+        for choice_index, color in ipairs(choices) do
+            select(ui)
+            dialog = assert(highlight.highlight_dialog)
+            checkChoices(dialog)
+            if stale then
+                local count = #ui.annotation.annotations
+                stale()
+                assert(highlight.highlight_dialog == dialog and highlight.selected_text)
+                assert(#ui.annotation.annotations == count, "Stale action must preserve a newer selection and dialog")
+            end
+            paint(dialog, "highlight-" .. (color or "monochrome") .. "-" .. drawer)
+            local rectangle = dialog:getContentSize()
+            assert(rectangle.x >= 0 and rectangle.y >= 0 and rectangle.x + rectangle.w <= Screen:getWidth() and rectangle.y + rectangle.h <= Screen:getHeight())
+            local button = assert(dialog:getButtonById(color and "kindlespouse-color-" .. color or "kindlespouse-highlight"))
+            local count = #ui.annotation.annotations
+            local index
+            if count == before then
+                tap(dialog, button)
+                index = #ui.annotation.annotations
+            else
+                index = dialog.buttons[1][choice_index].callback()
+            end
+            assert(#ui.annotation.annotations == count + 1)
+            local annotation = assert(ui.annotation.annotations[index], "Action must return the upstream annotation index")
+            assert(annotation.color == (color or "green") and annotation.drawer == drawer)
+            assert(highlight.selected_text == nil and highlight.highlight_dialog == nil)
+            assert(highlight.view.highlight.saved_drawer == drawer and highlight.view.highlight.saved_color == "green")
+            assert(G_reader_settings:readSetting("highlight_drawing_style") == global_drawer)
+            assert(G_reader_settings:readSetting("highlight_color") == global_color)
+            stale = button.callback
+            stale()
+            assert(#ui.annotation.annotations == count + 1, "Repeated stale action must not save twice")
+        end
+    end
+    highlight.view.highlight.saved_drawer = "underscore"
+    for choice_index, color in ipairs(choices) do
+        local selection = select(ui)
+        selection.drawer = "strikeout"
+        selection.color = "orange"
+        dialog = assert(highlight.highlight_dialog)
+        local index = dialog.buttons[1][choice_index].callback()
+        assert(ui.annotation.annotations[index].drawer == "strikeout", "Selection-specific drawer must override saved drawer")
+        assert(ui.annotation.annotations[index].color == (color or "orange"))
+        assert(highlight.view.highlight.saved_drawer == "underscore" and highlight.view.highlight.saved_color == "green")
+    end
+    assert(#ui.annotation.annotations == before + #choices * 5)
+    local expected = {}
+    for index, annotation in ipairs(ui.annotation.annotations) do
+        expected[index] = { color = annotation.color, drawer = annotation.drawer }
+    end
     highlight:addToHighlightDialog("99_synthetic_thirdparty", function()
         return { text = "Synthetic third-party action", callback = function() end }
     end)
@@ -125,12 +177,31 @@ local function highlights(ui)
     paint(stock, "highlight-stock-more")
     highlight:onClose()
     highlight:removeFromHighlightDialog("99_synthetic_thirdparty")
+    local selected_for_stale_more = select(ui)
+    local stale_more_dialog = assert(highlight.highlight_dialog)
+    local stale_more = stale_more_dialog:getButtonById("kindlespouse-highlight-more").callback
+    highlight:onClose()
+    select(ui)
+    dialog = assert(highlight.highlight_dialog)
+    assert(highlight.selected_text ~= selected_for_stale_more)
+    stale_more()
+    assert(highlight.highlight_dialog == dialog and dialog.kindlespouse_highlight_bar)
+    highlight:onSetDimensions({ w = Screen:getWidth(), h = Screen:getHeight() })
+    assert(highlight.highlight_dialog == nil and highlight.selected_text == nil)
+    select(ui)
+    dialog = assert(highlight.highlight_dialog)
+    dialog.tap_close_callback()
+    UIManager:close(dialog)
+    assert(highlight.highlight_dialog == nil and highlight.selected_text == nil)
+    select(ui)
     Highlight.uninstall(ui)
+    assert(highlight.highlight_dialog == nil and highlight.selected_text == nil)
     assert(highlight.onShowHighlightMenu == original)
     G_reader_settings:saveSetting("kindlespouse_reader", { highlight_bar = false })
     assert(not Highlight.install(ui))
     G_reader_settings:saveSetting("kindlespouse_reader", {})
-    print("READER CHECK highlight: real selection, yellow and purple annotations, stale callback, More and original restoration passed")
+    print("READER CHECK highlight: " .. (color_screen and "color" or "monochrome") .. ", all drawer styles, per-selection overrides, defaults, stale callbacks, More, third-party builders and lifecycle passed")
+    return expected
 end
 
 local function readerBar(ui)
@@ -233,13 +304,19 @@ UIManager:tickAfterNext(function()
                 require("reader/init").uninstall(ui)
             end
             local filename = ui.document.file
-            if feature ~= "reader" then highlights(ui) end
+            local expected
+            if feature ~= "reader" then expected = highlights(ui) end
             if feature ~= "highlight" then readerBar(ui) end
             if feature == "highlight" then ui:onClose() end
             if feature ~= "reader" then
-                local saved = require("docsettings"):open(filename):readSetting("annotations")
-                assert(type(saved) == "table" and #saved == 2)
-                assert(saved[1].color == "yellow" and saved[2].color == "purple")
+                local settings = require("docsettings"):open(filename)
+                local saved = settings:readSetting("annotations")
+                assert(type(saved) == "table" and #saved == #expected)
+                for index, annotation in ipairs(saved) do
+                    assert(annotation.color == expected[index].color and annotation.drawer == expected[index].drawer, "Persisted annotations must retain drawer and color")
+                end
+                assert(settings:readSetting("highlight_drawer") == "underscore" and settings:readSetting("highlight_color") == "green")
+                print("READER CHECK persisted: " .. #saved .. " annotation drawers and colors plus document defaults passed")
             end
             print("READER CHECK PASSED " .. feature)
         end, debug.traceback)
