@@ -42,6 +42,11 @@ jobs:
         run: |
           python3 kindlespouse/test_plugin.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --test annotation
           python3 kindlespouse/test_plugin.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --test patches
+      - name: Verify scheduler and launcher contracts
+        run: |
+          python3 kindlespouse/test_plugin.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --test scheduler
+          python3 kindlespouse/test_plugin.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --test launcher
+          python3 kindlespouse/test_plugin.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --test scheduler_integration
       - name: Verify 500-book asynchronous catalog
         run: python3 kindlespouse/test_catalog.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader
       - name: Verify native home and Chinese fonts
