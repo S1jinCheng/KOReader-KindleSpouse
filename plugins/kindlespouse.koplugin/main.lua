@@ -5,6 +5,7 @@ local Notification = require("ui/widget/notification")
 local NetworkMgr = require("ui/network/manager")
 local lfs = require("libs/libkoreader-lfs")
 local json = require("json")
+local logger = require("logger")
 
 local directory = "/mnt/us/kindlespouse/"
 local stages = {
@@ -261,18 +262,33 @@ function Companion:applySleepProfile()
     local profile = readJSON("sleep-profile.json")
     if not profile or type(profile.revision) ~= "string" or profile.version ~= 1 then return end
     if G_reader_settings:readSetting("kindlespouse_sleep_revision") == profile.revision then return end
-    self:setSleepCover(profile.enabled)
+    self.sleep_cover_requested = profile.enabled
+    if self:setSleepCover(profile.enabled) == false then return end
     G_reader_settings:saveSetting("kindlespouse_sleep_revision", profile.revision)
     self:prepareSleepCover()
 end
 
+function Companion:sleepPreset()
+    local ok, preset = pcall(require, "spouse_preset")
+    if not ok or type(preset) ~= "table" or type(preset.prepare) ~= "function" then
+        if not Companion.preset_missing then logger.warn("KindleSpouse:", "sleep cover preset is not installed") end
+        Companion.preset_missing = true
+        return
+    end
+    Companion.preset_missing = false
+    return preset
+end
+
 function Companion:prepareSleepCover()
+    local preset = self:sleepPreset()
+    if not preset then return end
     UIManager:scheduleIn(0.5, function()
-        pcall(function()
-            local preset = require("spouse_preset")
-            local reader = require("apps/reader/readerui").instance
-            if reader and reader.document then preset.prepare(reader) end
-        end)
+        local reader = package.loaded["apps/reader/readerui"]
+        reader = reader and reader.instance
+        if reader and reader.document then
+            local ok, error = pcall(preset.prepare, reader)
+            if not ok then logger.warn("KindleSpouse:", "sleep cover preparation failed", tostring(error)) end
+        end
     end)
 end
 
@@ -284,6 +300,7 @@ end
 function Companion:setSleepCover(enabled)
     local current = G_reader_settings:readSetting("screensaver_type")
     if enabled then
+        if not self:sleepPreset() then return false end
         if current ~= "customisable_ss" then G_reader_settings:saveSetting("kindlespouse_previous_screensaver", current or "cover") end
         G_reader_settings:saveSetting("screensaver_type", "customisable_ss")
     elseif current == "customisable_ss" then
@@ -292,10 +309,12 @@ function Companion:setSleepCover(enabled)
 end
 
 function Companion:applyAnnotations()
-    local ok, count = pcall(function() return require("annotation_apply").run(directory) end)
+    local ok, count, retry = pcall(function() return require("annotation_apply").run(directory) end)
+    if not ok then logger.warn("KindleSpouse:", "annotation queue failed", tostring(count)) end
     if ok and count > 0 then
         self:queueAutomaticSync(15)
         UIManager:scheduleIn(0.5, function() self:applyAnnotations() end)
+    elseif ok and retry then UIManager:scheduleIn(30, function() self:applyAnnotations() end)
     end
 end
 
@@ -387,7 +406,9 @@ function Companion:showStatus()
     local function text()
         local progress = self:status()
         local hint = progress.state == "running" and "Sync continues in the background. " or ""
-        return self:summary(progress) .. "\n\n" .. hint .. "Tap to return to reading."
+        local cover = Companion.preset_missing and (self.sleep_cover_requested or G_reader_settings and G_reader_settings:readSetting("screensaver_type") == "customisable_ss")
+            and "\n\n休眠封面组件未安装，请在桌面端重新配对" or ""
+        return self:summary(progress) .. cover .. "\n\n" .. hint .. "Tap to return to reading."
     end
     dialog = InfoMessage:new {
         text = text(), show_icon = false,
