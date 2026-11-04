@@ -90,10 +90,12 @@ local function history()
     return recent
 end
 
-local function reading(entry, recent)
-    local info = BookList.getBookInfo(entry.path)
-    entry.status = info.been_opened and (info.status or "reading") or "new"
-    entry.progress = info.percent_finished or 0
+local function reading(entry, recent, cached_only)
+    local info = cached_only and BookList.book_info_cache[entry.path] or not cached_only and BookList.getBookInfo(entry.path)
+    if info then
+        entry.status = info.been_opened and (info.status or "reading") or "new"
+        entry.progress = info.percent_finished or 0
+    end
     entry.recent = recent[entry.path] or 0
 end
 
@@ -175,6 +177,8 @@ local function record(state, filepath, attr, recent, pending)
     local previous = Catalog.books[filepath]
     local changed = not previous or previous.size ~= attr.size or previous.mtime ~= attr.modification
     local entry = previous or { path = filepath, added = attr.change or os.time() }
+    state.canonical_root = state.canonical_root or require("ffi/util").realpath(state.root) or state.root
+    entry.canonical = state.canonical_root .. filepath:sub(#state.root + 1)
     entry.name = filename(filepath)
     entry.format = filepath:lower():match("%.([^.]+)$") or ""
     entry.source = source(filepath, state.root)
@@ -314,12 +318,18 @@ end
 function Catalog.items(chooser)
     local state = selectRoot(chooser.path)
     local result, recent = {}, history()
-    local collate = chooser:getCollate()
     for _, entry in ipairs(Catalog.records(state.root)) do
-        reading(entry, recent)
+        reading(entry, recent, true)
         local attr = { mode = "file", size = entry.size, modification = entry.mtime, change = entry.added }
-        local directory = entry.path:match("^(.*)/[^/]+$")
-        local item = chooser:getListItem(directory, entry.name, entry.path, attr, collate)
+        local opened = entry.status ~= "new"
+        local preference = G_reader_settings:readSetting("show_file_in_bold")
+        local bold = preference ~= false and not opened
+        if preference == "opened" then bold = opened end
+        local item = { text = entry.name, path = entry.path, attr = attr, is_file = true,
+            opened = opened, bold = bold,
+            bidi_wrap_func = require("ui/bidi").filename,
+            dim = chooser.ui and chooser.ui.selected_files and chooser.ui.selected_files[entry.path],
+            mandatory = require("util").getFriendlySize(entry.size or 0) }
         local data = {}
         for name, value in pairs(entry) do data[name] = value end
         data.author = entry.author ~= "" and entry.author or "未提供作者"

@@ -17,6 +17,8 @@ function Home.navigationHeight()
 end
 
 function Home.books(chooser, root)
+    root = Home.root(chooser.ui) or root
+    chooser.path = root
     Catalog.attachBookInfo(chooser.ui.bookinfo)
     Catalog.ensure(root)
     local items = Catalog.items(chooser)
@@ -28,8 +30,8 @@ function Home.observeCatalog(ui)
     if ui.kindlespouse_catalog_task then return end
     ui.kindlespouse_catalog_task = function()
         if ui.kindlespouse_patched and Home.enabled() and ui.file_chooser then
-            ui:reinit(ui.file_chooser.path)
-            UIManager:setDirty(ui, "ui")
+            if ui.kindlespouse_shelf then ui.kindlespouse_shelf:setScanning(nil) end
+            Library.refresh(ui, {})
         end
     end
     Catalog.attachBookInfo(ui.bookinfo)
@@ -197,6 +199,7 @@ function Home.layout(ui, companion)
         ui.kindlespouse_shelf = require("shelf").library(ui, height)
         ui.cropping_widget = ui.kindlespouse_shelf
         body = VerticalGroup:new { align = "left", header, toolbar, ui.kindlespouse_shelf }
+        ui.kindlespouse_library_group = body
     end
     local navigation = HorizontalGroup:new { align = "center" }
     for index, tab in ipairs({ "Library", "Notebook" }) do
@@ -263,6 +266,7 @@ function Home.install(companion)
     if ui.kindlespouse_patched then return end
     ui.kindlespouse_patched = true
     Home.observeCatalog(ui)
+    Home.trackFiles(ui)
     Home.patchChooser()
     Patches.wrap(Patches.scope(ui) .. "layout", ui, "setupLayout", function(original, manager)
         Home.releaseChooser(manager.file_chooser)
@@ -273,7 +277,7 @@ function Home.install(companion)
             manager.file_chooser = nil
             local mode = G_reader_settings:readSetting("kindlespouse_home_previous_mode") or nil
             if Home.enabled() then mode = nil end
-            manager.coverbrowser:setDisplayMode(mode)
+            if require("bookinfomanager"):getSetting("filemanager_display_mode") ~= mode then manager.coverbrowser:setDisplayMode(mode) end
             manager.file_chooser = chooser
         end
         if Home.enabled() then manager.root_path = Home.root(manager) end
@@ -299,6 +303,46 @@ function Home.install(companion)
             Home.prepare(ui)
             ui:reinit(Home.root(ui))
         end
+    end)
+end
+
+function Home.rebuild(ui)
+    ui:reinit(ui.file_chooser.path)
+    UIManager:setDirty(ui, "ui", ui.dimen)
+end
+
+function Home.refreshFiles(ui)
+    Catalog.rescan(Home.root(ui))
+end
+
+function Home.trackFiles(ui)
+    for _, name in ipairs({ "moveFile", "copyFileFromTo", "copyRecursive" }) do
+        Patches.wrap(Patches.scope(ui) .. "file:" .. name, ui, name, function(original, manager, from, to)
+            local mode = lfs.attributes(from, "mode")
+            local ok = original(manager, from, to)
+            if ok then
+                if mode == "directory" then Home.refreshFiles(manager)
+                else
+                    if name == "moveFile" then Catalog.remove(from) end
+                    Catalog.add(to)
+                end
+            end
+            return ok
+        end)
+    end
+    Patches.wrap(Patches.scope(ui) .. "file:delete", ui, "deleteFile", function(original, manager, file, is_file)
+        local ok = original(manager, file, is_file)
+        if ok then
+            if is_file then Catalog.remove(file) else Home.refreshFiles(manager) end
+        end
+        return ok
+    end)
+    Patches.wrap(Patches.scope(ui) .. "file:deleteSelected", ui, "deleteSelectedFiles", function(original, manager, ...)
+        local files = {}
+        for file in pairs(manager.selected_files or {}) do files[#files+1] = file end
+        local result = original(manager, ...)
+        for _, file in ipairs(files) do if not lfs.attributes(file, "mode") then Catalog.remove(file) end end
+        return result
     end)
 end
 
