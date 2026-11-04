@@ -42,6 +42,8 @@ jobs:
         run: |
           python3 kindlespouse/test_plugin.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --test annotation
           python3 kindlespouse/test_plugin.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --test patches
+      - name: Verify compact highlight actions
+        run: python3 kindlespouse/test_reader.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --fonts kindlespouse/build/cache --feature highlight --integrated
       - name: Verify compatibility and lifecycle fallback
         run: |
           python3 kindlespouse/test_plugin.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --test main_lifecycle

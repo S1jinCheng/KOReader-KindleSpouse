@@ -14,7 +14,7 @@ Integration base: codex/improvement-baseline-v1. The existing notebook experimen
 | 07 | P2 shared event scheduler | Verified 19 scenarios, launcher/integration and real 600-second idle; device pending |
 | 08 | P2 localized menus and status dialog | Verified 251 translation keys, native dialogs and loaded plugin in EN/ZH; device pending |
 | 09 | P4 version guard and main module split | Verified lifecycle/version/rollback and extracted package; device pending |
-| 10 | P3 highlight bar | Pending |
+| 10 | P3 highlight bar | Verified real selections, saved annotations, More/restoration and automatic plugin wiring; device pending |
 | 11 | P3 reader toolbar | Pending |
 | 12 | P3 annotation notebook and navigation | Pending |
 
