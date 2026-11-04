@@ -41,8 +41,8 @@ function Library.matches(item, settings)
     if settings.format ~= "" and data.format ~= settings.format then return false end
     if settings.author ~= "" and data.author ~= settings.author then return false end
     if settings.source ~= "" and data.source ~= settings.source then return false end
-    if settings.collection ~= "" and not ReadCollection:isFileInCollection(item.path, settings.collection) then return false end
-    if settings.shelf == "favorites" then return ReadCollection:isFileInCollection(item.path, ReadCollection.default_collection_name) end
+    if settings.collection ~= "" and (ReadCollection.coll[settings.collection] or {})[data.canonical or item.path] == nil then return false end
+    if settings.shelf == "favorites" then return (ReadCollection.coll[ReadCollection.default_collection_name] or {})[data.canonical or item.path] ~= nil end
     if settings.shelf == "complete" then return data.status == "complete" or data.progress >= 0.98 end
     if settings.shelf == "reading" then return data.status == "reading" and data.progress < 0.98 end
     if settings.shelf == "new" then return data.status == "new" end
@@ -65,12 +65,38 @@ function Library.apply(items, settings)
     return result
 end
 
+function Library.updateSearch(ui)
+    if not ui.kindlespouse_search_label then return end
+    local notebook = ui.kindlespouse_tab == "Notebook"
+    local query = notebook and (ui.kindlespouse_notebook_query or "") or Library.settings().query
+    ui.kindlespouse_search_label:setText(query ~= "" and query or (notebook and "搜索笔记本" or "搜索 Kindle"))
+    UIManager:setDirty(ui, "ui", ui.kindlespouse_search.dimen)
+end
+
+function Library.updateToolbar(ui)
+    local group = ui.kindlespouse_library_group
+    if not group then return end
+    local previous = group[2]
+    local region = require("ui/geometry"):new { x = 0, y = group[1]:getSize().h, w = Screen:getWidth(), h = previous:getSize().h }
+    group[2] = Library.toolbar(ui)
+    group:resetLayout()
+    previous:free()
+    UIManager:setDirty(ui, "ui", region)
+end
+
 function Library.refresh(ui, changes)
     local settings = Library.settings()
+    local old_view = settings.view
     for name, value in pairs(changes) do settings[name] = value end
     Library.save(settings)
-    ui:reinit(ui.file_chooser.path)
-    UIManager:setDirty(ui, "ui")
+    if settings.view ~= old_view then return require("home").rebuild(ui) end
+    local chooser = ui.file_chooser
+    local items = require("home").books(chooser, chooser.path)
+    chooser.item_table = items
+    if ui.kindlespouse_shelf then ui.kindlespouse_shelf:setItems(items) end
+    Library.updateToolbar(ui)
+    Library.updateSearch(ui)
+    if ui.title_bar then ui.title_bar:setSubTitle(require("home").count(ui)) end
 end
 
 function Library.choose(ui, title, options, select)

@@ -179,7 +179,17 @@ end
 function Shelf:refreshCards()
     if self.closed then return end
     self[1]:free()
-    UIManager:setDirty(self.show_parent, "ui")
+    UIManager:setDirty(self.show_parent, "ui", self.dimen)
+end
+
+function Shelf:setItems(items)
+    local offset = self:getScrolledOffset()
+    self[1]:free()
+    self.items = items
+    self[1].dimen.h = math.max(self.dimen.h, math.ceil(#items / self.columns) * self.row_h)
+    self:reset()
+    self:setScrolledOffset(offset)
+    UIManager:setDirty(self.show_parent, "ui", self.dimen)
 end
 
 function Shelf:setScrolledOffset(offset)

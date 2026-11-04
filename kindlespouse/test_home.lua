@@ -51,6 +51,9 @@ UIManager:scheduleIn(3, function() check(function()
     assert(#navigation == 2 and navigation[1].text == "Library" and navigation[2].text == "Notebooks")
     assert(ui.title_bar.right_icon_tap_callback and ui.title_bar.left_icon_tap_callback)
     local FileChooser = require("ui/widget/filechooser")
+    local original_shelf = ui.kindlespouse_shelf
+    local original_reinit, rebuilds = ui.reinit, 0
+    ui.reinit = function(manager, ...) rebuilds = rebuilds + 1; return original_reinit(manager, ...) end
     local previous_filter = FileChooser.show_filter
     FileChooser.show_filter = { status = { reading = true } }
     Library.refresh(ui, { shelf = "all" })
@@ -124,6 +127,7 @@ UIManager:scheduleIn(3, function() check(function()
     assert(#ui.file_chooser.item_table == 8 and Library.settings().shelf == "all")
     Library.refresh(ui, { shelf = "all", sort = "progress" })
     assert(ui.file_chooser.item_table[1].path == files[2].path)
+    assert(rebuilds == 0 and ui.kindlespouse_shelf == original_shelf, "Filtering and sorting must preserve the shelf without reinit")
     Library.refresh(ui, { sort = "title", view = "list" })
     assert(ui.kindlespouse_shelf.list_view and ui.kindlespouse_shelf.columns == 1)
     assert(ui[1]:getSize().h <= Screen:getHeight())

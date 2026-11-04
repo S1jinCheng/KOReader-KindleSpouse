@@ -46,6 +46,8 @@ jobs:
         run: python3 kindlespouse/test_catalog.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader
       - name: Verify native home and Chinese fonts
         run: python3 kindlespouse/test_home.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader
+      - name: Verify 500-book local shelf and reader return
+        run: python3 kindlespouse/test_home.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --scale
       - uses: actions/upload-artifact@v7
         with:
           name: KindleSpouse-Scribe-Preview
@@ -54,5 +56,6 @@ jobs:
             kindlespouse/build/KindleSpouse-Scribe-Overlay.zip.sha256
             kindlespouse/build/artifacts/*.png
             kindlespouse/build/test/runtime.log
+            kindlespouse/build/test500/runtime.log
             kindlespouse/build/checks/**/runtime.log
           if-no-files-found: error
