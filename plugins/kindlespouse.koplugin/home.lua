@@ -514,7 +514,7 @@ local function install(companion)
     ui.kindlespouse_post_init_callback = function()
         ui.kindlespouse_post_init_running = true
         Home.safe(ui, function()
-            if Home.enabled() then Home.prepare(ui); ui:reinit(Home.root(ui)) end
+            if Home.enabled() and not ui.kindlespouse_content then Home.prepare(ui); ui:reinit(Home.root(ui)) end
         end)
         ui.kindlespouse_post_init_running = nil
         ui.kindlespouse_post_init_callback = nil
