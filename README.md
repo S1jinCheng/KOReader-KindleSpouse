@@ -4,6 +4,8 @@ KindleSpouse edition for first-generation Kindle Scribe, based on KOReader v2026
 
 [中文说明与安装](kindlespouse/README.zh-CN.md) · [Releases](https://github.com/S1jinCheng/KOReader-KindleSpouse/releases) · [KindleSpouse desktop](https://github.com/S1jinCheng/KindleSpouse)
 
+Verified runtime support is currently limited to official v2026.07.1. The v2026.07.2 tag has no official AppImage asset and remains unverified; its UI is not enabled in the version guard. See [runtime verification](kindlespouse/README.zh-CN.md#运行时版本验收).
+
 This is an independent preview fork. Native Scribe handwriting remains in the Kindle system; the Notebook tab offers a normal exit, followed by selecting Kindle's Notebooks tab. The downloadable overlay requires an existing official KOReader installation.
 
 [![KOReader](https://raw.githubusercontent.com/koreader/koreader.github.io/master/koreader-logo.png)](https://koreader.rocks)
