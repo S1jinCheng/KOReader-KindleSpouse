@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "finished_at": "2026-11-04T07:04:58Z",
+  "launch_count": 1,
+  "real_uimanager": true,
+  "synthetic_worker": true,
+  "active": false,
+  "started_at": "2026-11-04T06:54:58Z",
+  "launches": [
+    {
+      "mode": "full",
+      "manual": false,
+      "elapsed_seconds": 1.000536
+    }
+  ],
+  "elapsed_seconds": 600.405306,
+  "requested_seconds": 600,
+  "fake_clock": false,
+  "network_used": false,
+  "runner_elapsed_seconds": 601.9474436529999,
+  "runtime_luajit_sha256": "d45e2e20df501f0aabc2eb55c5e6138090d48bae423d4de87ac3df113e8eee3c"
+}
