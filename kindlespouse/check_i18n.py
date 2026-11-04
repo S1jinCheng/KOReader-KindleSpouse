@@ -64,7 +64,8 @@ def inspect(source):
                 chinese = re.search(r'[\u3400-\u9fff]', value) is not None
                 prose = re.search(r'\s', stripped) and len(re.findall(r'[A-Za-z]{2,}', stripped)) >= 2
                 label = field in visible_fields and re.search(r'^[A-Z]|\s+[A-Za-z]', stripped)
-                if chinese or prose or label:
+                shell_redirection = value == ' < /dev/null > /dev/null 2>&1 &' and field not in visible_fields
+                if (chinese or prose or label) and not shell_redirection:
                     literals.append(token)
         if value == '(':
             calls.append(call_name(values, index - 1))
@@ -79,6 +80,9 @@ def self_test():
     assert inspect('logger.warn("KindleSpouse:", "cannot read local JSON"); error("Unknown internal mode")')[0] == []
     assert inspect('text = T("sync_now"); title = T("notebook.summary")')[0] == []
     assert len(inspect('text = "同步状态"; notify("Connect Wi-Fi and retry")')[0]) == 2
+    assert inspect('local command = executable .. " < /dev/null > /dev/null 2>&1 &"')[0] == []
+    assert len(inspect('text = " < /dev/null > /dev/null 2>&1 &"')[0]) == 1
+    assert len(inspect('return false, "Cannot start sync"')[0]) == 1
     assert inspect('T("reader.highlight." .. color)')[1] == [('reader.highlight.', True, 1)]
 
 
@@ -120,7 +124,7 @@ def main():
     self_test()
     names = ['main.lua', 'home.lua', 'library.lua']
     if args.all_ui:
-        names += ['shelf.lua', 'profile.lua', 'catalog.lua']
+        names += ['shelf.lua', 'profile.lua', 'catalog.lua', 'launcher.lua', 'scheduler.lua']
     targets = args.files if args.files is not None else [plugin / name for name in names]
     failures = []
     for filename in targets:

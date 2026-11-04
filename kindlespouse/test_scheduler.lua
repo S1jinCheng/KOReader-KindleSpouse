@@ -1,4 +1,6 @@
 local root = assert(os.getenv("KINDLESPOUSE_TEST_ROOT"))
+package.path = root .. "/plugins/kindlespouse.koplugin/?.lua;" .. package.path
+local I18n = require("i18n")
 local filename = root .. "/plugins/kindlespouse.koplugin/scheduler.lua"
 local passed = 0
 
@@ -8,10 +10,11 @@ end
 
 local function fixture(options)
     options = options or {}
+    G_reader_settings = { readSetting = function() return options.language or "en" end }
     local clock = options.now or 10000
     local settings = { kindlespouse_last_sync = options.last_sync or clock, kindlespouse_sync_generation = 0 }
     local connected, reading, running = true, false, false
-    local pauses, tasks, launches, notices, files = {}, {}, {}, {}, {}
+    local pauses, tasks, launches, notices, files, warnings = {}, {}, {}, {}, {}, {}
     local sequence = 0
     local value = { state = "idle" }
     local host_seen
@@ -24,6 +27,7 @@ local function fixture(options)
         for index = #tasks, 1, -1 do if tasks[index].action == action then table.remove(tasks, index) end end
     end
     local deps = {
+        logger = { warn = function(...) warnings[#warnings + 1] = { ... } end },
         now = function() return clock end,
         read = function(key, default) if settings[key] == nil then return default end; return settings[key] end,
         save = function(key, item) settings[key] = item end,
@@ -58,7 +62,7 @@ local function fixture(options)
         return true
     end
     scheduler.configure(deps)
-    local env = { scheduler = scheduler, settings = settings, launches = launches, notices = notices, files = files, pauses = pauses, tasks = tasks, deps = deps }
+    local env = { scheduler = scheduler, settings = settings, launches = launches, notices = notices, warnings = warnings, files = files, pauses = pauses, tasks = tasks, deps = deps }
     function env.advance(seconds)
         local ending = clock + seconds
         local count = 0
@@ -458,6 +462,71 @@ check("automatic debounce cannot postpone an explicit manual request", function(
     env.advance(0)
     equal(#env.launches, 1)
     equal(env.launches[1].manual, true)
+end)
+
+check("scheduler failures remain visible and localized in both languages", function()
+    for _, locale in ipairs({ "en", "zh_CN" }) do
+        local function expect(env, key, raw)
+            local result = env.scheduler.snapshot().result
+            equal(result.state, "failed")
+            equal(result.error, I18n.T(key))
+            equal(env.notices[#env.notices].error, I18n.T(key))
+            equal(env.scheduler.snapshot().failures, 1)
+            assert(result.retryAt > env.time())
+            if raw then
+                assert(not result.error:find(raw, 1, true))
+                local warning = env.warnings[#env.warnings]
+                equal(warning[1], "KindleSpouse:")
+                assert(tostring(warning[3]):find(raw, 1, true))
+            end
+        end
+        local env = fixture({ language = locale, fail_launch = true })
+        env.scheduler.attach({})
+        env.scheduler.request("full", true)
+        env.advance(0)
+        expect(env, "scheduler_cannot_launch", "Generated launch failure")
+        env = fixture({ language = locale })
+        env.deps.reserve = function() error("Generated raw reserve failure") end
+        env.scheduler.attach({})
+        env.scheduler.request("full", true)
+        env.advance(0)
+        expect(env, "scheduler_reserved", "Generated raw reserve failure")
+        env = fixture({ language = locale })
+        env.deps.launch = function() error("Generated raw execute failure") end
+        env.scheduler.attach({})
+        env.scheduler.request("full", true)
+        env.advance(0)
+        expect(env, "scheduler_cannot_launch", "Generated raw execute failure")
+        env = fixture({ language = locale })
+        env.deps.launch = function() return false, I18n.T("launcher_reading_failed") end
+        env.scheduler.attach({})
+        env.scheduler.request("full", true)
+        env.advance(0)
+        expect(env, "launcher_reading_failed")
+        env = fixture({ language = locale, no_progress = true })
+        env.scheduler.attach({})
+        env.scheduler.request("full", true)
+        env.advance(20)
+        expect(env, "scheduler_timeout")
+        env = fixture({ language = locale, no_progress = true })
+        env.scheduler.attach({})
+        env.scheduler.request("full", true)
+        env.advance(0)
+        local stamp = env.time()
+        env.setProgress({ state = "running", mode = "full", startedAt = stamp, updatedAt = stamp }, true)
+        env.advance(1)
+        env.setProgress({ state = "idle" }, false)
+        env.advance(5)
+        expect(env, "scheduler_stopped")
+        env = fixture({ language = locale, no_progress = true })
+        env.scheduler.attach({})
+        env.scheduler.request("full", true)
+        env.advance(0)
+        stamp = env.time()
+        env.setProgress({ state = "failed", mode = "full", startedAt = stamp, error = "Generated raw worker failure" }, false)
+        env.advance(1)
+        expect(env, "scheduler_failed", "Generated raw worker failure")
+    end
 end)
 
 print("KindleSpouse scheduler acceptance passed: " .. passed .. " scenarios")
