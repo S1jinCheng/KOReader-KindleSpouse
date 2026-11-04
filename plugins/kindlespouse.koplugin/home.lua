@@ -5,6 +5,7 @@ local lfs = require("libs/libkoreader-lfs")
 local Screen = Device.screen
 local Home = {}
 local Library = require("library")
+local Patches = require("patches")
 
 function Home.enabled()
     return G_reader_settings:readSetting("kindlespouse_home") ~= false
@@ -41,13 +42,21 @@ function Home.books(chooser, root)
     return Library.apply(files, Library.settings())
 end
 
-local original_init = FileChooser.init
-function FileChooser:init()
-    if self.ui and self.ui.kindlespouse_home and Home.enabled() then
-        self.height = Screen:getHeight() - Home.navigationHeight()
-        self.genItemTableFromPath = function(chooser, root) return Home.books(chooser, root) end
-    end
-    original_init(self)
+function Home.patchChooser()
+    if Patches.applied["home:filechooser"] then return end
+    Patches.wrap("home:filechooser", FileChooser, "init", function(original, chooser, ...)
+        if chooser.ui and chooser.ui.kindlespouse_home and Home.enabled() then
+            chooser.height = Screen:getHeight() - Home.navigationHeight()
+            chooser.kindlespouse_patch = Patches.scope(chooser) .. "items"
+            Patches.wrap(chooser.kindlespouse_patch, chooser, "genItemTableFromPath", function(_, current, root) return Home.books(current, root) end)
+        end
+        return original(chooser, ...)
+    end)
+end
+Home.patchChooser()
+
+function Home.releaseChooser(chooser)
+    if chooser and chooser.kindlespouse_patch then Patches.revert(chooser.kindlespouse_patch) end
 end
 
 function Home.returnToKindle(companion)
@@ -165,6 +174,7 @@ function Home.layout(ui, companion)
     local Blitbuffer = require("ffi/blitbuffer")
     local center_width = Screen:scaleBySize(88)
     local side_width = math.floor((Screen:getWidth() - center_width) / 2)
+    Patches.revertPrefix(Patches.scope(ui) .. "render:")
     local selected = ui.kindlespouse_tab or "Library"
     if ui.kindlespouse_shelf then ui.kindlespouse_shelf:onCloseWidget(); ui.kindlespouse_shelf = nil end
     if ui.kindlespouse_recent then ui.kindlespouse_recent:free() end
@@ -205,37 +215,34 @@ function Home.layout(ui, companion)
     ui.kindlespouse_recent = navigation[2]
     for index, tab in ipairs({ "Library", "Notebook" }) do
         local button = navigation[index == 1 and 1 or 3]
-        local original_paint = button.paintTo
-        button.paintTo = function(widget, bb, x, y)
-            original_paint(widget, bb, x, y)
+        Patches.wrap(Patches.scope(ui) .. "render:tab" .. index, button, "paintTo", function(original, widget, bb, x, y)
+            original(widget, bb, x, y)
             if selected == tab then
                 local label = widget.label_widget:getSize()
                 bb:paintRect(x + math.floor((widget.width - label.w) / 2),
                     y + math.floor((widget.height + label.h) / 2) + Screen:scaleBySize(3), label.w, 2, Blitbuffer.COLOR_BLACK)
             end
-        end
+        end)
     end
-    local original_paint = navigation.paintTo
-    navigation.paintTo = function(widget, bb, x, y)
-        original_paint(widget, bb, x, y)
+    Patches.wrap(Patches.scope(ui) .. "render:navigation", navigation, "paintTo", function(original, widget, bb, x, y)
+        original(widget, bb, x, y)
         local gap = Screen:scaleBySize(46)
         local left = math.floor((Screen:getWidth() - gap) / 2)
         bb:paintRect(x, y, left, 1, Blitbuffer.COLOR_GRAY)
         bb:paintRect(x + left + gap, y, Screen:getWidth() - left - gap, 1, Blitbuffer.COLOR_GRAY)
-    end
+    end)
     ui[1] = FrameContainer:new {
         padding = 0, margin = 0, bordersize = 0, background = Blitbuffer.COLOR_WHITE,
         VerticalGroup:new { align = "left",
             LeftContainer:new { dimen = require("ui/geometry"):new { w = Screen:getWidth(), h = Screen:getHeight() - Home.navigationHeight() }, body },
             navigation },
     }
-    local original_propagate = ui[1].propagateEvent
-    ui[1].propagateEvent = function(widget, event)
+    Patches.wrap(Patches.scope(ui) .. "render:events", ui[1], "propagateEvent", function(original, widget, event)
         local gesture = event.handler == "onGesture" and event.args and event.args[1]
         if gesture and gesture.pos and (gesture.ges == "tap" or gesture.ges == "hold")
             and gesture.pos:intersectWith(ui.kindlespouse_recent.dimen) and ui.kindlespouse_recent:handleEvent(event) then return true end
-        return original_propagate(widget, event)
-    end
+        return original(widget, event)
+    end)
     ui.layout = {}
     for _, row in ipairs(focus or {}) do ui.layout[#ui.layout + 1] = row end
     ui.layout[#ui.layout + 1] = { navigation[1], navigation[3] }
@@ -250,8 +257,11 @@ function Home.install(companion)
     if ui.document then return end
     ui.kindlespouse_home = true
     ui.kindlespouse_tab = "Library"
-    local original_layout = ui.setupLayout
-    ui.setupLayout = function(manager)
+    if ui.kindlespouse_patched then return end
+    ui.kindlespouse_patched = true
+    Home.patchChooser()
+    Patches.wrap(Patches.scope(ui) .. "layout", ui, "setupLayout", function(original, manager)
+        Home.releaseChooser(manager.file_chooser)
         if manager.file_chooser and manager.file_chooser.onCloseWidget then manager.file_chooser:onCloseWidget() end
         if manager.coverbrowser and (Home.enabled() or G_reader_settings:readSetting("kindlespouse_home_saved")) then
             if Home.enabled() then Home.prepare(manager) end
@@ -263,23 +273,23 @@ function Home.install(companion)
             manager.file_chooser = chooser
         end
         if Home.enabled() then manager.root_path = Home.root(manager) end
-        original_layout(manager)
+        original(manager)
         if Home.enabled() then Home.layout(manager, companion) end
-    end
-    local original_home = ui.onHome
-    ui.onHome = function(manager)
-        if not Home.enabled() then return original_home(manager) end
+    end)
+    Patches.wrap(Patches.scope(ui) .. "home", ui, "onHome", function(original, manager)
+        if not Home.enabled() then return original(manager) end
         manager.kindlespouse_tab = "Library"
         manager:reinit(Home.root(manager))
         UIManager:setDirty(manager, "ui")
         return true
-    end
-    local original_path = ui.updateTitleBarPath
-    ui.updateTitleBarPath = function(manager, path)
-        if not Home.enabled() then return original_path(manager, path) end
+    end)
+    Patches.wrap(Patches.scope(ui) .. "title", ui, "updateTitleBarPath", function(original, manager, path)
+        if not Home.enabled() then return original(manager, path) end
         manager.title_bar:setSubTitle(manager.kindlespouse_tab == "Notebook" and "Kindle Scribe" or Home.count(manager))
-    end
-    ui.onPathChanged = ui.updateTitleBarPath
+    end)
+    Patches.wrap(Patches.scope(ui) .. "path", ui, "onPathChanged", function(_, manager, path) return manager:updateTitleBarPath(path) end)
+    if ui.kindlespouse_post_init_registered then return end
+    ui.kindlespouse_post_init_registered = true
     ui:registerPostInitCallback(function()
         if Home.enabled() then
             Home.prepare(ui)
@@ -326,17 +336,34 @@ function Home.prepareStart()
     G_reader_settings:saveSetting("start_with", "filemanager")
 end
 
+function Home.uninstall(ui)
+    Home.releaseChooser(ui.file_chooser)
+    Patches.revertPrefix(Patches.scope(ui))
+    ui.kindlespouse_patched = nil
+    ui.kindlespouse_home = nil
+end
+
 function Home.toggle(companion)
     local ui = companion.ui
-    if ui.kindlespouse_recent then ui.kindlespouse_recent:free(); ui.kindlespouse_recent = nil end
-    if ui.kindlespouse_shelf then ui.kindlespouse_shelf:onCloseWidget(); ui.kindlespouse_shelf = nil end
-    ui.cropping_widget = nil
     local enabled = not Home.enabled()
     G_reader_settings:saveSetting("kindlespouse_home", enabled)
     if enabled then
         Home.prepare(ui)
-    elseif G_reader_settings:readSetting("kindlespouse_home_saved") then
-        G_reader_settings:saveSetting("start_with", G_reader_settings:readSetting("kindlespouse_home_previous_start") or nil)
+        Home.install(companion)
+    else
+        if ui.kindlespouse_shelf then ui.kindlespouse_shelf:onCloseWidget(); ui.kindlespouse_shelf = nil end
+        if ui.cropping_widget then ui.cropping_widget = nil end
+        Home.uninstall(ui)
+        Patches.revert("home:filechooser")
+        if ui.coverbrowser then
+            local chooser = ui.file_chooser
+            ui.file_chooser = nil
+            ui.coverbrowser:setDisplayMode(G_reader_settings:readSetting("kindlespouse_home_previous_mode") or nil)
+            ui.file_chooser = chooser
+        end
+        if G_reader_settings:readSetting("kindlespouse_home_saved") then
+            G_reader_settings:saveSetting("start_with", G_reader_settings:readSetting("kindlespouse_home_previous_start") or nil)
+        end
     end
     ui.kindlespouse_tab = "Library"
     ui:reinit(Home.root(ui))

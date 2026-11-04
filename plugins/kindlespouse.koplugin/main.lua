@@ -517,6 +517,7 @@ function Companion:onCloseDocument()
 end
 
 function Companion:onCloseWidget()
+    if self.ui and not self.ui.document then require("home").uninstall(self.ui) end
     self.suspended = true
     if self.auto_receive_task then UIManager:unschedule(self.auto_receive_task) end
     if self.auto_sync_task then UIManager:unschedule(self.auto_sync_task) end
