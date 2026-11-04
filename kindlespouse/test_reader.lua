@@ -6,7 +6,7 @@ local Geom = require("ui/geometry")
 local Screen = Device.screen
 local project = assert(os.getenv("KINDLESPOUSE_TEST_ROOT"))
 local output = assert(os.getenv("KINDLESPOUSE_TEST_SANDBOX"))
-local feature = os.getenv("KINDLESPOUSE_READER_FEATURE") or "highlight"
+local feature = os.getenv("KINDLESPOUSE_READER_FEATURE") or "all"
 package.path = (os.getenv("KINDLESPOUSE_PLUGIN_DIR") or project .. "/plugins/kindlespouse.koplugin") .. "/?.lua;" .. package.path
 local translations = {
     ["reader.highlight.yellow"] = "Yellow", ["reader.highlight.blue"] = "Blue",
@@ -26,6 +26,8 @@ if not pcall(require, "i18n") then
 end
 local Patches = require("patches")
 local Highlight = require("reader/highlight_bar")
+local ReaderBar
+if feature ~= "highlight" then ReaderBar = require("reader/reader_bar") end
 Device.hasKeyboard = function() return false end
 Device.hasKeys = function() return false end
 
@@ -131,6 +133,94 @@ local function highlights(ui)
     print("READER CHECK highlight: real selection, yellow and purple annotations, stale callback, More and original restoration passed")
 end
 
+local function readerBar(ui)
+    local original = ui.menu.onTapShowMenu
+    assert(ReaderBar.install(ui))
+    assert(not ReaderBar.install(ui))
+    assert(not ReaderBar.install({ menu = {} }))
+    ui.menu.activation_menu = "swipe"
+    assert(ui.menu:onTapShowMenu({ pos = Geom:new { x = 10, y = 10 } }) == nil)
+    assert(not ui._kindlespouse_reader_bar.overlay)
+    ui.menu.activation_menu = "tap"
+    local function open()
+        assert(ui.menu:onTapShowMenu({ pos = Geom:new { x = Screen:getWidth() / 2, y = 10 } }))
+        local bar = assert(ui._kindlespouse_reader_bar.overlay)
+        paint(bar, "reader-bar")
+        return bar
+    end
+    local bar = open()
+    assert(bar.top_rect.h < Screen:getHeight() / 3 and bar.bottom_rect.h < Screen:getHeight() / 3)
+    if ui.statistics then
+        assert(bar.progress_text.text:find("left", 1, true), "Available statistics must supply remaining time")
+    else
+        assert(not bar.progress_text.text:find("left", 1, true), "Disabled statistics must not invent remaining time")
+    end
+    assert(bar.bottom:getSize().w == Screen:getWidth(), "Bottom panel must cover the stock footer without gaps")
+    bar:handleEvent(Event:new("Gesture", { ges = "tap", pos = Geom:new { x = 20, y = Screen:getHeight() / 2 } }))
+    assert(not ui._kindlespouse_reader_bar.overlay)
+    local counts = {}
+    local hooks = {
+        { "toc", ui.toc, "onShowToc" }, { "bookmarks", ui.bookmark, "onShowBookmark" },
+        { "search", ui.search, "onShowFulltextSearchInput" }, { "appearance", ui.config, "onShowConfigMenu" },
+        { "more", ui.menu, "onShowMenu" },
+    }
+    for _, hook in ipairs(hooks) do
+        local key, target, method = hook[1], hook[2], hook[3]
+        local upstream = assert(target[method])
+        target[method] = function(self, ...)
+            counts[key] = (counts[key] or 0) + 1
+            return upstream(self, ...)
+        end
+        bar = open()
+        tap(bar, bar.actions[key])
+        assert(counts[key] == 1 and not ui._kindlespouse_reader_bar.overlay)
+        if key == "more" then
+            assert(ui.menu.menu_container and ui.menu.menu_container[1])
+            paint(ui.menu.menu_container, "reader-stock-more")
+        end
+        closeAbove(ui)
+        target[method] = upstream
+    end
+    bar = open()
+    local rectangle = assert(bar.scrubber.dimen)
+    local function scrub(kind, ratio)
+        bar:handleEvent(Event:new("Gesture", { ges = kind, pos = Geom:new { x = rectangle.x + rectangle.w * ratio, y = rectangle.y + rectangle.h / 2 } }))
+    end
+    local first = ui.rolling.current_page
+    scrub("pan", 0.7)
+    assert(ui.rolling.current_page == first, "Pan previews progress before committing")
+    scrub("pan_release", 0.7)
+    assert(ui.rolling.current_page > first)
+    scrub("tap", 0.2)
+    assert(math.abs(ui.rolling:getLastPercent() - 0.2) < 0.1)
+    bar:close()
+    ReaderBar.uninstall(ui)
+    assert(ui.menu.onTapShowMenu == original)
+    G_reader_settings:saveSetting("kindlespouse_reader", { reader_bar = false })
+    assert(not ReaderBar.install(ui))
+    G_reader_settings:saveSetting("kindlespouse_reader", {})
+    local Reader = require("reader/init")
+    Reader.install(ui)
+    assert(ui._kindlespouse_reader_bar and ui._kindlespouse_highlight_bar)
+    G_reader_settings:saveSetting("kindlespouse_reader", { schema = 1, highlight_bar = false, reader_bar = true })
+    Reader.install(ui)
+    assert(ui._kindlespouse_reader_bar and not ui._kindlespouse_highlight_bar)
+    G_reader_settings:saveSetting("kindlespouse_reader", { schema = 1, highlight_bar = true, reader_bar = false })
+    Reader.install(ui)
+    assert(not ui._kindlespouse_reader_bar and ui._kindlespouse_highlight_bar)
+    G_reader_settings:saveSetting("kindlespouse_reader", true)
+    Reader.install(ui)
+    local back = ui.onHome
+    local called = 0
+    ui.onHome = function(self, ...) called = called + 1; return back(self, ...) end
+    bar = open()
+    tap(bar, bar.actions.library)
+    assert(called == 1)
+    assert(not ui._kindlespouse_reader_bar and not ui._kindlespouse_highlight_bar)
+    for id in pairs(Patches.applied) do assert(not id:find("reader:" .. tostring(ui) .. ":", 1, true)) end
+    print("READER CHECK bar: gesture condition, outside dismiss, real upstream hooks, drag/tap navigation and lifecycle restoration passed")
+end
+
 UIManager:tickAfterNext(function()
     UIManager:scheduleIn(2, function()
         local ok, error = xpcall(function()
@@ -139,13 +229,13 @@ UIManager:tickAfterNext(function()
             assert(ui.document.info.number_of_pages > 3, "Fixture must load the generated multi-page EPUB, never an error document")
             if os.getenv("KINDLESPOUSE_TEST_INTEGRATED") == "1" then
                 assert(ui._kindlespouse_highlight_bar, "Loaded plugin must install the highlight toolbar automatically")
-                Highlight.uninstall(ui)
-                local adapter = package.loaded["reader/init"]
-                if adapter then adapter.uninstall(ui) end
+                assert(ui._kindlespouse_reader_bar, "Loaded plugin must install the reader toolbar automatically")
+                require("reader/init").uninstall(ui)
             end
             local filename = ui.document.file
             if feature ~= "reader" then highlights(ui) end
-            ui:onClose()
+            if feature ~= "highlight" then readerBar(ui) end
+            if feature == "highlight" then ui:onClose() end
             if feature ~= "reader" then
                 local saved = require("docsettings"):open(filename):readSetting("annotations")
                 assert(type(saved) == "table" and #saved == 2)
