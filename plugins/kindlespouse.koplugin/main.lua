@@ -127,10 +127,24 @@ function Companion:guardPostInit(ui)
 end
 
 function Companion:installReaderExperience()
-    local reader = package.loaded["reader/init"] or package.loaded["reader.init"]
-    if type(reader) == "table" and type(reader.install) == "function" then
-        return Guard.install(self.ui, function() return reader.install(self.ui) end)
-    end
+    if not self.ui or not self.ui.document then return end
+    return Guard.install(self.ui, function()
+        local reader = package.loaded["reader/init"] or package.loaded["reader.init"]
+        if type(reader) == "table" and type(reader.install) == "function" then return reader.install(self.ui) end
+        local highlight = require("reader/highlight_bar")
+        if highlight.settings().highlight_bar then highlight.install(self.ui) else highlight.uninstall(self.ui) end
+    end)
+end
+
+function Companion:readerMenuItems()
+    local highlight = require("reader/highlight_bar")
+    return { { text = T("reader.highlight_bar"), checked_func = function() return highlight.settings().highlight_bar end,
+        callback = function()
+            local settings = highlight.settings()
+            settings.highlight_bar = not settings.highlight_bar
+            G_reader_settings:saveSetting("kindlespouse_reader", settings)
+            self:installReaderExperience()
+        end } }
 end
 
 function Companion:init()
