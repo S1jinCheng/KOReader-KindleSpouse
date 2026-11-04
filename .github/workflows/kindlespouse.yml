@@ -42,6 +42,8 @@ jobs:
         run: |
           python3 kindlespouse/test_plugin.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --test annotation
           python3 kindlespouse/test_plugin.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader --test patches
+      - name: Verify 500-book asynchronous catalog
+        run: python3 kindlespouse/test_catalog.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader
       - name: Verify native home and Chinese fonts
         run: python3 kindlespouse/test_home.py --runtime kindlespouse/build/runtime/squashfs-root/usr/lib/koreader
       - uses: actions/upload-artifact@v7

@@ -1,4 +1,5 @@
 import io
+import os
 import re
 import tokenize
 from pathlib import Path
@@ -32,14 +33,15 @@ def lua_comments(text):
     return False
 
 for folder in ('plugins/kindlespouse.koplugin', 'kindlespouse'):
-    for path in (root / folder).rglob('*'):
-        if not path.is_file() or 'build' in path.relative_to(root).parts:
-            continue
-        text = path.read_text(encoding='utf-8') if path.suffix in ('.lua', '.py') else ''
-        if path.suffix == '.lua' and lua_comments(text):
-            failures.append(str(path.relative_to(root)))
-        if path.suffix == '.py' and any(token.type == tokenize.COMMENT for token in tokenize.generate_tokens(io.StringIO(text).readline)):
-            failures.append(str(path.relative_to(root)))
+    for directory, directories, names in os.walk(root / folder, followlinks=False):
+        directories[:] = [name for name in directories if name not in ('build', '__pycache__')]
+        for name in names:
+            path = Path(directory) / name
+            text = path.read_text(encoding='utf-8') if path.suffix in ('.lua', '.py') else ''
+            if path.suffix == '.lua' and lua_comments(text):
+                failures.append(str(path.relative_to(root)))
+            if path.suffix == '.py' and any(token.type == tokenize.COMMENT for token in tokenize.generate_tokens(io.StringIO(text).readline)):
+                failures.append(str(path.relative_to(root)))
 if failures:
     print('Authored code comments are not allowed: ' + ', '.join(failures))
     raise SystemExit(1)

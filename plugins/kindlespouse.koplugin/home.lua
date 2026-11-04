@@ -6,6 +6,7 @@ local Screen = Device.screen
 local Home = {}
 local Library = require("library")
 local Patches = require("patches")
+local Catalog = require("catalog")
 
 function Home.enabled()
     return G_reader_settings:readSetting("kindlespouse_home") ~= false
@@ -16,30 +17,32 @@ function Home.navigationHeight()
 end
 
 function Home.books(chooser, root)
-    local files, visited = {}, {}
-    local collate = chooser:getCollate()
-    local history = {}
-    for _, item in ipairs(require("readhistory").hist) do history[item.file] = item.time end
-    local function visit(directory)
-        if visited[directory] then return end
-        visited[directory] = true
-        local ok, iterator, state = pcall(lfs.dir, directory)
-        if not ok then return end
-        for name in iterator, state do
-            if name:sub(1, 1) ~= "." and not name:match("%.sdr$") then
-                local filename = directory .. "/" .. name
-                local attr = lfs.symlinkattributes(filename)
-                if attr and attr.mode == "directory" and chooser:show_dir(name) then
-                    visit(filename)
-                elseif attr and attr.mode == "file" and require("document/documentregistry"):hasProvider(filename) then
-                    files[#files + 1] = Library.record(chooser.ui, chooser:getListItem(directory, name, filename, attr, collate), root, history)
-                end
-            end
+    Catalog.attachBookInfo(chooser.ui.bookinfo)
+    Catalog.ensure(root)
+    local items = Catalog.items(chooser)
+    chooser.ui.kindlespouse_catalog = items
+    return Library.apply(items, Library.settings())
+end
+
+function Home.observeCatalog(ui)
+    if ui.kindlespouse_catalog_task then return end
+    ui.kindlespouse_catalog_task = function()
+        if ui.kindlespouse_patched and Home.enabled() and ui.file_chooser then
+            ui:reinit(ui.file_chooser.path)
+            UIManager:setDirty(ui, "ui")
         end
     end
-    visit(root)
-    chooser.ui.kindlespouse_catalog = files
-    return Library.apply(files, Library.settings())
+    Catalog.attachBookInfo(ui.bookinfo)
+    Catalog.subscribe(ui, function(event)
+        if not ui.kindlespouse_patched or not Home.enabled() then return end
+        if event.scanning then
+            if ui.kindlespouse_shelf then ui.kindlespouse_shelf:setScanning(event.count or 0) end
+            if ui.title_bar then ui.title_bar:setSubTitle(string.format("正在整理书库…（已找到 %d 本）", event.count or 0)) end
+            return
+        end
+        UIManager:unschedule(ui.kindlespouse_catalog_task)
+        UIManager:scheduleIn(0.01, ui.kindlespouse_catalog_task)
+    end)
 end
 
 function Home.patchChooser()
@@ -259,6 +262,7 @@ function Home.install(companion)
     ui.kindlespouse_tab = "Library"
     if ui.kindlespouse_patched then return end
     ui.kindlespouse_patched = true
+    Home.observeCatalog(ui)
     Home.patchChooser()
     Patches.wrap(Patches.scope(ui) .. "layout", ui, "setupLayout", function(original, manager)
         Home.releaseChooser(manager.file_chooser)
@@ -337,6 +341,9 @@ function Home.prepareStart()
 end
 
 function Home.uninstall(ui)
+    Catalog.unsubscribe(ui)
+    if not next(Catalog.subscribers) and Catalog.root then Catalog.cancel(Catalog.root) end
+    if ui.kindlespouse_catalog_task then UIManager:unschedule(ui.kindlespouse_catalog_task); ui.kindlespouse_catalog_task = nil end
     Home.releaseChooser(ui.file_chooser)
     Patches.revertPrefix(Patches.scope(ui))
     ui.kindlespouse_patched = nil
