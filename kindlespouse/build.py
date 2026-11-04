@@ -45,9 +45,11 @@ for asset in manifest['assets']:
         shutil.copyfile(filename, destination)
 package = build / 'KindleSpouse-Scribe-Overlay.zip'
 with zipfile.ZipFile(package, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
-    for filename in sorted((root / 'plugins' / 'kindlespouse.koplugin').iterdir()):
-        if filename.is_file():
-            archive.write(filename, 'koreader/plugins/kindlespouse.koplugin/' + filename.name)
+    plugin = root / 'plugins' / 'kindlespouse.koplugin'
+    for filename in sorted(plugin.rglob('*')):
+        relative = filename.relative_to(plugin).as_posix()
+        if filename.is_file() and (filename.suffix == '.lua' or relative == 'LICENSE'):
+            archive.write(filename, 'koreader/plugins/kindlespouse.koplugin/' + relative)
     for asset in manifest['assets']:
         archive.write(cache / asset['filename'], asset['target'])
     archive.write(root / 'kindlespouse' / 'fonts.json', 'kindlespouse/licenses/reader-fonts/manifest.json')

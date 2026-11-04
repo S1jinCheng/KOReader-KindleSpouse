@@ -341,7 +341,7 @@ function Catalog.items(chooser)
     return result
 end
 
-local function change(filepath, kind)
+local function change(filepath, kind, refresh_metadata)
     load()
     local attr = lfs.symlinkattributes(filepath)
     if not attr or attr.mode ~= "file" or not DocumentRegistry:hasProvider(filepath) then
@@ -352,7 +352,15 @@ local function change(filepath, kind)
     for root, state in pairs(Catalog.roots) do
         if allowed(filepath, root) then
             local pending = {}
-            record(state, filepath, attr, recent, pending)
+            local entry = record(state, filepath, attr, recent, pending)
+            if refresh_metadata and bookinfo then
+                local props = bookinfo:getDocProps(filepath, nil, true)
+                if props and (props.title or props.authors) then
+                    entry.title = props.title or entry.title
+                    entry.author = props.authors or entry.author
+                    entry.meta_ready = true
+                end
+            end
             requestMetadata(state, pending)
             emit(kind, root)
         end
@@ -360,8 +368,8 @@ local function change(filepath, kind)
     saveLater()
 end
 
-function Catalog.touch(filepath)
-    change(filepath, "touch")
+function Catalog.touch(filepath, refresh_metadata)
+    change(filepath, "touch", refresh_metadata)
 end
 
 function Catalog.add(filepath)

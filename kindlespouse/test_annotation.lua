@@ -86,7 +86,7 @@ assert(not lfs.attributes(directory .. "annotation-jobs/" .. id(20) .. ".json"))
 local Device = require("device")
 require("document/canvascontext"):init(Device)
 local Companion = dofile(project .. "/plugins/kindlespouse.koplugin/main.lua")
-local host = setmetatable({}, { __index = Companion })
+local host = setmetatable({ directory = directory }, { __index = Companion })
 package.loaded.spouse_preset = nil
 package.preload.spouse_preset = function() error("fixture missing preset") end
 G_reader_settings:saveSetting("screensaver_type", "cover")

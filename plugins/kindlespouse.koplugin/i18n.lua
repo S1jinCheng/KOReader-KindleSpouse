@@ -1,5 +1,7 @@
 local I18n = { keys = {}, en = {}, zh = {} }
 local definitions = {
+    { "version.unsupported", "This KOReader version is not supported by the KindleSpouse interface. The original interface and synchronization remain available.", "当前 KOReader 版本暂不支持 KindleSpouse 界面。原有界面与同步功能仍可使用。" },
+    { "version.install_failed", "The KindleSpouse interface could not start and has been disabled. The original interface and synchronization remain available.", "KindleSpouse 界面未能启动，已停用。原有界面与同步功能仍可使用。" },
     { "device_scribe", "Kindle Scribe", "Kindle Scribe" },
     { "brand_kindlespouse", "KindleSpouse", "KindleSpouse" },
     { "brand_kindlespouse_prefix", "KindleSpouse · ", "KindleSpouse · " },

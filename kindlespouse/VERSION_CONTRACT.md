@@ -1,0 +1,34 @@
+# Interface version guard
+
+`require("version_guard")` loads the actual KOReader `version` module and the KindleSpouse patch registry. It does not load Home, ReaderUI, custom widgets or install any patch.
+
+`Guard.isSupported()` returns a boolean and the real `Version:getNormalizedCurrentVersion()` value. Only `202607010000`, the pinned v2026.07.1 value, is accepted. A nightly commit after that release, v2026.07.2, missing version metadata or a missing version API is unsupported. The tested upstream source is `9192014d8bd82a91dc1012473be0f238dedfdb54`.
+
+`Guard.run(fn, ...)` calls an interface installer only on the supported version. On success it returns `true` followed by all installer return values, including nil values. On failure it returns `false, reason` instead of throwing into the plugin initializer. `Guard.install(ui, fn)` calls the installer with that UI instance. `Guard.status()` reports `supported`, `disabled`, `version` and `reason`.
+
+An unsupported version or installer exception disables custom interface installation for the rest of the process. The guard reverses all registered KindleSpouse UI patches with reserved prefixes `home:`, `reader:`, `menu:`, `library:`, `notebook:`, `profile:` or `kindlespouse:`. Reversal runs in reverse registration order. Unrelated registry IDs remain active. A later wrapper installed by another plugin remains installed; the underlying KindleSpouse wrapper becomes inactive through the registry's existing revert behavior. The guard does not call `revertAll()` or change plugin, sync, pause or device settings.
+
+Disabled subsequent calls also reverse newly discovered owned patches. This handles an accidental auto-patching module import outside the guard. Parent integration must still remove Home's static `Home.patchChooser()` call and load or invoke UI patchers inside `Guard.run` or `Guard.install`. A guard cannot prevent arbitrary unregistered assignments performed by an imported module before its first check.
+
+On the first failure, logging uses the `KindleSpouse:` prefix. One stock information message is scheduled if UIManager is already loaded. The guard does not initialize UIManager merely to display a warning. A failure while displaying the notice or reversing a patch is logged without aborting the caller. Later failed calls produce no duplicate warning or scheduled notice.
+
+Synchronization initialization and scheduling belong outside the guarded installer. A disabled custom interface must not disable the Companion plugin. The guard protects synchronous patch installation; it does not turn later callback failures into another installation attempt, nor does it rerun upstream methods after failure.
+
+Translation keys for `require("i18n").T(key)`:
+
+- `version.unsupported`: English `This KOReader version is not supported by the KindleSpouse interface. The original interface and synchronization remain available.`; Chinese `当前 KOReader 版本暂不支持 KindleSpouse 界面。原有界面与同步功能仍可使用。`.
+- `version.install_failed`: English `The KindleSpouse interface could not start and has been disabled. The original interface and synchronization remain available.`; Chinese `KindleSpouse 界面未能启动，已停用。原有界面与同步功能仍可使用。`.
+
+Run `python3 kindlespouse/test_version_guard.py --runtime /path/to/koreader`. It uses the real pinned AppImage version parser, registry and scheduler. Tests cover exact normalization, supported installers, preserved return values, unsupported and unknown revisions, once-only logging and scheduling, missing upstream methods, installer exceptions, rollback of previous and partial owned patches, unrelated plugin wrappers, late auto-patches, skipped auto-patching requires and unchanged sync settings. The runner creates only an isolated KO_HOME.
+
+## Home integration
+
+Requiring Home does not install a FileChooser class patch. `Home.install` installs it only for a supported, enabled interface; the parent initializer must call Home installation inside `Guard.install`. `Home.enabled` consults guard support and disabled state without changing the saved Home option. An unsupported or disabled guard also makes `Home.toggle` a no-op.
+
+`Home.safe(ui, fn, ...)` runs Home-owned work through the guard and restores the existing native snapshot after failure. Setup preparation, custom layout creation, post-init, tab buttons, catalog notifications and scheduled catalog refreshes use this boundary. Partial synchronous Home installation cleans up before rethrowing to the parent's guard. Teardown isolates resource-release failures so later cleanup still runs.
+
+The setup wrapper calls its captured upstream setup exactly once, outside the guarded custom layout. After that call succeeds, Home records the native root widget, focus layout, cropping widget, chooser, title bar text and key events. Only then does it build the custom layout. FileChooser initialization similarly guards instance patch preparation and calls captured upstream initialization exactly once. If catalog projection fails, the captured native item generator runs once for that request. The shortened hidden-chooser height is assigned only after custom layout succeeds, preserving native fallback geometry.
+
+Failure cancels Home catalog callbacks, scan/extraction ownership and pending post-init work, releases both cached bodies, removes Home registry wrappers, and restores the captured widget, layout, cropping, chooser and title text without reinitializing FileManager. Stock operations may subsequently update the restored title normally. The guard warning and unrelated plugin wrappers or scheduled work remain independent. Rollback calls the captured native directory generator once if custom catalog projection previously replaced it, then rebuilds the native Menu items. A generator already used by native initialization or projection fallback is not repeated. The native root and layout objects retain identity, and the restored list shows real folders and files instead of the catalog's initial empty placeholder.
+
+Run `python3 kindlespouse/test_home_guard.py --runtime /path/to/koreader --fonts /path/to/fonts`. Ten separate real AppImage processes cover a supported eight-book library, unknown version, missing installation method, layout exception, missing layout method, post-init exception, chooser preparation exception, catalog projection exception, delayed tab exception and scheduled catalog exception. Checks cover exact restoration at the rollback boundary, once-only upstream setup/initialization, no owned registry/subscription/scan/refresh timer left behind, one warning, unchanged Home and sync options, preserved unrelated work, and successful native repaint. Only generated EPUBs and synthetic sidecars are read. The existing `test_home.py` acceptance suite remains unchanged and covers filters, menus, tab caching, rotation and disabling Home.
