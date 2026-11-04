@@ -81,7 +81,7 @@ function Library.updateToolbar(ui)
     group[2] = Library.toolbar(ui)
     group:resetLayout()
     previous:free()
-    UIManager:setDirty(ui, "ui", region)
+    if ui.kindlespouse_tab ~= "Notebook" then UIManager:setDirty(ui, "ui", region) end
 end
 
 function Library.refresh(ui, changes)
@@ -96,7 +96,7 @@ function Library.refresh(ui, changes)
     if ui.kindlespouse_shelf then ui.kindlespouse_shelf:setItems(items) end
     Library.updateToolbar(ui)
     Library.updateSearch(ui)
-    if ui.title_bar then ui.title_bar:setSubTitle(require("home").count(ui)) end
+    if ui.title_bar and ui.kindlespouse_tab ~= "Notebook" then ui.title_bar:setSubTitle(require("home").count(ui)) end
 end
 
 function Library.choose(ui, title, options, select)

@@ -144,6 +144,61 @@ UIManager:scheduleIn(3, function() check(function()
     ReadCollection:removeCollection(collection)
     ReadCollection:write()
     capture(ui, output .. "library.png")
+    local chooser, shelf = ui.file_chooser, ui.kindlespouse_shelf
+    local header, content, library = ui.kindlespouse_header, ui.kindlespouse_content, ui.kindlespouse_library_group
+    local frame, navigation = ui[1], ui.kindlespouse_navigation
+    local original_notebook = Home.notebook
+    local notebook_creations, notebook_pauses, notebook_resumes, notebook_frees, header_frees = 0, 0, 0, 0, 0
+    Home.notebook = function(...)
+        notebook_creations = notebook_creations + 1
+        local body = original_notebook(...)
+        local original_free = body.free
+        body.onCloseWidget = function(widget) notebook_pauses = notebook_pauses + 1; widget.closed = true end
+        body.refresh = function(widget) notebook_resumes = notebook_resumes + 1; widget.closed = false end
+        body.free = function(widget, ...)
+            notebook_frees = notebook_frees + 1
+            return original_free(widget, ...)
+        end
+        return body
+    end
+    local header_free = header.free
+    header.free = function(widget, ...)
+        header_frees = header_frees + 1
+        return header_free(widget, ...)
+    end
+    shelf:setScrolledOffset({ y = Screen:scaleBySize(60) })
+    local scroll = shelf:getScrolledOffset().y
+    assert(scroll > 0, "Eight-book grid fixture must exercise a nonzero scroll offset")
+    local lfs = require("libs/libkoreader-lfs")
+    local original_dir, scans, before = lfs.dir, 0, rebuilds
+    lfs.dir = function(path, ...)
+        if path == chooser.path then scans = scans + 1 end
+        return original_dir(path, ...)
+    end
+    for index = 1, 20 do
+        ui.layout[#ui.layout][2].callback()
+        assert(ui.kindlespouse_content == content and content[1] == ui.kindlespouse_notebook_group)
+        assert(ui.kindlespouse_search_label.text == "搜索笔记本")
+        assert(not ui.cropping_widget and not shelf.closed and not shelf.queued)
+        assert(ui.title_bar.subtitle_widget.text == "Kindle Scribe")
+        Library.refresh(ui, {})
+        assert(ui.title_bar.subtitle_widget.text == "Kindle Scribe", "Background library updates must preserve the notebook title")
+        UIManager:widgetRepaint(ui, 0, 0)
+        ui.layout[#ui.layout][1].callback()
+        assert(content[1] == library and ui.cropping_widget == shelf)
+        assert(ui.kindlespouse_search_label.text == "搜索 Kindle")
+        assert(ui.file_chooser == chooser and ui.kindlespouse_shelf == shelf and ui.kindlespouse_header == header)
+        assert(ui[1] == frame and ui.kindlespouse_navigation == navigation)
+        assert(shelf:getScrolledOffset().y == scroll, "Tab changes must preserve the scrolled shelf")
+        UIManager:widgetRepaint(ui, 0, 0)
+    end
+    ui.layout[#ui.layout][2].callback()
+    ui:onHome()
+    assert(ui.kindlespouse_tab == "Library" and ui.file_chooser == chooser and ui.kindlespouse_shelf == shelf)
+    assert(shelf:getScrolledOffset().y == scroll and rebuilds == before and scans == 0)
+    assert(notebook_creations == 1 and notebook_pauses == 21 and notebook_resumes == 20)
+    assert(header_frees == 0 and notebook_frees == 0, "Cached bodies must not free the shared header")
+    lfs.dir = original_dir
     ui.layout[#ui.layout][2].callback()
     UIManager:scheduleIn(0.5, function() check(function()
         assert(ui.kindlespouse_tab == "Notebook")
@@ -156,9 +211,15 @@ UIManager:scheduleIn(3, function() check(function()
         UIManager:setDirty(ui, "full")
         UIManager:scheduleIn(0.5, function() check(function()
             assert(Screen:getWidth() > Screen:getHeight())
+            assert(ui.file_chooser ~= chooser and ui.kindlespouse_shelf ~= shelf and shelf.closed)
+            assert(header_frees == 1 and notebook_frees == 1, "Rotation must dispose both cached bodies and the shared header once")
+            Home.notebook = original_notebook
             assert(ui[1]:getSize().h <= Screen:getHeight(), "Landscape must fit on screen")
             capture(ui, output .. "landscape.png")
+            ui.layout[#ui.layout][2].callback()
+            local hidden_shelf = ui.kindlespouse_shelf
             Home.toggle { ui = ui }
+            assert(hidden_shelf.closed and not ui.kindlespouse_notebook_body and not ui.kindlespouse_content)
             assert(not Home.enabled() and not ui.file_chooser.height)
             assert(not ui.kindlespouse_shelf and not ui.cropping_widget)
             assert(G_reader_settings:readSetting("start_with") == "filemanager")
@@ -171,6 +232,21 @@ UIManager:scheduleIn(3, function() check(function()
             Home.returnToKindle { ui = { onClose = function() closed = true end } }
             Device.isKindle, UIManager.quit = original_kind, original_quit
             assert(closed and quit, "Native notebooks must use the normal save and exit path")
+            local final_shelf, final_header = ui.kindlespouse_shelf, ui.kindlespouse_header
+            ui.layout[#ui.layout][2].callback()
+            local final_body = ui.kindlespouse_notebook_body
+            local body_closes, final_header_frees = 0, 0
+            final_body.onCloseWidget = function(widget) body_closes = body_closes + 1; widget.closed = true end
+            local final_free = final_header.free
+            final_header.free = function(widget, ...)
+                final_header_frees = final_header_frees + 1
+                return final_free(widget, ...)
+            end
+            UIManager:close(ui)
+            assert(final_shelf.closed and body_closes == 1 and final_header_frees == 1)
+            assert(not ui.kindlespouse_content and not ui.kindlespouse_notebook_body)
+            assert(not require("catalog").subscribers[ui], "Closing must detach catalog refresh callbacks")
+            print("KindleSpouse body-only tab acceptance passed: 20 round trips, cached Home, zero rebuilds/scans, nonzero scroll and cleanup")
             print("KindleSpouse home acceptance passed")
             UIManager:quit()
         end) end)

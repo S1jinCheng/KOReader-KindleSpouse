@@ -10,7 +10,7 @@ Integration base: codex/improvement-baseline-v1. The existing notebook experimen
 | 03 | P4 plugin-only and lint CI guards | Verified negative/positive checks and AppImage |
 | 04 | P1 asynchronous catalog and metadata queue | Verified 500 books and existing UI in AppImage; device pending |
 | 05 | P1 local shelf refresh and display-mode changes | Verified 8/500-book UI and real reader return; device pending |
-| 06 | P1 body-only tab switching | Pending |
+| 06 | P1 body-only tab switching | Verified 20 round trips, scroll, rotation and cleanup; device pending |
 | 07 | P2 shared event scheduler | Pending |
 | 08 | P2 localized menus and status dialog | Pending |
 | 09 | P4 version guard and main module split | Pending |
