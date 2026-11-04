@@ -1,6 +1,5 @@
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local UIManager = require("ui/uimanager")
-local InfoMessage = require("ui/widget/infomessage")
 local Notification = require("ui/widget/notification")
 local NetworkMgr = require("ui/network/manager")
 local lfs = require("libs/libkoreader-lfs")
@@ -11,6 +10,8 @@ local directory = "/mnt/us/kindlespouse/"
 local Status = require("sync_status")
 local Scheduler = require("scheduler")
 local Launcher = require("launcher")
+local Menu = require("menu")
+local T = require("i18n").T
 local synchronization_configured = false
 local Companion = WidgetContainer:extend { name = "kindlespouse", is_doc_only = false, directory = directory }
 
@@ -60,8 +61,8 @@ local function configureSynchronization(host)
             end
             if result.manual then
                 current:notify(result.state == "completed" and Status.summary(result.progress)
-                    or result.state == "paused" and "KindleSpouse: sync paused."
-                    or "KindleSpouse: sync stopped. Open Sync status for details.")
+                    or result.state == "paused" and T("sync_paused_notice")
+                    or T("sync_stopped_hint"))
             end
         end,
     }
@@ -82,11 +83,11 @@ end
 function Companion:requestSync(mode, manual)
     configureSynchronization(self)
     if not NetworkMgr:isConnected() then
-        if manual then self:notify("KindleSpouse: connect Wi-Fi, then retry.") end
+        if manual then self:notify(T("sync_wifi_retry")) end
         return false
     end
     if lfs.attributes(self.directory .. "/config.json", "mode") ~= "file" then
-        if manual then self:notify("KindleSpouse: pair this Kindle from the desktop app first.") end
+        if manual then self:notify(T("pair_desktop")) end
         return false
     end
     if manual then
@@ -94,7 +95,7 @@ function Companion:requestSync(mode, manual)
         if not ok then self:notify(failure); return false end
     elseif Status.paused(mode) then return false end
     Scheduler.request(mode, manual)
-    if manual then self:notify("KindleSpouse: synchronization queued in background.") end
+    if manual then self:notify(T("sync_queued")) end
     return true
 end
 
@@ -248,104 +249,88 @@ end
 function Companion:collectTitles()
     local started = os.time()
     os.execute("sh /mnt/us/kindlespouse/catalog.sh < /dev/null > /dev/null 2>&1 &")
-    self:notify("KindleSpouse: preparing notebook titles offline.")
+    self:notify(T("catalog_started"))
     local attempts = 0
     local check
     check = function()
         attempts = attempts + 1
         local result = readJSON("catalog-result.json")
         if result and tonumber(result.completedAt) and result.completedAt >= started then
-            self:notify(result.ok and "KindleSpouse: title index ready. You can reconnect USB." or "KindleSpouse: could not read title index.")
+            self:notify(result.ok and T("catalog_ready") or T("catalog_failed"))
         elseif attempts < 15 then UIManager:scheduleIn(2, check)
-        else self:notify("KindleSpouse: title collection stopped. Try Collect notebook titles again.") end
+        else self:notify(T("catalog_timeout")) end
     end
     UIManager:scheduleIn(2, check)
 end
 
 function Companion:pause()
-    if not Launcher.pause() then self:notify("KindleSpouse: cannot save pause request."); return false end
-    self:notify("KindleSpouse: pausing sync. Uploaded files are kept.")
+    if not Launcher.pause() then self:notify(T("pause_save_failed")); return false end
+    self:notify(T("pause_started"))
     return true
 end
 
 function Companion:showStatus()
-    if self.status_dialog then UIManager:close(self.status_dialog) end
-    local dialog
-    local refresh
-    local function text()
-        local progress = self:status()
-        local hint = progress.state == "running" and "Sync continues in the background. " or ""
-        local cover = Companion.preset_missing and (self.sleep_cover_requested or G_reader_settings and G_reader_settings:readSetting("screensaver_type") == "customisable_ss")
-            and "\n\n休眠封面组件未安装，请在桌面端重新配对" or ""
-        return self:summary(progress) .. cover .. "\n\n" .. hint .. "Tap to return to reading."
+    return Menu.showStatus(self)
+end
+
+function Companion:saveSleepPreference(enabled)
+    local profile = readJSON("sleep-profile.json") or { version = 1, displayName = "Reader", avatar = "R" }
+    profile.enabled = enabled
+    local file = io.open(directory .. "sleep-profile.json.partial", "wb")
+    if not file then self:notify(T("sleep_save_failed")); return false end
+    local written = file:write(json.encode(profile))
+    local closed = file:close()
+    if not written or not closed or not os.rename(directory .. "sleep-profile.json.partial", directory .. "sleep-profile.json") then
+        self:notify(T("sleep_save_failed")); return false
     end
-    dialog = InfoMessage:new {
-        text = text(), show_icon = false,
-        dismiss_callback = function()
-            self.status_dialog = nil
-            if refresh then UIManager:unschedule(refresh) end
-        end,
-    }
-    self.status_dialog = dialog
-    UIManager:show(dialog)
-    refresh = function()
-        if self.status_dialog ~= dialog then return end
-        local value = text()
-        if dialog.text ~= value then
-            local previous_area = dialog:getVisibleArea()
-            dialog:free()
-            dialog.text = value
-            dialog:init()
-            UIManager:setDirty(nil, "ui", previous_area)
-            UIManager:setDirty(dialog, "ui")
-        end
-        if self:isRunning() then UIManager:scheduleIn(3, refresh) end
+    return self:setSleepCover(enabled)
+end
+
+function Companion:sleepWarning()
+    if Companion.preset_missing and (self.sleep_cover_requested or G_reader_settings:readSetting("screensaver_type") == "customisable_ss") then
+        return T("sleep_missing")
     end
-    if self:isRunning() then UIManager:scheduleIn(3, refresh) end
 end
 
 function Companion:sync(silent)
     return self:requestSync("full", not silent)
 end
 
+function Companion:setAutoSyncEnabled(enabled)
+    G_reader_settings:saveSetting("kindlespouse_auto_sync", enabled == true)
+    if enabled then
+        local ok, failure = Launcher.manual("updates")
+        if not ok then self:notify(failure); return false end
+        Scheduler.markDirty("annotations")
+    end
+    return true
+end
+
+function Companion:setAutoReceiveEnabled(enabled)
+    G_reader_settings:saveSetting("kindlespouse_auto_receive", enabled == true)
+    if enabled then
+        local ok, failure = Launcher.manual("books")
+        if not ok then self:notify(failure); return false end
+        self:receiveBooks(true)
+    end
+    return true
+end
+
+function Companion:refreshLibrary()
+    if self.ui.document then return end
+    require("catalog").rescan(require("home").root(self.ui))
+end
+
+function Companion:toggleHome()
+    require("home").toggle(self)
+end
+
+function Companion:openProfile()
+    require("profile").open(self)
+end
+
 function Companion:addToMainMenu(menu_items)
-    menu_items.kindlespouse = { text = "KindleSpouse", sub_item_table = {
-        { text = "Profile and cloud sync", callback = function() require("profile").open(self) end },
-        { text = "Use KindleSpouse home", enabled_func = function() return not self.ui.document end,
-          checked_func = function() return G_reader_settings:readSetting("kindlespouse_home") ~= false end,
-          callback = function() if not self.ui.document then require("home").toggle(self) end end },
-        { text_func = function() return lfs.attributes(directory .. "pause.requested", "mode") and "Resume sync" or "Sync now" end,
-          callback = function() self:sync(false) end },
-        { text = "Pause sync", callback = function() self:pause() end },
-        { text = "Sync profile now", callback = function() self:syncProfile() end },
-        { text = "Check for new books", callback = function() self:receiveBooks(false) end },
-        { text = "Automatically receive books", checked_func = function() return not G_reader_settings or G_reader_settings:readSetting("kindlespouse_auto_receive") ~= false end,
-          callback = function() if G_reader_settings then local enabled = G_reader_settings:readSetting("kindlespouse_auto_receive") == false; G_reader_settings:saveSetting("kindlespouse_auto_receive", enabled); if enabled then os.remove(directory .. "books-pause.requested"); self:receiveBooks(true) end end end },
-        { text = "Automatically sync notes and reading history", checked_func = function() return self:autoSyncEnabled() end,
-          callback = function()
-              if G_reader_settings then
-                  local enabled = not self:autoSyncEnabled()
-                  G_reader_settings:saveSetting("kindlespouse_auto_sync", enabled)
-                  if enabled then os.remove(directory .. "pause.requested"); self:queueAutomaticSync() end
-              end
-          end },
-        { text_func = function() return "Sync status: " .. self:summary(self:status()) end,
-          callback = function() self:showStatus() end },
-        { text = "Last result", callback = function() self:showStatus() end },
-        { text = "Collect notebook titles", callback = function() self:collectTitles() end },
-        { text = "Sync titles", callback = function() self:syncTitles() end },
-        { text = "Apply pending annotation edits", callback = function() self:applyAnnotations() end },
-        { text = "Use KindleSpouse sleep cover", checked_func = function() return G_reader_settings:readSetting("screensaver_type") == "customisable_ss" end,
-          callback = function()
-              local profile = readJSON("sleep-profile.json") or { version = 1, displayName = "Reader", avatar = "R" }
-              profile.enabled = G_reader_settings:readSetting("screensaver_type") ~= "customisable_ss"
-              local file = io.open(directory .. "sleep-profile.json.partial", "wb")
-              if not file then self:notify("Cannot save sleep cover preference."); return end
-              file:write(json.encode(profile)); file:close()
-              os.rename(directory .. "sleep-profile.json.partial", directory .. "sleep-profile.json")
-              self:setSleepCover(profile.enabled)
-          end },
-    } }
+    menu_items.kindlespouse = Menu.build(self)
 end
 
 function Companion:onCloseDocument()
@@ -364,7 +349,7 @@ function Companion:onCloseWidget()
     Scheduler.detach(self.scheduler_token)
     self.scheduler_token = nil
     if self.annotation_task then UIManager:unschedule(self.annotation_task) end
-    if self.status_dialog then UIManager:close(self.status_dialog) end
+    Menu.closeStatus(self)
 end
 
 return Companion

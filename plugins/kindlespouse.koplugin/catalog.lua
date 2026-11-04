@@ -1,3 +1,4 @@
+local T = require("i18n").T
 local UIManager = require("ui/uimanager")
 local lfs = require("libs/libkoreader-lfs")
 local BookList = require("ui/widget/booklist")
@@ -142,7 +143,7 @@ end
 
 local function source(filepath, root)
     local relative = filepath:sub(#root + (root == "/" and 1 or 2))
-    return relative:match("^([^/]+)/") or "书籍根目录"
+    return relative:match("^([^/]+)/") or T("library_root")
 end
 
 local function metadata(entry, info)
@@ -332,7 +333,7 @@ function Catalog.items(chooser)
             mandatory = require("util").getFriendlySize(entry.size or 0) }
         local data = {}
         for name, value in pairs(entry) do data[name] = value end
-        data.author = entry.author ~= "" and entry.author or "未提供作者"
+        data.author = entry.author ~= "" and entry.author or T("author_missing")
         data.source = source(entry.path, state.root)
         item.kindlespouse = data
         result[#result + 1] = item

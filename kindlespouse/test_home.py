@@ -12,12 +12,16 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--runtime', type=Path, required=True)
 parser.add_argument('--fonts', type=Path)
 parser.add_argument('--scale', action='store_true')
+parser.add_argument('--integrated', action='store_true')
+parser.add_argument('--language', default='en')
 args = parser.parse_args()
 runtime = args.runtime.resolve()
 fonts = (args.fonts or root / 'kindlespouse' / 'build' / 'cache').resolve()
-test = root / 'kindlespouse' / 'build' / ('test500' if args.scale else 'test')
+test = root / 'kindlespouse' / 'build' / (('integrated500-' if args.scale else 'integrated-') + args.language if args.integrated else ('test500' if args.scale else 'test'))
 books = test / 'books'
 output = root / 'kindlespouse' / 'build' / 'artifacts'
+if args.integrated:
+    output = output / ('integrated-' + args.language)
 (books / 'nested').mkdir(parents=True, exist_ok=True)
 (books / '.notebooks').mkdir(parents=True, exist_ok=True)
 (books / '.notebooks' / 'private.txt').write_text('Excluded fixture', encoding='utf-8')
@@ -54,10 +58,18 @@ for index, title in enumerate(titles):
         ink = 'white' if shade < 150 else 'black'
         archive.writestr('cover.svg', f'<svg xmlns="http://www.w3.org/2000/svg" width="400" height="600"><rect width="400" height="600" fill="rgb({shade},{shade},{shade})"/><rect x="30" y="30" width="340" height="540" fill="none" stroke="{ink}" stroke-width="2"/><text x="200" y="260" fill="{ink}" font-size="32" text-anchor="middle">BOOK {index + 1}</text><text x="200" y="510" fill="{ink}" font-size="18" text-anchor="middle">KindleSpouse</text></svg>')
 disabled = ','.join('[' + json.dumps(path.name.removesuffix('.koplugin')) + ']=true' for path in (runtime / 'plugins').iterdir() if path.name.endswith('.koplugin') and path.name != 'coverbrowser.koplugin')
-settings = f'return {{language="en", last_migration_date=20260701, quickstart_shown_version=99999999, home_dir={json.dumps(str(books))}, start_with="filemanager", disable_network_connection=true, auto_suspend_timeout_seconds=0, plugins_disabled={{{disabled}}}}}'
+settings = f'return {{language={json.dumps(args.language)}, last_migration_date=20260701, quickstart_shown_version=99999999, home_dir={json.dumps(str(books))}, start_with="filemanager", disable_network_connection=true, auto_suspend_timeout_seconds=0, plugins_disabled={{{disabled}}}}}'
 (test / 'settings.reader.lua').write_text(settings, encoding='utf-8')
+if args.integrated:
+    plugins = test / 'plugins'
+    plugins.mkdir(exist_ok=True)
+    target = plugins / 'kindlespouse.koplugin'
+    if target.exists():
+        assert target.resolve() == root / 'plugins' / 'kindlespouse.koplugin'
+    else:
+        target.symlink_to(root / 'plugins' / 'kindlespouse.koplugin', target_is_directory=True)
 (test / 'patches' / '2-home-test.lua').write_text((root / 'kindlespouse' / ('test_shelf.lua' if args.scale else 'test_home.lua')).read_text(encoding='utf-8'), encoding='utf-8')
-environment = dict(os.environ, SDL_VIDEODRIVER='dummy', SDL_AUDIODRIVER='dummy', XDG_DATA_HOME=str(test), KO_HOME=str(test), KINDLESPOUSE_TEST_ROOT=str(root), KINDLESPOUSE_TEST_FONTS=str(fonts), KINDLESPOUSE_TEST_OUTPUT=str(output), EMULATE_READER_W='1860', EMULATE_READER_H='2480', EMULATE_READER_DPI='300', LD_LIBRARY_PATH='libs')
+environment = dict(os.environ, KINDLESPOUSE_TEST_INTEGRATED='1' if args.integrated else '0', SDL_VIDEODRIVER='dummy', SDL_AUDIODRIVER='dummy', XDG_DATA_HOME=str(test), KO_HOME=str(test), KINDLESPOUSE_TEST_ROOT=str(root), KINDLESPOUSE_TEST_FONTS=str(fonts), KINDLESPOUSE_TEST_OUTPUT=str(output), EMULATE_READER_W='1860', EMULATE_READER_H='2480', EMULATE_READER_DPI='300', LD_LIBRARY_PATH='libs')
 for filename in (root / 'plugins' / 'kindlespouse.koplugin').glob('*.lua'):
     result = subprocess.run([str(runtime / 'luajit'), '-e', f'assert(loadfile({json.dumps(str(filename))}))'], cwd=runtime, env=environment, capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
