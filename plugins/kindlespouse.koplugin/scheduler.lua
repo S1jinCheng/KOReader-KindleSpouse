@@ -162,6 +162,12 @@ local function launch(request)
     if pending[request.mode] == request then pending[request.mode] = nil end
 end
 
+local function reading_deadline()
+    if dependencies.reading() and read("kindlespouse_reading_dirty", false) and allowed("full", false) then
+        return math.max((tonumber(read("kindlespouse_last_sync", 0)) or 0) + 600, retry_at, network_ready_at)
+    end
+end
+
 local function fallback_interval()
     return dependencies.reading() and 1800 or 900
 end
@@ -178,6 +184,8 @@ step = function()
     end
     if not dependencies.connected() then arm(); return end
     local current = now()
+    local reading_due = reading_deadline()
+    if reading_due and current >= reading_due then enqueue("full", false, current, false) end
     if current >= fallback_anchor + fallback_interval() then
         fallback_anchor = current
         for _, mode in ipairs({ "books", "updates" }) do
@@ -207,8 +215,11 @@ arm = function()
         return
     end
     if not dependencies.connected() then return end
-    local due
-    if enabled("books") or enabled("updates") then due = fallback_anchor + fallback_interval() end
+    local due = reading_deadline()
+    if enabled("books") or enabled("updates") then
+        local fallback_due = fallback_anchor + fallback_interval()
+        due = due and math.min(due, fallback_due) or fallback_due
+    end
     for mode, request in pairs(pending) do
         if allowed(mode, request.manual) then
             local deadline = math.max(request.due, retry_at, request.manual and 0 or network_ready_at)
