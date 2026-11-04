@@ -1,3 +1,11 @@
+# KOReader · KindleSpouse Edition
+
+KindleSpouse edition for first-generation Kindle Scribe, based on KOReader v2026.07.1. Cover-first Library, Library/Notebook navigation, Chinese reading fonts, and integration with the KindleSpouse desktop companion.
+
+[中文说明与安装](kindlespouse/README.zh-CN.md) · [Releases](https://github.com/S1jinCheng/KOReader-KindleSpouse/releases) · [KindleSpouse desktop](https://github.com/S1jinCheng/KindleSpouse)
+
+This is an independent preview fork. Native Scribe handwriting remains in the Kindle system; the Notebook tab offers a normal exit, followed by selecting Kindle's Notebooks tab. The downloadable overlay requires an existing official KOReader installation.
+
 [![KOReader](https://raw.githubusercontent.com/koreader/koreader.github.io/master/koreader-logo.png)](https://koreader.rocks)
 
 #### KOReader is a document viewer primarily aimed at e-ink readers.
