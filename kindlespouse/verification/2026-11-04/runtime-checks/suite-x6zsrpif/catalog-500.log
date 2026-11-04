@@ -1,0 +1,5 @@
+KindleSpouse catalog acceptance passed {"uiDocumentOpens":0,"extractionCollisions":0,"schema":2,"books":500,"directoryScans":153,"inputPollsDuringScan":44,"extractionBatches":16,"extractedFiles":505}
+11/04/26-22:08:01 INFO  Preparing to quit UIManager 
+11/04/26-22:08:01 INFO  UIManager: No dialogs left to show 
+11/04/26-22:08:01 INFO  Tearing down UIManager with exit code: 0
+Artifacts: /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/catalog-tests/run-4vjwku95

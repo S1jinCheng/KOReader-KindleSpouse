@@ -1,0 +1,6 @@
+Verified package: 24 plugin files and all pinned fonts/licenses.
+/mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/reader-checks/all-mqd8kjbd
+READER CHECK highlight: monochrome, all drawer styles, per-selection overrides, defaults, stale callbacks, More, third-party builders and lifecycle passed
+READER CHECK bar: gesture condition, outside dismiss, real upstream hooks, drag/tap navigation and lifecycle restoration passed
+READER CHECK persisted: 5 annotation drawers and colors plus document defaults passed
+READER CHECK PASSED all

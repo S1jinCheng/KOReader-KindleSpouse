@@ -1,0 +1,28 @@
+/mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/version-checks/guard-2x2s2aet
+has monolibtic? no (libs/libkoreader-monolibtic.so: cannot open shared object file: No such file or directory)
+lib_search_path: libs/?
+lib_basic_format: lib%s.so
+lib_version_format: lib%s.so.%s
+ffi.load: rt.so.1 (RTLD_GLOBAL)
+ffi.findlib: utf8proc [3]
+ffi.load: libs/libutf8proc.so.3
+ffi.findlib: SDL3 [0]
+ffi.load: libs/libSDL3.so.0
+ffi.findlib: blitbuffer
+ffi.load: libs/libblitbuffer.so
+Started SDL in /mnt/d/kindleBooming/KindleSpouse/native/tools/koreader/squashfs-root/usr/lib/koreader/ using dummy video driver
+ffi.findlib: lodepng
+ffi.load: libs/liblodepng.so
+11/04/26-22:05:54 INFO  initializing for device Emulator 
+11/04/26-22:05:54 INFO  framebuffer resolution: {
+  h = 800,
+  w = 600
+} --[[table: 0x6ffd9ac1b700]] 
+11/04/26-22:05:54 WARN  KindleSpouse: unsupported KOReader version (normalized 202607010001); expected v2026.07.1 
+11/04/26-22:05:54 WARN  KindleSpouse: interface installation failed: ...r-kindlespouse/plugins/kindlespouse.koplugin/patches.lua:7: KindleSpouse: missing upstream method absent 
+11/04/26-22:05:54 WARN  KindleSpouse: interface installation failed: ...oreader-kindlespouse/kindlespouse/test_version_guard.lua:85: Synthetic installer failure 
+11/04/26-22:05:54 WARN  KindleSpouse: unsupported KOReader version (normalized 202607020000); expected v2026.07.1 
+11/04/26-22:05:54 WARN  KindleSpouse: unsupported KOReader version (normalized unknown); expected v2026.07.1 
+11/04/26-22:05:54 WARN  KindleSpouse: unsupported KOReader version (normalized unknown); expected v2026.07.1 
+KindleSpouse version guard acceptance passed: real normalized version, exact support, UI-only rollback, once-only warning, sync continuation and require safety
+
