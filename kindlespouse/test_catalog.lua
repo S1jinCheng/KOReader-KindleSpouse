@@ -138,9 +138,17 @@ local function verifyReload()
     local previous_scans, previous_extracted = scans, extracted
     package.loaded.catalog = nil
     Catalog = require("catalog")
-    local completed = 0
+    local completed, startup_events, touch_events = 0, 0, 0
+    local startup_owner = {}
+    Catalog.subscribe(startup_owner, function(event)
+        assert(not event.scanning, "Cached startup must never publish a scanning event")
+        if event.kind == "touch" then touch_events = touch_events + 1
+        else startup_events = startup_events + 1 end
+    end)
     local state = Catalog.ensure(root, function()
         completed = completed + 1
+        assert(startup_events == 1, "Cached startup must publish its first update only after enumeration")
+        Catalog.unsubscribe(startup_owner)
         assert(count() == 500 and scans > previous_scans, "A fresh module must rescan persisted roots at startup")
         assert(not Catalog.entries[removed] and Catalog.entries[added], "Startup must find externally added and removed books")
         assert(Catalog.entries[files[1]].title == "迁移标题" and Catalog.entries[files[1]].added == 1234)
@@ -163,12 +171,19 @@ local function verifyReload()
         end)
     end)
     local scan = assert(state.scan)
+    assert(state.quiet_startup and #Catalog.records(root) == 500, "Cached startup must retain its complete library")
     assert(scans == previous_scans, "Startup enumeration must be scheduled in the background")
     assert(Catalog.ensure(root, function() completed = completed + 1 end).scan == scan,
         "Concurrent hosts must reuse the startup scan")
+    Catalog.touch(files[1])
+    assert(touch_events == 1 and startup_events == 0, "Explicit book changes must stay observable during quiet startup")
 end
 local function verifyIncremental()
     local before = extracted
+    local manual_owner, scanning_events = {}, 0
+    Catalog.subscribe(manual_owner, function(event)
+        if event.scanning then scanning_events = scanning_events + 1 end
+    end)
     local removed = files[3]
     assert(os.remove(removed))
     local changed = assert(io.open(files[4], "ab")); changed:write("changed fixture"); changed:close()
@@ -176,6 +191,8 @@ local function verifyIncremental()
     local added = root .. "/added.epub"
     local output = assert(io.open(added, "wb")); output:write(source:read("*a")); output:close(); source:close()
     Catalog.rescan(root, function()
+        assert(scanning_events > 0, "Manual rescans must retain scanning feedback")
+        Catalog.unsubscribe(manual_owner)
         assert(count() == 500 and not Catalog.entries[removed] and Catalog.entries[added])
         waitFor(idle, function()
             assert(extracted - before == 2, "Rescan must extract only changed and added files")
@@ -220,13 +237,14 @@ UIManager:tickAfterNext(function() later(function()
         return props(self, file, value, no_open)
     end
     Catalog.attachBookInfo(ui.bookinfo)
-    local owner, events = {}, 0
+    local owner, events, scanning_events = {}, 0, 0
     Catalog.subscribe(owner, function(event)
         assert(event.root == root and event.count <= 501)
         events = events + 1
+        if event.scanning then scanning_events = scanning_events + 1 end
     end)
     Catalog.ensure(root, function()
-        assert(count() == 500 and input_waits > 0 and events > 1)
+        assert(count() == 500 and input_waits > 0 and events > 1 and scanning_events > 0)
         assert(Catalog.entries[files[1]].title == "迁移标题" and Catalog.entries[files[1]].author == "旧作者")
         local previous_scans = scans
         local chooser = ui.file_chooser

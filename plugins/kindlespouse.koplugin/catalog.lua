@@ -122,9 +122,10 @@ end
 
 local function emit(kind, root, done)
     local state = Catalog.roots[root]
+    if state.quiet_startup and (kind == "scan" or kind == "metadata") then return end
     local count = 0
     for _ in pairs(state.entries) do count = count + 1 end
-    local event = { kind = kind, root = root, scanning = state.scanning, count = count, done = done == true }
+    local event = { kind = kind, root = root, scanning = state.scanning and not state.quiet_startup, count = count, done = done == true }
     for _, callback in pairs(Catalog.subscribers) do callback(event, root) end
 end
 
@@ -160,8 +161,9 @@ local function requestMetadata(state, entries)
     for _, entry in ipairs(entries) do files[#files + 1] = { filepath = entry.path } end
     if #files == 0 then return end
     Extractor.enqueue(state, files, function(filepath, info, status)
-        local entry = Catalog.books[filepath]
-        if not entry or state.entries[filepath] ~= entry then return end
+        local entries = state.scan and state.scan.entries or state.entries
+        local entry = entries[filepath]
+        if not entry then return end
         if info and Extractor.isFresh(info, { size = entry.size, modification = entry.mtime }) then
             metadata(entry, info)
         elseif status == "unsupported" then
@@ -174,7 +176,7 @@ local function requestMetadata(state, entries)
     end)
 end
 
-local function record(state, filepath, attr, recent, pending)
+local function record(state, filepath, attr, recent, pending, entries)
     local previous = Catalog.books[filepath]
     local changed = not previous or previous.size ~= attr.size or previous.mtime ~= attr.modification
     local entry = previous or { path = filepath, added = attr.change or os.time() }
@@ -200,8 +202,13 @@ local function record(state, filepath, attr, recent, pending)
         pending[#pending + 1] = entry
     end
     reading(entry, recent)
-    Catalog.books[filepath] = entry
-    state.entries[filepath] = entry
+    if not entries then Catalog.books[filepath] = entry end
+    local target = entries or state.entries
+    target[filepath] = entry
+    if not entries and state.scan and state.scan.entries then
+        state.scan.entries[filepath] = entry
+        state.scan.seen[filepath] = true
+    end
     return entry
 end
 
@@ -212,27 +219,36 @@ end
 
 local function finish(state, scan)
     closeIterator(scan)
-    for filepath in pairs(state.entries) do
+    if scan.entries then state.entries = scan.entries end
+    for filepath, entry in pairs(state.entries) do
         if not scan.seen[filepath] then
             state.entries[filepath], Catalog.books[filepath] = nil, nil
             for _, other in pairs(Catalog.roots) do other.entries[filepath] = nil end
+        else
+            Catalog.books[filepath] = entry
         end
     end
-    state.scanning, state.complete, state.scan = false, true, nil
+    state.scanning, state.complete, state.scan, state.quiet_startup = false, true, nil, nil
+    if Catalog.root == state.root then Catalog.entries = state.entries end
     persist()
     emit("scan", state.root, true)
     for _, callback in ipairs(scan.callbacks) do callback(state) end
 end
 
-local function start(state, on_done)
+local function start(state, on_done, quiet)
     if state.scanning then
         if on_done then state.scan.callbacks[#state.scan.callbacks + 1] = on_done end
         return state
     end
     state.startup_pending = nil
     local scan = { directories = { state.root }, head = 1, seen = {}, recent = history(), callbacks = {}, generation = (state.generation or 0) + 1 }
+    if quiet then
+        scan.entries = {}
+        for filepath, entry in pairs(state.entries) do scan.entries[filepath] = entry end
+    end
     if on_done then scan.callbacks[1] = on_done end
     state.scanning, state.scan, state.generation = true, scan, scan.generation
+    state.quiet_startup = quiet or nil
     scan.step = function()
         if state.scan ~= scan then return end
         local processed, pending = 0, {}
@@ -259,7 +275,7 @@ local function start(state, on_done)
                         scan.directories[#scan.directories + 1] = filepath
                     elseif attr and attr.mode == "file" and DocumentRegistry:hasProvider(filepath) then
                         scan.seen[filepath] = true
-                        record(state, filepath, attr, scan.recent, pending)
+                        record(state, filepath, attr, scan.recent, pending, scan.entries)
                     end
                 end
             end
@@ -278,7 +294,7 @@ end
 
 function Catalog.ensure(root, on_done)
     local state = selectRoot(root)
-    if state.scanning or not state.complete or state.startup_pending then return start(state, on_done) end
+    if state.scanning or not state.complete or state.startup_pending then return start(state, on_done, state.startup_pending) end
     if not state.metadata_requested then
         state.metadata_requested = true
         local pending = {}
@@ -292,17 +308,21 @@ function Catalog.ensure(root, on_done)
 end
 
 function Catalog.rescan(root, on_done)
-    return start(selectRoot(root), on_done)
+    local state = selectRoot(root)
+    state.quiet_startup = nil
+    return start(state, on_done)
 end
 
 function Catalog.cancel(root)
     local state = Catalog.roots[normalize(root)]
     if not state then return end
     if state.scan then
+        local quiet = state.quiet_startup == true
         UIManager:unschedule(state.scan.step)
         closeIterator(state.scan)
         state.scan = nil
-        state.scanning, state.complete = false, false
+        state.scanning, state.complete, state.quiet_startup = false, quiet, nil
+        state.startup_pending = quiet or nil
     end
     Extractor.cancel(state)
     state.metadata_requested = nil
@@ -381,6 +401,7 @@ function Catalog.remove(filepath)
     load()
     Catalog.books[filepath] = nil
     for root, state in pairs(Catalog.roots) do
+        if state.scan and state.scan.entries then state.scan.entries[filepath] = nil end
         if state.entries[filepath] then
             state.entries[filepath] = nil
             emit("remove", root)
