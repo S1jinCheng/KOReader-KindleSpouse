@@ -161,8 +161,8 @@ local function requestMetadata(state, entries)
     for _, entry in ipairs(entries) do files[#files + 1] = { filepath = entry.path } end
     if #files == 0 then return end
     Extractor.enqueue(state, files, function(filepath, info, status)
-        local entries = state.scan and state.scan.entries or state.entries
-        local entry = entries[filepath]
+        local indexed = state.scan and state.scan.entries or state.entries
+        local entry = indexed[filepath]
         if not entry then return end
         if info and Extractor.isFresh(info, { size = entry.size, modification = entry.mtime }) then
             metadata(entry, info)
