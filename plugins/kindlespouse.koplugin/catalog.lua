@@ -259,12 +259,16 @@ local function start(state, on_done, quiet)
                 scan.head = scan.head + 1
                 local attr = lfs.symlinkattributes(directory)
                 local ok, iterator, handle
-                if attr and attr.mode == "directory" then ok, iterator, handle = pcall(lfs.dir, directory) end
+                if attr and attr.mode == "directory" then
+                    ok, iterator, handle = pcall(lfs.dir, directory)
+                    if not ok and state.quiet_startup then Catalog.cancel(state.root); return end
+                end
                 if ok then scan.iterator, scan.handle, scan.directory = iterator, handle, directory
                 else processed = processed + 1 end
             end
             if scan.iterator then
                 local ok, name = pcall(scan.iterator, scan.handle)
+                if not ok and state.quiet_startup then Catalog.cancel(state.root); return end
                 processed = processed + 1
                 if not ok or not name then
                     closeIterator(scan)

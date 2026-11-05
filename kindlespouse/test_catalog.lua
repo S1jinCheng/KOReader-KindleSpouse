@@ -138,6 +138,20 @@ local function verifyReload()
     local previous_scans, previous_extracted = scans, extracted
     package.loaded.catalog = nil
     Catalog = require("catalog")
+    for _, failure in ipairs({ "open", "iterate" }) do
+        local state = Catalog.ensure(root)
+        UIManager:unschedule(state.scan.step)
+        local directory = lfs.dir
+        lfs.dir = function(path)
+            if path ~= root then return directory(path) end
+            if failure == "open" then error("Fixture directory open failure") end
+            return function() error("Fixture directory iterator failure") end
+        end
+        state.scan.step()
+        lfs.dir = directory
+        assert(state.complete and state.startup_pending and not state.scanning and not state.scan and count() == 500,
+            "Failed cached startup scans must preserve the completed cache and stay quiet on retry")
+    end
     local completed, startup_events, touch_events = 0, 0, 0
     local startup_owner = {}
     Catalog.subscribe(startup_owner, function(event)
