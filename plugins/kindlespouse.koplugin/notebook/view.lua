@@ -1,3 +1,11 @@
+local Blitbuffer = require("ffi/blitbuffer")
+local Font = require("ui/font")
+local FrameContainer = require("ui/widget/container/framecontainer")
+local HorizontalGroup = require("ui/widget/horizontalgroup")
+local HorizontalSpan = require("ui/widget/horizontalspan")
+local Size = require("ui/size")
+local TextBoxWidget = require("ui/widget/textboxwidget")
+local VerticalSpan = require("ui/widget/verticalspan")
 local ButtonTable = require("ui/widget/buttontable")
 local Device = require("device")
 local Event = require("ui/event")
@@ -16,25 +24,96 @@ local Patches = require("patches")
 local View = {}
 local Panel = InputContainer:extend { covers_fullscreen = false }
 
-local function excerpt(text, limit)
-    local characters = {}
-    for character in text:gsub("%s+", " "):gmatch("[%z\1-\127\194-\244][\128-\191]*") do
-        if #characters == limit then return table.concat(characters) .. "…" end
-        characters[#characters+1] = character
+local AnnotationMenu = Menu:extend {}
+
+local function metadata(item)
+    local date = item.datetime:match("^%d%d%d%d%-%d%d%-%d%d") or ""
+    local chapter = item.chapter or ""
+    if type(item.position) == "number" then
+        chapter = chapter ~= "" and chapter .. " · " .. T("notebook.page", item.position) or T("notebook.page", item.position)
     end
-    return table.concat(characters)
+    return chapter ~= "" and date ~= "" and chapter .. " · " .. date or chapter .. date
 end
 
-local function preview(item)
-    local limit = math.max(12, math.floor(Screen:getWidth() / Screen:scaleBySize(18)) - 3 - (type(item.position) == "number" and 6 or 0))
-    local date = item.datetime:match("^%d%d%d%d%-%d%d%-%d%d") or ""
-    local footer = excerpt(item.chapter or "", math.max(4, limit - (date ~= "" and 13 or 0)))
-    if date ~= "" then footer = footer ~= "" and footer .. " · " .. date or date end
-    local rows = {}
-    if item.text ~= "" then rows[#rows+1] = excerpt(item.text, limit * (item.note == "" and (footer == "" and 3 or 2) or 1)) end
-    if item.note ~= "" then rows[#rows+1] = excerpt(T("notebook.note", item.note), limit * (#rows == 0 and (footer == "" and 3 or 2) or 1)) end
-    if footer ~= "" then rows[#rows+1] = footer end
-    return table.concat(rows, "\n")
+local function annotationWidgets(item, width, available_height)
+    local padding = Screen:scaleBySize(12)
+    local gap = Screen:scaleBySize(8)
+    local indent = Screen:scaleBySize(20)
+    local widgets = {}
+    local function textbox(text, font_size, box_width, height, color)
+        return TextBoxWidget:new {
+            text = text, face = Font:getFace("cfont", font_size), width = box_width,
+            height = height, height_adjust = height ~= nil, height_overflow_show_ellipsis = true,
+            alignment = "left", fgcolor = color or Blitbuffer.COLOR_BLACK,
+        }
+    end
+    local footer = metadata(item)
+    if footer ~= "" then
+        widgets.metadata = textbox(footer, 13, width, Screen:scaleBySize(40), Blitbuffer.COLOR_DARK_GRAY)
+    end
+    if item.text ~= "" then widgets.quote = textbox(item.text, 18, width) end
+    if item.note ~= "" then widgets.note = textbox(T("notebook.note", item.note), 18, width - indent) end
+    local count = (widgets.quote and 1 or 0) + (widgets.note and 1 or 0) + (widgets.metadata and 1 or 0)
+    local text_budget = available_height - 2 * padding - math.max(0, count - 1) * gap
+        - (widgets.metadata and widgets.metadata:getSize().h or 0)
+    local quote_height = widgets.quote and widgets.quote:getSize().h or 0
+    local note_height = widgets.note and widgets.note:getSize().h or 0
+    if quote_height + note_height > text_budget then
+        local quote_budget = widgets.note and math.min(quote_height, math.max(text_budget / 2, text_budget - note_height)) or text_budget
+        if widgets.quote and quote_height > quote_budget then
+            widgets.quote:free()
+            widgets.quote = textbox(item.text, 18, width, quote_budget)
+        end
+        local note_budget = text_budget - (widgets.quote and widgets.quote:getSize().h or 0)
+        if widgets.note and note_height > note_budget then
+            widgets.note:free()
+            widgets.note = textbox(T("notebook.note", item.note), 18, width - indent, note_budget)
+        end
+    end
+    local group = VerticalGroup:new { align = "left", VerticalSpan:new { width = padding } }
+    for _, name in ipairs({ "quote", "note", "metadata" }) do
+        local widget = widgets[name]
+        if widget then
+            if #group > 1 then group[#group + 1] = VerticalSpan:new { width = gap } end
+            group[#group + 1] = name == "note" and HorizontalGroup:new {
+                HorizontalSpan:new { width = indent }, widget,
+            } or widget
+        end
+    end
+    group[#group + 1] = VerticalSpan:new { width = padding }
+    return group, widgets
+end
+
+function AnnotationMenu:setupItemHeights()
+    if not self.item_table[1] or not self.item_table[1].annotation then return Menu.setupItemHeights(self) end
+    self.page_items = { {} }
+    local used = 0
+    for index, item in ipairs(self.item_table) do
+        local group = annotationWidgets(item.annotation, self.inner_dimen.w - 2 * Size.padding.fullscreen, self.available_height - self.linesize)
+        item.height = group:getSize().h + self.linesize
+        group:free()
+        if used > 0 and used + item.height > self.available_height then
+            self.page_items[#self.page_items + 1] = {}
+            used = 0
+        end
+        local page = self.page_items[#self.page_items]
+        page[#page + 1] = index
+        used = used + item.height
+    end
+end
+
+function AnnotationMenu:updateItems(...)
+    Menu.updateItems(self, ...)
+    for _, row in ipairs(self.item_group) do
+        if row.entry.annotation then
+            local group, widgets = annotationWidgets(row.entry.annotation, row.content_width, self.available_height - self.linesize)
+            row._underline_container[1]:free()
+            row._underline_container[1] = group
+            row.rich = widgets
+        end
+    end
+    self.item_group:resetLayout()
+    self.content_group:resetLayout()
 end
 
 function View.navigate(filename, item)
@@ -68,7 +147,7 @@ function Panel:render()
         for _, annotation in ipairs(self.index:search(self.query, self.book.path)) do
             local selected = annotation
             items[#items + 1] = {
-                text = preview(annotation),
+                text = table.concat({ annotation.text, annotation.note ~= "" and T("notebook.note", annotation.note) or "", metadata(annotation) }, "\n"),
                 mandatory = type(annotation.position) == "number" and T("notebook.page", annotation.position) or "",
                 annotation = annotation,
                 callback = function()
@@ -90,6 +169,7 @@ function Panel:render()
     if #items == 0 then
         items[1] = { text = T(self.index.pending and "notebook.loading" or "notebook.empty"), select_enabled = false }
     end
+    self.title:setText(self.book and self.book.title or T("notebook.summary"))
     self.menu:switchItemTable(nil, items)
     self.back:setText(self.book and T("notebook.books") or T("notebook.summary"), self.back.width)
     UIManager:setDirty(self.companion.ui or self, "ui", self.dimen)
@@ -162,13 +242,17 @@ function Panel:init()
         bordersize = 0, padding = 0, text_font_size = 14, text_font_bold = false,
         callback = function() require("home").returnToKindle(self.companion) end }
     self.back = buttons:getButtonById("kindlespouse-summary-back")
-    self.menu = Menu:new {
-        width = self.dimen.w, height = math.max(Screen:scaleBySize(100), self.height - buttons:getSize().h - self.native:getSize().h), no_title = true,
+    self.title = TextBoxWidget:new { text = T("notebook.summary"), width = self.dimen.w - 2 * Size.padding.fullscreen,
+        height = Screen:scaleBySize(64), face = Font:getFace("cfont", 24), bold = true,
+        height_overflow_show_ellipsis = true, alignment = "left" }
+    local heading = FrameContainer:new { bordersize = 0, padding = Size.padding.fullscreen, background = Blitbuffer.COLOR_WHITE, self.title }
+    self.menu = AnnotationMenu:new {
+        width = self.dimen.w, height = math.max(Screen:scaleBySize(100), self.height - buttons:getSize().h - heading:getSize().h - self.native:getSize().h), no_title = true,
         item_table = {}, is_borderless = true, is_popout = false, show_parent = self.companion.ui or self,
-        items_max_lines = 3, items_font_size = 18, is_enable_shortcut = false,
+        items_max_lines = 3, items_font_size = 18, is_enable_shortcut = false, line_color = Blitbuffer.COLOR_LIGHT_GRAY,
     }
     self:installMenuHandlers()
-    self[1] = VerticalGroup:new { align = "left", buttons, self.menu, self.native }
+    self[1] = VerticalGroup:new { align = "left", buttons, heading, self.menu, self.native }
     self:refresh()
 end
 

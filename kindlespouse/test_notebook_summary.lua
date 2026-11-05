@@ -25,6 +25,8 @@ if not pcall(require, "i18n") then
 end
 local Index = require("notebook/index")
 local View = require("notebook/view")
+local Menu = require("ui/widget/menu")
+local menu_update, menu_heights = Menu.updateItems, Menu.setupItemHeights
 local function write(filename, bytes)
     local stream = assert(io.open(filename, "wb"))
     assert(stream:write(bytes)); assert(stream:close())
@@ -71,6 +73,7 @@ UIManager:tickAfterNext(function()
             local settings = DocSettings:open(filename)
             if number == 1 then
                 first = filename
+                records[#records].title = "山间来信 · A Quiet Morning"
                 settings:saveSetting("annotations", { item(10, "Searchable thoughtful note"), item(2, "Earlier note") })
                 local stale = item(2, "Stale alternate note")
                 stale.text, stale.datetime = "Stale alternate quotation", "2026-11-05 10:00:00"
@@ -178,7 +181,19 @@ UIManager:tickAfterNext(function()
                     check(function()
                         assert(reads == initial_reads, "Unchanged sidecars must use the cache")
                         local settings = old_full_open(DocSettings, first)
-                        settings:saveSetting("annotations", { item(3, "Changed note after refresh") })
+                        local changed_items = { item(3, "Changed note after refresh · 留下完整的思考，不省略正文。") }
+                        changed_items[1].text = "清晨读到这里，窗外的河水缓缓流过。The complete quotation remains visible across wrapped lines."
+                        changed_items[1].chapter = "第一章 · 清晨"
+                        for number = 4, 24 do
+                            local entry = item(number, "Thoughtful note " .. number)
+                            entry.chapter = "Generated chapter " .. number
+                            changed_items[#changed_items + 1] = entry
+                        end
+                        local long_entry = item(25, string.rep("A long reflective note. ", 160))
+                        long_entry.text = "Oversized row " .. string.rep("A complete stored quotation. ", 160)
+                        long_entry.chapter = "A long annotation"
+                        changed_items[#changed_items + 1] = long_entry
+                        settings:saveSetting("annotations", changed_items)
                         settings:delSetting("annotations_rolling")
                         assert(settings:flush(nil, true))
                         local sidecar = DocSettings:findSidecarFile(first)
@@ -198,14 +213,59 @@ UIManager:tickAfterNext(function()
                                     assert(panel:getSize().h <= Device.screen:getHeight() - 150)
                                     panel:search("Changed note")
                                     assert(#panel.menu.item_table == 1 and panel.menu.item_table[1].book.path == first)
-                                    panel.menu:onMenuSelect(panel.menu.item_table[1])
-                                    assert(panel.book.path == first and #panel.menu.item_table == 1)
                                     UIManager:widgetRepaint(panel, 0, 0)
+                                    local book_row = panel.menu.item_group[1]
+                                    book_row:onTapSelect(nil, { pos = Geom:new { x = book_row[1].dimen.x + 10, y = book_row[1].dimen.y + 10 } })
+                                    assert(panel.book.path == first and #panel.menu.item_table == 1)
+                                    assert(panel.title.text == records[1].title and not panel.title.text:find("fixture-1.txt", 1, true))
+                                    UIManager:widgetRepaint(panel, 0, 0)
+                                    local row = panel.menu.item_group[1]
+                                    local rich = assert(row.rich)
+                                    assert(rich.quote.text == changed_items[1].text and rich.note.text == require("i18n").T("notebook.note", changed_items[1].note))
+                                    assert(rich.metadata.text == "第一章 · 清晨 · 2026-11-04")
+                                    assert(rich.quote.face.orig_size == 18 and rich.note.face.orig_size == 18 and rich.metadata.face.orig_size == 13)
+                                    assert(rich.metadata.fgcolor == require("ffi/blitbuffer").COLOR_DARK_GRAY)
+                                    assert(rich.note.dimen.x > rich.quote.dimen.x and rich.note.dimen.y > rich.quote.dimen.y and rich.metadata.dimen.y > rich.note.dimen.y)
+                                    assert(row._underline_container.linesize > 0 and row._underline_container.color == require("ffi/blitbuffer").COLOR_LIGHT_GRAY)
+                                    assert(#rich.quote.vertical_string_list > 1 and not rich.quote.line_with_ellipsis and not rich.note.line_with_ellipsis)
                                     Device.screen:shot(root .. "/notebook-summary.png")
+                                    panel:search("")
+                                    assert(#panel.menu.item_table == 23 and panel.menu.page_num > 1)
+                                    UIManager:widgetRepaint(panel, 0, 0)
+                                    assert(#panel.menu.item_group > 1)
+                                    Device.screen:shot(root .. "/notebook-detail-layers.png")
+                                    panel.menu:onNextPage()
+                                    assert(panel.menu.page == 2 and panel.menu.item_group[1].rich)
+                                    UIManager:widgetRepaint(panel, 0, 0)
+                                    Device.screen:shot(root .. "/notebook-detail-page2.png")
+                                    panel.menu:onPrevPage()
+                                    assert(panel.menu.page == 1)
+                                    panel:search("Oversized row")
+                                    assert(panel.menu.item_table[1].height <= panel.menu.available_height)
+                                    local long_row = panel.menu.item_group[1].rich
+                                    assert(long_row.quote.line_with_ellipsis and long_row.note.line_with_ellipsis)
+                                    assert(long_row.quote.text == long_entry.text and long_row.note.text == require("i18n").T("notebook.note", long_entry.note))
+                                    panel:search("Thoughtful note 24")
+                                    assert(#panel.menu.item_table == 1 and panel.menu.item_table[1].annotation.note == "Thoughtful note 24")
+                                    panel.menu.item_group[1]:onFocus()
+                                    assert(panel.menu.item_group[1]._underline_container.color == require("ffi/blitbuffer").COLOR_BLACK)
+                                    panel.menu.item_group[1]:onUnfocus()
+                                    assert(panel.menu.item_group[1]._underline_container.color == require("ffi/blitbuffer").COLOR_LIGHT_GRAY)
+                                    assert(Menu.updateItems == menu_update and Menu.setupItemHeights == menu_heights)
+                                    panel:search("No matching synthetic annotation")
+                                    assert(#panel.menu.item_table == 1 and panel.menu.item_table[1].select_enabled == false and not panel.menu.item_group[1].rich)
                                     panel.menu:onClose()
                                     assert(not panel.book)
-                                    panel:search("Memory-only")
+                                    panel:search("Only a note")
                                     panel.menu:onMenuSelect(panel.menu.item_table[1])
+                                    local note_only = panel.menu.item_group[1].rich
+                                    assert(not note_only.quote and note_only.note.text == require("i18n").T("notebook.note", "Only a note"))
+                                    assert(note_only.metadata.text == require("i18n").T("notebook.page", 7) .. " · 2026-11-04")
+                                    panel.menu:onClose()
+                                    panel:search("Memory-only")
+                                    UIManager:widgetRepaint(panel, 0, 0)
+                                    local live_row = panel.menu.item_group[1]
+                                    live_row:onTapSelect(nil, { pos = Geom:new { x = live_row[1].dimen.x + 10, y = live_row[1].dimen.y + 10 } })
                                     local link = ui.link.addCurrentLocationToStack
                                     local event_handler = ui.handleEvent
                                     local pushed, jumped = 0, 0
@@ -214,7 +274,9 @@ UIManager:tickAfterNext(function()
                                         if event.handler == "onGotoXPointer" then jumped = jumped + 1 end
                                         return event_handler(self, event)
                                     end
-                                    panel.menu:onMenuSelect(panel.menu.item_table[1])
+                                    UIManager:widgetRepaint(panel, 0, 0)
+                                    local annotation_row = panel.menu.item_group[1]
+                                    annotation_row:onTapSelect(nil, { pos = Geom:new { x = annotation_row[1].dimen.x + 10, y = annotation_row[1].dimen.y + 10 } })
                                     assert(pushed == 1 and jumped == 1 and panel.closed)
                                     View.navigate(ui.document.file, { position = "/invalid/annotation/position" })
                                     assert(pushed == 1 and jumped == 1)
@@ -248,7 +310,7 @@ UIManager:tickAfterNext(function()
                                         DocSettings.findSidecarFile, lfs.attributes, DocSettings.open = old_find, old_attributes, old_full_open
                                         assert(catalog_calls >= 4)
                                         ui:onClose()
-                                        print("NOTEBOOK SUMMARY CHECK PASSED: real sidecars, memory annotations, bounded batches, cache invalidation, search, embedding, navigation and cancellation")
+                                        print("NOTEBOOK SUMMARY CHECK PASSED: real sidecars, primary counts, cache, catalog title, rich layers, search, paging, focus, taps, navigation and cancellation")
                                         UIManager:quit()
                                     end)
                                 end)
