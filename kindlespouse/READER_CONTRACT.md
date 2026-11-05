@@ -4,7 +4,7 @@ The base is c1d9e9e85081cf7854da2a0cda2d006f4110e177. The implementation uses th
 
 `require("reader/highlight_bar")` provides `install(ui)`, `uninstall(ui)` and `settings()`. Installation is idempotent and applies only to this ReaderUI instance. Missing upstream selection APIs leave the stock menu active. Closing or resizing the reader removes the compact popup. Closing the reader restores its instance methods.
 
-`settings()` saves `kindlespouse_reader = { schema = 1, highlight_bar = true, reader_bar = true }`. A legacy boolean controls both fields. Existing field values and additional fields survive migration. Each feature can be disabled independently.
+`Highlight.settings` and `NotebookSettings.settings` alias the migration function exported by `reader/settings`. It saves `kindlespouse_reader = { schema = 1, highlight_bar = true, reader_bar = true, notebook_summary = true }`. A legacy boolean controls both reader bars. Notebook summary defaults to true. Explicit feature values and additional fields survive migration. Each feature can be disabled independently.
 
 The highlight toolbar handles new selections only. Existing-annotation menus remain upstream. It reads `Device.screen:isColorScreen()` rather than color rendering preferences. A monochrome screen gets one `Highlight` action through upstream gettext (`高亮` in Chinese); it leaves the selection's color unchanged. Color screens get four color choices, each setting only the selected annotation's `color`. Both paths call `saveHighlight()` once and clear the selection.
 

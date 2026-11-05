@@ -20,9 +20,8 @@ local function position(item)
     if type(item.page) == "string" then return item.page end
 end
 
-local function annotations(data)
+local function annotations(values)
     local output, seen = {}, {}
-    local values = type(data) == "table" and data.annotations
     if type(values) == "table" then
         for _, item in ipairs(values) do
             if type(item) == "table" then
@@ -82,27 +81,24 @@ function Index:read(record)
     if record.status == "new" then return {} end
     local filename = record.path
     local reader = ReaderUI.instance
-    local data
     if reader and reader.document and reader.document.file == filename and reader.annotation then
-        data = { annotations = reader.annotation.annotations }
-    else
-        local path, signature, size = sidecar(filename)
-        local previous = self.cache[filename]
-        if previous and previous.signature == signature then return previous.items end
-        local settings
-        if path and size <= 10 * 1024 * 1024 then
-            local loaded, value = pcall(DocSettings.openSettingsFile, path)
-            if loaded and value and type(value.data) == "table" and next(value.data) ~= nil then
-                settings = value.data
-            else
-                logger.warn("KindleSpouse: empty or invalid annotation sidecar", path)
-            end
-        end
-        local items = annotations(settings)
-        self.cache[filename] = { signature = signature, items = items }
-        return items
+        return annotations(reader.annotation.annotations)
     end
-    return annotations(data)
+    local path, signature, size = sidecar(filename)
+    local previous = self.cache[filename]
+    if previous and previous.signature == signature then return previous.items end
+    local settings
+    if path and size <= 10 * 1024 * 1024 then
+        local loaded, value = pcall(DocSettings.openSettingsFile, path)
+        if loaded and value and type(value.data) == "table" and next(value.data) ~= nil then
+            settings = value.data
+        else
+            logger.warn("KindleSpouse: empty or invalid annotation sidecar", path)
+        end
+    end
+    local items = annotations(settings and settings.annotations)
+    self.cache[filename] = { signature = signature, items = items }
+    return items
 end
 
 function Index:cancel()
