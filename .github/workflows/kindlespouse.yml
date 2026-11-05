@@ -60,5 +60,8 @@ jobs:
             kindlespouse/build/notebook-summary-checks/**/runtime.log
             kindlespouse/build/home-guard-checks/**/*.png
             kindlespouse/build/home-guard-checks/**/runtime.log
+            kindlespouse/build/cached-startup-checks/**/*.png
+            kindlespouse/build/cached-startup-checks/**/*runtime.log
+            kindlespouse/build/cached-startup-checks/**/*.json
             kindlespouse/build/runtime-checks/**
           if-no-files-found: error

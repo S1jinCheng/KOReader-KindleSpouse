@@ -73,7 +73,7 @@ python3 kindlespouse/test_home.py --runtime /path/to/koreader
 
 v2026.07.2 尚未验证，白名单仍不包含该版本。[官方标签资源](https://github.com/koreader/koreader/releases/expanded_assets/v2026.07.2)只有源码归档，没有 AppImage。后续 nightly 与该标签包含的提交不同，不能替代精确版本验收。取得准确 AppImage 后，需要在该运行时通过完整测试，才能扩大白名单并更新兼容性断言。
 
-以下入口先核对运行时实际版本，再串行执行 24 组验收，覆盖目录增量扫描、主页返回、同步与中英文错误、单色和彩色高亮、笔记和解压后的安装包。各组日志及完整结果写入 `kindlespouse/build/runtime-checks`。当前 CI 使用同一入口。
+以下入口先核对运行时实际版本，再串行执行 26 组验收，覆盖缓存启动截图与静默后台扫描、EPUB/PDF 阅读工具栏、目录增量扫描、主页返回、同步与中英文错误、单色和彩色高亮、笔记和解压后的安装包。各组日志及完整结果写入 `kindlespouse/build/runtime-checks`。当前 CI 使用同一入口。
 
 ```sh
 python3 kindlespouse/test_runtime.py --runtime /path/to/koreader --fonts kindlespouse/build/cache --package kindlespouse/build/KindleSpouse-Scribe-Overlay.zip --expected-version 202607010000

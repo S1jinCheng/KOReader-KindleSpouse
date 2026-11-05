@@ -51,6 +51,7 @@ def main():
     add('version-guard', 'test_version_guard.py')
     add('home-guard', 'test_home_guard.py', font_args)
     add('catalog-500', 'test_catalog.py')
+    add('cached-startup', 'test_cached_startup.py', font_args)
     add('notebook', 'test_notebook_summary.py', font_args)
     add('home', 'test_home.py', font_args)
     for language in ('en', 'zh_CN'):
@@ -60,6 +61,7 @@ def main():
     for screen in ('monochrome', 'color'):
         add('reader-' + screen, 'test_reader.py', [*font_args, '--feature', 'all', '--statistics', '--integrated', '--screen', screen])
         add('package-reader-' + screen, 'test_reader.py', [*font_args, *package_args, '--feature', 'all', '--statistics', '--screen', screen])
+    add('reader-pdf', 'test_reader.py', [*font_args, '--feature', 'reader', '--statistics', '--integrated', '--document', 'pdf'])
     add('package-home', 'test_home.py', [*font_args, *package_args, '--language', 'zh_CN'])
     for name, command, overrides in checks:
         print('Running ' + name, flush=True)
