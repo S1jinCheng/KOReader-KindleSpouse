@@ -8,7 +8,26 @@ require("ui/widget/menu").is_enable_shortcut = false
 require("ui/widget/filechooser").is_enable_shortcut = false
 local project = assert(os.getenv("KINDLESPOUSE_TEST_ROOT"))
 package.path = (os.getenv("KINDLESPOUSE_PLUGIN_DIR") or project .. "/plugins/kindlespouse.koplugin") .. "/?.lua;" .. package.path
+local NotebookSettings = require("notebook/settings")
+local previous_reader = G_reader_settings:readSetting("kindlespouse_reader")
+G_reader_settings:saveSetting("kindlespouse_reader", false)
+local migrated = NotebookSettings.settings()
+assert(migrated.schema == 1 and not migrated.highlight_bar and not migrated.reader_bar and migrated.notebook_summary)
+G_reader_settings:saveSetting("kindlespouse_reader", { schema = 0, highlight_bar = false, reader_bar = true, notebook_summary = false, unknown = "preserved" })
+migrated = NotebookSettings.settings()
+assert(migrated.schema == 1 and not migrated.highlight_bar and migrated.reader_bar and not migrated.notebook_summary and migrated.unknown == "preserved")
+NotebookSettings.setEnabled(true)
+assert(NotebookSettings.enabled() and NotebookSettings.settings().unknown == "preserved")
+if previous_reader == nil then G_reader_settings:delSetting("kindlespouse_reader")
+else G_reader_settings:saveSetting("kindlespouse_reader", previous_reader) end
+assert(NotebookSettings.enabled())
 local Home = require("home")
+local layouts = {}
+local layout = Home.layout
+Home.layout = function(ui, ...)
+    layouts[ui] = (layouts[ui] or 0) + 1
+    return layout(ui, ...)
+end
 local Library = require("library")
 G_reader_settings:saveSetting("kindlespouse_library", { sort = "title" })
 G_reader_settings:delSetting("kindlespouse_native_library")
@@ -17,13 +36,16 @@ local original_init = FileManager.init
 function FileManager:init()
     local original_setup = self.setupLayout
     local installed = false
-    self.setupLayout = function(manager)
+    local entry
+    entry = function(manager)
         if not installed then
             installed = true
             Home.install { ui = manager, notify = function() end }
+            if manager.setupLayout ~= entry then return manager:setupLayout() end
         end
         return original_setup(manager)
     end
+    self.setupLayout = entry
     original_init(self)
 end
 end
@@ -44,6 +66,7 @@ local output = assert(os.getenv("KINDLESPOUSE_TEST_OUTPUT")) .. "/koreader-home-
 UIManager:tickAfterNext(function()
 UIManager:scheduleIn(3, function() check(function()
     local ui = assert(FileManager.instance)
+    assert(layouts[ui] == 1, "First setup must construct the custom home only once")
     assert(Library.fonts.title == "NotoSerifCJKsc-Regular.otf" and Library.fonts.ui == "NotoSansCJKsc-Regular.otf")
     assert(#ui.file_chooser.item_table == 8, "Nested books must be included and notebooks excluded")
     assert(ui.kindlespouse_shelf and ui.kindlespouse_shelf.list_view, "Scrollable cover shelf must be active")
@@ -89,6 +112,7 @@ UIManager:scheduleIn(3, function() check(function()
     end
     local files = ui.kindlespouse_catalog
     local BookList = require("ui/widget/booklist")
+    for _, item in ipairs(files) do BookList.book_info_cache[item.path] = { been_opened = false } end
     BookList.book_info_cache[files[1].path] = { been_opened = true, status = "reading", percent_finished = 0.42 }
     BookList.book_info_cache[files[2].path] = { been_opened = true, status = "complete", percent_finished = 1 }
     Library.refresh(ui, {})
@@ -146,6 +170,36 @@ UIManager:scheduleIn(3, function() check(function()
     ReadCollection:removeCollection(collection)
     ReadCollection:write()
     capture(ui, output .. "library.png")
+    local DocSettings = require("docsettings")
+    local Catalog = require("catalog")
+    local fixtures = G_reader_settings:readSetting("home_dir") .. "/"
+    assert(fixtures:sub(1, #(project .. "/kindlespouse/build/")) == project .. "/kindlespouse/build/")
+    for _, item in ipairs(files) do
+        assert(item.path:sub(1, #fixtures) == fixtures, "Only generated fixtures may be seeded")
+        local settings = DocSettings:open(item.path)
+        settings:delSetting("annotations")
+        settings:delSetting("annotations_rolling")
+        settings:delSetting("annotations_paging")
+        if item.path == files[1].path or item.path == files[3].path then
+            settings:saveSetting("annotations", { {
+                page = "/body/DocFragment[1]/body/p[1]", pos0 = "/body/DocFragment[1]/body/p[1]",
+                pos1 = "/body/DocFragment[1]/body/p[1]/text().1", text = "Synthetic quote " .. item.path:match("([^/]+)$"),
+                note = item.path == files[1].path and "只在笔记中的线索" or nil,
+                drawer = "lighten", color = "yellow", datetime = "2026-11-04 10:00:00", chapter = "Generated chapter",
+            } })
+            BookList.book_info_cache[item.path] = { been_opened = true, status = "reading", percent_finished = 0.3 }
+        end
+        settings:flush()
+        Catalog.touch(item.path)
+    end
+    Library.refresh(ui, {})
+    assert(Catalog.books[files[1].path].status == "reading" and Catalog.books[files[3].path].status == "reading")
+    local Registry = require("document/documentregistry")
+    local original_open, summary_opens = Registry.openDocument, 0
+    Registry.openDocument = function(manager, ...)
+        summary_opens = summary_opens + 1
+        return original_open(manager, ...)
+    end
     local chooser, shelf = ui.file_chooser, ui.kindlespouse_shelf
     local header, content, library = ui.kindlespouse_header, ui.kindlespouse_content, ui.kindlespouse_library_group
     local frame, navigation = ui[1], ui.kindlespouse_navigation
@@ -154,9 +208,17 @@ UIManager:scheduleIn(3, function() check(function()
     Home.notebook = function(...)
         notebook_creations = notebook_creations + 1
         local body = original_notebook(...)
-        local original_free = body.free
-        body.onCloseWidget = function(widget) notebook_pauses = notebook_pauses + 1; widget.closed = true end
-        body.refresh = function(widget) notebook_resumes = notebook_resumes + 1; widget.closed = false end
+        local original_free, original_close, original_refresh = body.free, body.onCloseWidget, body.refresh
+        body.onCloseWidget = function(widget, ...)
+            notebook_pauses = notebook_pauses + 1
+            if original_close then original_close(widget, ...) end
+            widget.closed = true
+        end
+        body.refresh = function(widget, ...)
+            notebook_resumes = notebook_resumes + 1
+            widget.closed = false
+            if original_refresh then return original_refresh(widget, ...) end
+        end
         body.free = function(widget, ...)
             notebook_frees = notebook_frees + 1
             return original_free(widget, ...)
@@ -188,6 +250,8 @@ UIManager:scheduleIn(3, function() check(function()
         UIManager:widgetRepaint(ui, 0, 0)
         ui.layout[#ui.layout][1].callback()
         assert(content[1] == library and ui.cropping_widget == shelf)
+        local hidden_panel = ui.kindlespouse_notebook_body
+        assert(hidden_panel.closed and not hidden_panel.index.task and not hidden_panel.index.pending and not ui.kindlespouse_notebook_search)
         assert(ui.kindlespouse_search_label.text == require("i18n").T("search_kindle"))
         assert(ui.file_chooser == chooser and ui.kindlespouse_shelf == shelf and ui.kindlespouse_header == header)
         assert(ui[1] == frame and ui.kindlespouse_navigation == navigation)
@@ -200,13 +264,47 @@ UIManager:scheduleIn(3, function() check(function()
     assert(shelf:getScrolledOffset().y == scroll and rebuilds == before and scans == 0)
     assert(notebook_creations == 1 and notebook_pauses == 21 and notebook_resumes == 20)
     assert(header_frees == 0 and notebook_frees == 0, "Cached bodies must not free the shared header")
-    lfs.dir = original_dir
     ui.layout[#ui.layout][2].callback()
     UIManager:scheduleIn(0.5, function() check(function()
         assert(ui.kindlespouse_tab == "Notebook")
         assert(ui[1]:getSize().h <= Screen:getHeight(), "Notebook must fit on screen")
         assert(ui.title_bar.subtitle_widget.text == "Kindle Scribe")
+        local panel = ui.kindlespouse_notebook_body
+        assert(panel.index and not panel.index.pending and #panel.menu.item_table == 2)
+        local highlight_count, note_count = 0, 0
+        for _, row in ipairs(panel.menu.item_table) do
+            assert(row.book.highlights == 1)
+            assert(row.mandatory == require("i18n").T("notebook.counts", row.book.highlights, row.book.notes))
+            highlight_count = highlight_count + row.book.highlights
+            note_count = note_count + row.book.notes
+        end
+        assert(highlight_count == 2 and note_count == 1 and summary_opens == 0 and scans == 0)
+        Registry.openDocument, lfs.dir = original_open, original_dir
+        panel:search("只在笔记中的线索")
+        assert(#panel.menu.item_table == 1 and panel.menu.item_table[1].book.path == files[1].path)
+        assert(ui.kindlespouse_search_label.text == "只在笔记中的线索" and Library.settings().query == "")
+        local dialog = ui.kindlespouse_search:onSearch()
+        assert(dialog == panel.search_dialog)
+        UIManager:close(dialog)
+        assert(not panel.search_dialog)
+        panel.menu.item_table[1].callback()
+        assert(#panel.menu.item_table == 1 and panel.menu.item_table[1].annotation.note == "只在笔记中的线索")
+        assert(panel.menu.item_table[1].text:find("Generated chapter", 1, true) and panel.menu.item_table[1].text:find("2026-11-04", 1, true))
+        assert(panel.title.text == panel.book.title and panel.title.text ~= files[1].name)
+        capture(ui, output .. "notebook-detail.png")
+        local row = panel.menu.item_group[1]
+        assert(row.rich.quote.text == panel.menu.item_table[1].annotation.text)
+        assert(row.rich.note.text == require("i18n").T("notebook.note", "只在笔记中的线索"))
+        assert(row.rich.metadata.text == "Generated chapter · 2026-11-04")
+        assert(row.rich.metadata.face.orig_size < row.rich.quote.face.orig_size)
+        assert(row.rich.note.dimen.x > row.rich.quote.dimen.x)
+        assert(row.rich.quote.dimen.y < row.rich.note.dimen.y and row.rich.note.dimen.y < row.rich.metadata.dimen.y)
+        assert(row._underline_container.color == require("ffi/blitbuffer").COLOR_LIGHT_GRAY)
+        panel.back.callback()
+        panel:search("")
+        assert(#panel.menu.item_table == 2)
         capture(ui, output .. "notebook.png")
+        assert(panel.dimen.y + panel:getSize().h < ui.kindlespouse_recent.dimen.y, "Summary pagination must stay above the protruding recent-book cover")
         ui.layout[#ui.layout][1].callback()
         Screen:setRotationMode(1)
         ui:reinit(ui.file_chooser.path)
@@ -219,6 +317,19 @@ UIManager:scheduleIn(3, function() check(function()
             assert(ui[1]:getSize().h <= Screen:getHeight(), "Landscape must fit on screen")
             capture(ui, output .. "landscape.png")
             ui.layout[#ui.layout][2].callback()
+            local enabled_panel = ui.kindlespouse_notebook_body
+            local stable_chooser, stable_shelf, stable_header = ui.file_chooser, ui.kindlespouse_shelf, ui.kindlespouse_header
+            local companion = { ui = ui, notify = function() end }
+            assert(not NotebookSettings.toggle(companion))
+            assert(enabled_panel.closed and not enabled_panel.index.task and not ui.kindlespouse_notebook_body.index)
+            local search_patch = require("patches").scope(ui) .. "notebook:search"
+            assert(not require("patches").applied[search_patch])
+            assert(not ui.kindlespouse_notebook_search and ui.kindlespouse_search_label.text == require("i18n").T("search_notebooks"))
+            local before_query = Library.settings().query
+            assert(ui.kindlespouse_search:onSearch() == true and Library.settings().query == before_query)
+            assert(NotebookSettings.toggle(companion) and ui.kindlespouse_notebook_body.index and ui.kindlespouse_notebook_search)
+            assert(require("patches").applied[search_patch].target == ui.kindlespouse_notebook_body)
+            assert(ui.file_chooser == stable_chooser and ui.kindlespouse_shelf == stable_shelf and ui.kindlespouse_header == stable_header)
             local hidden_shelf = ui.kindlespouse_shelf
             Home.toggle { ui = ui }
             assert(hidden_shelf.closed and not ui.kindlespouse_notebook_body and not ui.kindlespouse_content)
@@ -238,7 +349,11 @@ UIManager:scheduleIn(3, function() check(function()
             ui.layout[#ui.layout][2].callback()
             local final_body = ui.kindlespouse_notebook_body
             local body_closes, final_header_frees = 0, 0
-            final_body.onCloseWidget = function(widget) body_closes = body_closes + 1; widget.closed = true end
+            local final_body_close = final_body.onCloseWidget
+            final_body.onCloseWidget = function(widget, ...)
+                body_closes = body_closes + 1
+                return final_body_close(widget, ...)
+            end
             local final_free = final_header.free
             final_header.free = function(widget, ...)
                 final_header_frees = final_header_frees + 1
@@ -248,6 +363,9 @@ UIManager:scheduleIn(3, function() check(function()
             assert(final_shelf.closed and body_closes == 1 and final_header_frees == 1)
             assert(not ui.kindlespouse_content and not ui.kindlespouse_notebook_body)
             assert(not require("catalog").subscribers[ui], "Closing must detach catalog refresh callbacks")
+            assert(not require("patches").applied[search_patch], "Closing must restore the panel search method")
+            for id in pairs(require("patches").applied) do assert(id:sub(1, 9) ~= "notebook:", "Closed panels must release menu and dialog patches") end
+            print("KindleSpouse integrated summary acceptance passed: 2 books, 2 highlights, 1 note, local search, reversible schema1 toggle")
             print("KindleSpouse body-only tab acceptance passed: 20 round trips, cached Home, zero rebuilds/scans, nonzero scroll and cleanup")
             print("KindleSpouse home acceptance passed")
             UIManager:quit()

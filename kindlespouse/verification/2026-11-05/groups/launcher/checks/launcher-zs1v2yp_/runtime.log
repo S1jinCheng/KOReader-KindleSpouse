@@ -1,0 +1,9 @@
+has monolibtic? no (libs/libkoreader-monolibtic.so: cannot open shared object file: No such file or directory)
+lib_search_path: libs/?
+lib_basic_format: lib%s.so
+lib_version_format: lib%s.so.%s
+ffi.load: rt.so.1 (RTLD_GLOBAL)
+ffi.findlib: utf8proc [3]
+ffi.load: libs/libutf8proc.so.3
+KindleSpouse localized launcher failures passed: 52 visible failures in both locales, prefixed raw diagnostics retained
+KindleSpouse launcher acceptance passed: whitelist, shell quoting, marker ownership, raw lock, pause scope, save failure, expiry, atomic publication

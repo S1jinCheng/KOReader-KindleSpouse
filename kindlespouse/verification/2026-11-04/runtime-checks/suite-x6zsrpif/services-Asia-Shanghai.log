@@ -1,0 +1,30 @@
+has monolibtic? no (libs/libkoreader-monolibtic.so: cannot open shared object file: No such file or directory)
+lib_search_path: libs/?
+lib_basic_format: lib%s.so
+lib_version_format: lib%s.so.%s
+ffi.load: rt.so.1 (RTLD_GLOBAL)
+ffi.findlib: utf8proc [3]
+ffi.load: libs/libutf8proc.so.3
+ffi.findlib: SDL3 [0]
+ffi.load: libs/libSDL3.so.0
+ffi.findlib: blitbuffer
+ffi.load: libs/libblitbuffer.so
+Started SDL in /mnt/d/kindleBooming/KindleSpouse/native/tools/koreader/squashfs-root/usr/lib/koreader/ using dummy video driver
+ffi.findlib: lodepng
+ffi.load: libs/liblodepng.so
+11/04/26-22:05:50 INFO  initializing for device Emulator 
+11/04/26-22:05:50 INFO  framebuffer resolution: {
+  h = 800,
+  w = 600
+} --[[table: 0x76ff87d76b70]] 
+ffi.findlib: wrap-mupdf
+ffi.load: libs/libwrap-mupdf.so
+ffi.findlib: freetype [6]
+ffi.load: libs/libfreetype.so.6
+ffi.findlib: harfbuzz [0]
+ffi.load: libs/libharfbuzz.so.0
+ffi.findlib: zstd [1]
+ffi.load: libs/libzstd.so.1
+11/04/26-22:05:50 INFO  /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/checks/services-notzs_1q/cache/fontlist/fontinfo.dat fopen: No such file or directory -> initializing it 
+KindleSpouse services acceptance passed: localization, bounded JSON, worker and launch state, invocation IDs, menus, native dialog replacement, timer ownership and guarded sleep-cover lifecycle
+

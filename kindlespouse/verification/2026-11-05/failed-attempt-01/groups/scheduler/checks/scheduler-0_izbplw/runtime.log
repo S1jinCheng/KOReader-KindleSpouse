@@ -1,0 +1,26 @@
+PASS two hosts share one pending launch and late old detach preserves current host
+PASS five modifications debounce to one full job
+PASS network reconnect requests full when dirty and updates otherwise after eight seconds
+PASS pause flags remain authoritative even for manual requests
+PASS only matching successful full generation clears dirty flags
+PASS old completed status never acknowledges a newly accepted launch
+PASS reservation prevents spawning until acquired and releases once worker observed
+PASS launch failure uses exponential retry capped at fifteen minutes
+PASS idle for ten minutes starts no repeated jobs after one stale boot check
+PASS fallback queues books and updates after fifteen awake minutes
+PASS reading dirty full upload starts at exactly 600 seconds since last full sync
+PASS reading generation changed during upload remains dirty until next 600 second deadline
+PASS reading deadline failure respects retry and pause without launching every page
+PASS reading deadline survives offline and suspended time with one reconnect job
+PASS reading deadline remains suspended until resume
+PASS reading without dirty state only receives books and updates after thirty minutes
+PASS suspend stops all timers and recent resume adds no full sync
+PASS detaching current host retains debounce deadline for next attach
+PASS books completion never clears notes and requests coalesce globally
+PASS terminal status may omit a worker PID after its lock disappears
+PASS a restored network promptly retries after a previous failed launch
+PASS reservation filesystem errors retry without wedging the active state
+PASS overlapping offline sleep is excluded once from fallback elapsed time
+PASS automatic debounce cannot postpone an explicit manual request
+PASS scheduler failures remain visible and localized in both languages
+KindleSpouse scheduler acceptance passed: 25 scenarios

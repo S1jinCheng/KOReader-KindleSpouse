@@ -1,0 +1,50 @@
+ffi.findlib: sqlite3 [0]
+ffi.load: libs/libsqlite3.so.0
+11/05/26-18:26:49 INFO  Applying patch: /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/reader-checks/reader-l48gsqqx/patches/2-reader-check.lua 
+ffi.findlib: archive [13]
+ffi.load: libs/libarchive.so.13
+ffi.findlib: freetype [6]
+ffi.load: libs/libfreetype.so.6
+ffi.findlib: harfbuzz [0]
+ffi.load: libs/libharfbuzz.so.0
+ffi.findlib: zstd [1]
+ffi.load: libs/libzstd.so.1
+11/05/26-18:26:49 INFO  /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/reader-checks/reader-l48gsqqx/cache/fontlist/fontinfo.dat fopen: No such file or directory -> initializing it 
+ffi.findlib: leptonica [6]
+ffi.load: libs/libleptonica.so.6
+ffi.findlib: k2pdfopt [2]
+ffi.load: libs/libk2pdfopt.so.2
+11/05/26-18:26:50 INFO  opening file /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/reader-checks/reader-l48gsqqx/generated.pdf 
+11/05/26-18:26:50 INFO  Inhibiting user input 
+11/05/26-18:26:50 INFO  Looking for plugins in directory: plugins 
+11/05/26-18:26:50 INFO  Looking for plugins in directory: /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/reader-checks/reader-l48gsqqx/plugins/ 
+11/05/26-18:26:50 WARN  PluginLoader: kindlespouse name in _meta.lua, is deprecated and will be ignored. 
+11/05/26-18:26:50 INFO  setting zoom mode to pagewidth 
+11/05/26-18:26:51 INFO  setting zoom mode to contentwidth 
+11/05/26-18:26:51 INFO  Restoring user input handling 
+READER CHECK pixels: complete viewport, blank gutters, 1 physical pixel separators and exact restoration passed
+11/05/26-18:26:58 WARN  KindleSpouse: interface installation failed: ...der-kindlespouse/plugins/kindlespouse.koplugin/shelf.lua:216: module 'bookinfomanager' not found:
+	no field package.preload['bookinfomanager']
+	no file '/mnt/d/kindleBooming/koreader-kindlespouse/plugins/kindlespouse.koplugin/bookinfomanager.lua'
+	no file 'common/bookinfomanager.lua'
+	no file 'frontend/bookinfomanager.lua'
+	no file 'plugins/exporter.koplugin/bookinfomanager.lua'
+	no file './bookinfomanager.lua'
+	no file '/usr/local/share/luajit-2.1/bookinfomanager.lua'
+	no file '/usr/local/share/lua/5.1/bookinfomanager.lua'
+	no file '/usr/local/share/lua/5.1/bookinfomanager/init.lua'
+	no file '/mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/reader-checks/reader-l48gsqqx/plugins//kindlespouse.koplugin/bookinfomanager.lua'
+	no file 'plugins/statistics.koplugin/bookinfomanager.lua'
+	no file 'common/bookinfomanager.so'
+	no file 'common/bookinfomanager.dll'
+	no file '/usr/lib/lua/bookinfomanager.so'
+	no file './bookinfomanager.so'
+	no file '/usr/local/lib/lua/5.1/bookinfomanager.so'
+	no file '/usr/local/lib/lua/5.1/loadall.so'
+	no file '/mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/reader-checks/reader-l48gsqqx/plugins//kindlespouse.koplugin/lib/bookinfomanager.so'
+	no file 'plugins/statistics.koplugin/lib/bookinfomanager.so' 
+READER CHECK bar: gesture condition, outside dismiss, real upstream hooks, drag/tap navigation and lifecycle restoration passed
+READER CHECK PASSED reader
+11/05/26-18:26:58 INFO  Preparing to quit UIManager with exit code: 0 
+11/05/26-18:26:58 INFO  UIManager: No dialogs left to show 
+11/05/26-18:26:58 INFO  Tearing down UIManager with exit code: 0 

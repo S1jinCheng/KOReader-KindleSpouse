@@ -260,7 +260,7 @@ function Shelf.library(ui, height)
         Extractor.cancel(shelf)
     end
     local state = require("catalog").roots[ui.file_chooser.path]
-    if state and state.scanning then shelf:setScanning(#require("catalog").records(state.root)) end
+    if state and state.scanning and not state.quiet_startup then shelf:setScanning(#require("catalog").records(state.root)) end
     shelf:setScrolledOffset(ui.kindlespouse_positions[key])
     return shelf
 end

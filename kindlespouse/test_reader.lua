@@ -16,7 +16,8 @@ local translations = {
     ["reader.library"] = "← Library", ["reader.contents"] = "Contents",
     ["reader.bookmarks"] = "Bookmarks", ["reader.search"] = "Search",
     ["reader.appearance"] = "Aa", ["reader.book"] = "Book",
-    ["reader.progress"] = "%1 / %2 · %3%", ["reader.remaining"] = "%1 left",
+    ["reader.progress"] = "%1 / %2 · %3%",
+    ["reader.remaining.minutes"] = "about %1 min", ["reader.remaining.hours"] = "about %1 h %2 min",
 }
 if not pcall(require, "i18n") then
     package.loaded.i18n = { T = function(key, ...)
@@ -85,27 +86,79 @@ local function highlights(ui)
     G_reader_settings:saveSetting("kindlespouse_reader", true)
     migrated = Highlight.settings()
     assert(migrated.schema == 1 and migrated.highlight_bar and migrated.reader_bar)
+    local color_screen = os.getenv("KINDLESPOUSE_READER_SCREEN") == "color"
+    assert(Screen:isColorScreen() == color_screen, "Profile must exercise the real screen capability API")
+    assert(not Screen:isColorEnabled(), "Screen capability must be independent of color rendering settings")
+    local global_drawer = G_reader_settings:readSetting("highlight_drawing_style")
+    local global_color = G_reader_settings:readSetting("highlight_color")
     local before = #ui.annotation.annotations
-    highlight.view.highlight.saved_drawer = "invert"
-    select(ui)
-    local dialog = assert(highlight.highlight_dialog)
-    assert(dialog.kindlespouse_highlight_bar)
-    paint(dialog, "highlight")
-    local rectangle = dialog:getContentSize()
-    assert(rectangle.x >= 0 and rectangle.y >= 0 and rectangle.x + rectangle.w <= Screen:getWidth() and rectangle.y + rectangle.h <= Screen:getHeight())
-    local yellow = assert(dialog:getButtonById("kindlespouse-color-yellow"))
-    tap(dialog, yellow)
-    assert(#ui.annotation.annotations == before + 1)
-    assert(ui.annotation.annotations[#ui.annotation.annotations].color == "yellow")
-    assert(ui.annotation.annotations[#ui.annotation.annotations].drawer == "lighten")
-    assert(highlight.selected_text == nil and highlight.highlight_dialog == nil)
-    yellow.callback()
-    assert(#ui.annotation.annotations == before + 1, "Repeated stale action must not save twice")
-    select(ui)
-    local purple_dialog = assert(highlight.highlight_dialog)
-    paint(purple_dialog, "highlight-purple")
-    tap(purple_dialog, purple_dialog:getButtonById("kindlespouse-color-purple"))
-    assert(ui.annotation.annotations[#ui.annotation.annotations].color == "purple")
+    local choices = color_screen and { "yellow", "blue", "purple", "orange" } or { false }
+    local stale
+    local function checkChoices(dialog)
+        assert(dialog.kindlespouse_highlight_bar)
+        assert(#dialog.buttons[1] == #choices)
+        assert((dialog:getButtonById("kindlespouse-highlight") ~= nil) == not color_screen)
+        for _, name in ipairs({ "yellow", "blue", "purple", "orange" }) do
+            assert((dialog:getButtonById("kindlespouse-color-" .. name) ~= nil) == color_screen)
+        end
+        if not color_screen then
+            assert(dialog:getButtonById("kindlespouse-highlight").text == require("gettext")("Highlight"))
+        end
+    end
+    local dialog
+    for _, drawer in ipairs({ "lighten", "underscore", "strikeout", "invert" }) do
+        highlight.view.highlight.saved_drawer = drawer
+        highlight.view.highlight.saved_color = "green"
+        for choice_index, color in ipairs(choices) do
+            select(ui)
+            dialog = assert(highlight.highlight_dialog)
+            checkChoices(dialog)
+            if stale then
+                local count = #ui.annotation.annotations
+                stale()
+                assert(highlight.highlight_dialog == dialog and highlight.selected_text)
+                assert(#ui.annotation.annotations == count, "Stale action must preserve a newer selection and dialog")
+            end
+            paint(dialog, "highlight-" .. (color or "monochrome") .. "-" .. drawer)
+            local rectangle = dialog:getContentSize()
+            assert(rectangle.x >= 0 and rectangle.y >= 0 and rectangle.x + rectangle.w <= Screen:getWidth() and rectangle.y + rectangle.h <= Screen:getHeight())
+            local button = assert(dialog:getButtonById(color and "kindlespouse-color-" .. color or "kindlespouse-highlight"))
+            local count = #ui.annotation.annotations
+            local index
+            if count == before then
+                tap(dialog, button)
+                index = #ui.annotation.annotations
+            else
+                index = dialog.buttons[1][choice_index].callback()
+            end
+            assert(#ui.annotation.annotations == count + 1)
+            local annotation = assert(ui.annotation.annotations[index], "Action must return the upstream annotation index")
+            assert(annotation.color == (color or "green") and annotation.drawer == drawer)
+            assert(highlight.selected_text == nil and highlight.highlight_dialog == nil)
+            assert(highlight.view.highlight.saved_drawer == drawer and highlight.view.highlight.saved_color == "green")
+            assert(G_reader_settings:readSetting("highlight_drawing_style") == global_drawer)
+            assert(G_reader_settings:readSetting("highlight_color") == global_color)
+            stale = button.callback
+            stale()
+            assert(#ui.annotation.annotations == count + 1, "Repeated stale action must not save twice")
+        end
+    end
+    highlight.view.highlight.saved_drawer = "underscore"
+    for choice_index, color in ipairs(choices) do
+        local selection = select(ui)
+        selection.drawer = "strikeout"
+        selection.color = "orange"
+        dialog = assert(highlight.highlight_dialog)
+        local index = dialog.buttons[1][choice_index].callback()
+        assert(ui.annotation.annotations[index].drawer == "strikeout", "Selection-specific drawer must override saved drawer")
+        assert(ui.annotation.annotations[index].color == (color or "orange"))
+        assert(highlight.view.highlight.saved_drawer == "underscore" and highlight.view.highlight.saved_color == "green")
+    end
+    assert(#ui.annotation.annotations == before + #choices * 5)
+    local expected = {}
+    for index, annotation in ipairs(ui.annotation.annotations) do
+        expected[index] = { color = annotation.color, drawer = annotation.drawer }
+    end
     highlight:addToHighlightDialog("99_synthetic_thirdparty", function()
         return { text = "Synthetic third-party action", callback = function() end }
     end)
@@ -125,12 +178,31 @@ local function highlights(ui)
     paint(stock, "highlight-stock-more")
     highlight:onClose()
     highlight:removeFromHighlightDialog("99_synthetic_thirdparty")
+    local selected_for_stale_more = select(ui)
+    local stale_more_dialog = assert(highlight.highlight_dialog)
+    local stale_more = stale_more_dialog:getButtonById("kindlespouse-highlight-more").callback
+    highlight:onClose()
+    select(ui)
+    dialog = assert(highlight.highlight_dialog)
+    assert(highlight.selected_text ~= selected_for_stale_more)
+    stale_more()
+    assert(highlight.highlight_dialog == dialog and dialog.kindlespouse_highlight_bar)
+    highlight:onSetDimensions({ w = Screen:getWidth(), h = Screen:getHeight() })
+    assert(highlight.highlight_dialog == nil and highlight.selected_text == nil)
+    select(ui)
+    dialog = assert(highlight.highlight_dialog)
+    dialog.tap_close_callback()
+    UIManager:close(dialog)
+    assert(highlight.highlight_dialog == nil and highlight.selected_text == nil)
+    select(ui)
     Highlight.uninstall(ui)
+    assert(highlight.highlight_dialog == nil and highlight.selected_text == nil)
     assert(highlight.onShowHighlightMenu == original)
     G_reader_settings:saveSetting("kindlespouse_reader", { highlight_bar = false })
     assert(not Highlight.install(ui))
     G_reader_settings:saveSetting("kindlespouse_reader", {})
-    print("READER CHECK highlight: real selection, yellow and purple annotations, stale callback, More and original restoration passed")
+    print("READER CHECK highlight: " .. (color_screen and "color" or "monochrome") .. ", all drawer styles, per-selection overrides, defaults, stale callbacks, More, third-party builders and lifecycle passed")
+    return expected
 end
 
 local function readerBar(ui)
@@ -148,16 +220,151 @@ local function readerBar(ui)
         paint(bar, "reader-bar")
         return bar
     end
+    local engine = ui.rolling or ui.paging
+    local location = engine.current_page
+    local dimensions = ui.view.dimen:copy()
+    local footer_visible = ui.view.footer_visible
+    local footer_settings = require("rapidjson").encode(ui.view.footer.settings, { sort_keys = true })
+    local document_settings = require("rapidjson").encode(ui.doc_settings.data, { sort_keys = true })
     local bar = open()
+    paint(bar, "reader-body-unobscured")
     assert(bar.top_rect.h < Screen:getHeight() / 3 and bar.bottom_rect.h < Screen:getHeight() / 3)
+    assert(bar.title == "A Quiet Morning", "Only the redundant trailing reading marker is removed")
+    assert(engine.current_page == location and ui.view.dimen == dimensions)
+    assert(ui.view.footer_visible == footer_visible)
+    assert(require("rapidjson").encode(ui.view.footer.settings, { sort_keys = true }) == footer_settings)
+    assert(require("rapidjson").encode(ui.doc_settings.data, { sort_keys = true }) == document_settings)
     if ui.statistics then
-        assert(bar.progress_text.text:find("left", 1, true), "Available statistics must supply remaining time")
+        assert(bar.progress_text.text:find("about", 1, true), "Available statistics must supply remaining time")
     else
-        assert(not bar.progress_text.text:find("left", 1, true), "Disabled statistics must not invent remaining time")
+        assert(not bar.progress_text.text:find("about", 1, true), "Disabled statistics must not invent remaining time")
     end
+    local Blitbuffer = require("ffi/blitbuffer")
+    local source = Blitbuffer.new(Screen:getWidth(), Screen:getHeight(), Screen.bb:getType())
+    source:fill(Blitbuffer.COLOR_WHITE)
+    ui.view:paintTo(source, 0, 0)
+    source:writePNG(output .. "/reader-source.png")
+    local expected = require("ui/renderimage"):scaleBlitBuffer(source, bar.viewport_rect.w, bar.viewport_rect.h, false)
+    expected:writePNG(output .. "/reader-expected-viewport.png")
+    local function compareBuffer(buffer, x, y)
+        for row = 0, buffer:getHeight() - 1 do
+            for column = 0, buffer:getWidth() - 1 do
+                local actual = Screen.bb:getPixel(x + column, y + row)
+                local pixel = buffer:getPixel(column, row)
+                assert(actual:getR() == pixel:getR() and actual:getG() == pixel:getG() and actual:getB() == pixel:getB(), "Entire viewport pixels must be retained or restored exactly")
+            end
+        end
+    end
+    local viewport, body = bar.viewport_rect, bar.body_rect
+    assert(viewport.y >= body.y and viewport.y + viewport.h <= body.y + body.h)
+    compareBuffer(expected, viewport.x, viewport.y)
+    local function solidRow(y, color, from, to)
+        for x = from or 0, (to or Screen:getWidth()) - 1 do
+            if Screen.bb:getPixel(x, y):getColor8().a ~= color then return false end
+        end
+        return true
+    end
+    for _, y in ipairs({ bar.top_rect.h, bar.bottom_rect.y - 1 }) do
+        assert(solidRow(y, 0), "Separators must span exactly one physical row")
+        assert(not solidRow(y - 1, 0) and not solidRow(y + 1, 0), "Separator must not grow with DPI")
+    end
+    for y = body.y, body.y + body.h - 1 do
+        assert(solidRow(y, 255, 0, viewport.x) and solidRow(y, 255, viewport.x + viewport.w, Screen:getWidth()), "Unscaled text must be cleared behind the fitted viewport")
+    end
+    local draw = ui.view.paintTo
+    local new_buffer = Blitbuffer.new
+    local allocated
+    Blitbuffer.new = function(...)
+        allocated = new_buffer(...)
+        return allocated
+    end
+    ui.view.paintTo = function() error("synthetic render failure") end
+    assert(not pcall(bar.paintTo, bar, Screen.bb))
+    ui.view.paintTo = draw
+    Blitbuffer.new = new_buffer
+    assert(allocated:getAllocated() == 0 and not bar.painting, "Render failures must free the temporary framebuffer and reset recursion state")
+    local renderer = require("ui/renderimage")
+    local scale = renderer.scaleBlitBuffer
+    renderer.scaleBlitBuffer = function(_, buffer)
+        allocated = buffer
+        error("synthetic scaling failure")
+    end
+    assert(not pcall(bar.paintTo, bar, Screen.bb))
+    renderer.scaleBlitBuffer = scale
+    assert(allocated:getAllocated() == 0, "Scaling failures must free the temporary framebuffer")
+    ui.view.paintTo = function(self, buffer, ...)
+        bar:paintTo(buffer)
+        return draw(self, buffer, ...)
+    end
+    bar:paintTo(Screen.bb)
+    ui.view.paintTo = draw
+    assert(not bar.painting, "Recursive view modules must not recursively render the toolbar")
+    expected:free()
+    local geometry = assert(io.open(output .. "/reader-geometry.json", "w"))
+    geometry:write(require("rapidjson").encode({ top = bar.top_rect, bottom = bar.bottom_rect, body = bar.body_rect, viewport = bar.viewport_rect }))
+    geometry:close()
+    local statistics = ui.statistics
+    local language = G_reader_settings:readSetting("language")
+    local left = ui.document.info.number_of_pages - engine.current_page
+    assert(left > 0)
+    for _, locale in ipairs({ "en", "zh_CN" }) do
+        G_reader_settings:saveSetting("language", locale)
+        for _, case in ipairs({ { 0, 0 }, { 29, 0 }, { 30, 1 }, { 3569, 59 }, { 3570, 60 }, { 3599, 60 }, { 3600, 60 }, { 3629, 60 }, { 3630, 61 }, { 7199, 120 } }) do
+            ui.statistics = { settings = { is_enabled = true }, avg_time = case[1] / left,
+                getTimeForPages = function() error("Presentation strings must never be parsed") end }
+            bar:refreshProgress()
+            local minutes = case[2]
+            local text
+            if locale == "zh_CN" then
+                text = minutes < 60 and ("约 " .. minutes .. " 分钟")
+                    or ("约 " .. math.floor(minutes / 60) .. " 小时 " .. minutes % 60 .. " 分")
+            else
+                text = minutes < 60 and ("about " .. minutes .. " min")
+                    or ("about " .. math.floor(minutes / 60) .. " h " .. minutes % 60 .. " min")
+            end
+            assert(bar.progress_text.text:sub(-#text) == text, "Remaining time rounding or localization failed")
+        end
+        for _, average in ipairs({ false, -1, math.huge, 0 / 0 }) do
+            ui.statistics.avg_time = average
+            bar:refreshProgress()
+            assert(not bar.progress_text.text:find("about", 1, true) and not bar.progress_text.text:find("约", 1, true))
+        end
+        ui.statistics = { settings = { is_enabled = false }, avg_time = 30 }
+        bar:refreshProgress()
+        assert(not bar.progress_text.text:find("about", 1, true) and not bar.progress_text.text:find("约", 1, true))
+    end
+    ui.statistics = statistics
+    G_reader_settings:saveSetting("language", "zh_CN")
+    bar:refreshProgress()
+    paint(bar, "reader-bar-zh")
+    G_reader_settings:saveSetting("language", language)
+    bar:refreshProgress()
     assert(bar.bottom:getSize().w == Screen:getWidth(), "Bottom panel must cover the stock footer without gaps")
     bar:handleEvent(Event:new("Gesture", { ges = "tap", pos = Geom:new { x = 20, y = Screen:getHeight() / 2 } }))
     assert(not ui._kindlespouse_reader_bar.overlay)
+    paint(ui, "reader-restored")
+    compareBuffer(source, 0, 0)
+    source:free()
+    print("READER CHECK pixels: complete viewport, blank gutters, 1 physical pixel separators and exact restoration passed")
+    assert(engine.current_page == location and ui.view.dimen == dimensions and ui.view.footer_visible == footer_visible)
+    G_reader_settings:saveSetting("language", "zh_CN")
+    bar = open()
+    assert(bar.actions.library.text == "← 书库" and bar.actions.toc.text == "目录")
+    paint(bar, "reader-body-unobscured-zh")
+    bar:close()
+    G_reader_settings:saveSetting("language", language)
+    local title = ui.doc_props.display_title
+    for _, text in ipairs({ "阅读 · A Quiet Morning", "A · 阅读 · Morning", "A Quiet Morning · Reading", "文学·阅读" }) do
+        ui.doc_props.display_title = text
+        bar = open()
+        assert(bar.title == text, "Meaningful title text must be retained")
+        bar:close()
+    end
+    ui.doc_props.display_title = "A Quiet Morning  ·  阅读  "
+    bar = open()
+    assert(bar.title == "A Quiet Morning")
+    bar:close()
+    ui.doc_props.display_title = title
     local counts = {}
     local hooks = {
         { "toc", ui.toc, "onShowToc" }, { "bookmarks", ui.bookmark, "onShowBookmark" },
@@ -186,15 +393,35 @@ local function readerBar(ui)
     local function scrub(kind, ratio)
         bar:handleEvent(Event:new("Gesture", { ges = kind, pos = Geom:new { x = rectangle.x + rectangle.w * ratio, y = rectangle.y + rectangle.h / 2 } }))
     end
-    local first = ui.rolling.current_page
+    local first = engine.current_page
     scrub("pan", 0.7)
-    assert(ui.rolling.current_page == first, "Pan previews progress before committing")
+    assert(engine.current_page == first, "Pan previews progress before committing")
     scrub("pan_release", 0.7)
-    assert(ui.rolling.current_page > first)
+    assert(engine.current_page > first)
     scrub("tap", 0.2)
-    assert(math.abs(ui.rolling:getLastPercent() - 0.2) < 0.1)
+    assert(math.abs(engine:getLastPercent() - 0.2) < 0.1)
     bar:close()
+    bar = open()
+    ui.menu:onSetDimensions(Screen:getSize())
+    assert(bar.closed and not ui._kindlespouse_reader_bar.overlay)
+    local rotation = Screen:getRotationMode()
+    for _, mode in ipairs({ (rotation + 1) % 4, rotation }) do
+        bar = open()
+        ui.view:onSetRotationMode(mode)
+        assert(bar.closed and not ui._kindlespouse_reader_bar.overlay, "Rotation must close the old viewport")
+        closeAbove(ui)
+        local page = engine.current_page
+        local rotated_footer = ui.view.footer_visible
+        bar = open()
+        assert(bar.dimen.w == Screen:getWidth() and bar.dimen.h == Screen:getHeight())
+        assert(bar.viewport_rect.y >= bar.body_rect.y and bar.viewport_rect.y + bar.viewport_rect.h <= bar.bottom_rect.y - 1)
+        paint(bar, mode == rotation and "reader-portrait-restored" or "reader-landscape")
+        bar:close()
+        assert(engine.current_page == page and ui.view.footer_visible == rotated_footer)
+    end
+    bar = open()
     ReaderBar.uninstall(ui)
+    assert(bar.closed and ui.view.dimen == dimensions and ui.view.footer_visible == footer_visible)
     assert(ui.menu.onTapShowMenu == original)
     G_reader_settings:saveSetting("kindlespouse_reader", { reader_bar = false })
     assert(not ReaderBar.install(ui))
@@ -225,7 +452,7 @@ UIManager:tickAfterNext(function()
     UIManager:scheduleIn(2, function()
         local ok, error = xpcall(function()
             local ui = assert(ReaderUI.instance)
-            assert(ui.document and ui.rolling and ui.rolling.current_page > 0)
+            assert(ui.document and (ui.rolling or ui.paging) and (ui.rolling or ui.paging).current_page > 0)
             assert(ui.document.info.number_of_pages > 3, "Fixture must load the generated multi-page EPUB, never an error document")
             if os.getenv("KINDLESPOUSE_TEST_INTEGRATED") == "1" then
                 assert(ui._kindlespouse_highlight_bar, "Loaded plugin must install the highlight toolbar automatically")
@@ -233,13 +460,19 @@ UIManager:tickAfterNext(function()
                 require("reader/init").uninstall(ui)
             end
             local filename = ui.document.file
-            if feature ~= "reader" then highlights(ui) end
+            local expected
+            if feature ~= "reader" then expected = highlights(ui) end
             if feature ~= "highlight" then readerBar(ui) end
             if feature == "highlight" then ui:onClose() end
             if feature ~= "reader" then
-                local saved = require("docsettings"):open(filename):readSetting("annotations")
-                assert(type(saved) == "table" and #saved == 2)
-                assert(saved[1].color == "yellow" and saved[2].color == "purple")
+                local settings = require("docsettings"):open(filename)
+                local saved = settings:readSetting("annotations")
+                assert(type(saved) == "table" and #saved == #expected)
+                for index, annotation in ipairs(saved) do
+                    assert(annotation.color == expected[index].color and annotation.drawer == expected[index].drawer, "Persisted annotations must retain drawer and color")
+                end
+                assert(settings:readSetting("highlight_drawer") == "underscore" and settings:readSetting("highlight_color") == "green")
+                print("READER CHECK persisted: " .. #saved .. " annotation drawers and colors plus document defaults passed")
             end
             print("READER CHECK PASSED " .. feature)
         end, debug.traceback)

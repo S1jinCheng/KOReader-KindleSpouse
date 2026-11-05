@@ -1,0 +1,50 @@
+ffi.findlib: k2pdfopt [2]
+ffi.load: libs/libk2pdfopt.so.2
+Shelf wait	120	false	500	true
+Shelf wait	140	false	500	true
+ffi.findlib: leptonica [6]
+ffi.load: libs/libleptonica.so.6
+ffi.findlib: k2pdfopt [2]
+ffi.load: libs/libk2pdfopt.so.2
+Shelf wait	160	false	500	true
+ffi.findlib: leptonica [6]
+ffi.load: libs/libleptonica.so.6
+ffi.findlib: k2pdfopt [2]
+ffi.load: libs/libk2pdfopt.so.2
+Shelf wait	180	false	500	true
+Shelf wait	200	false	500	true
+ffi.findlib: leptonica [6]
+ffi.load: libs/libleptonica.so.6
+ffi.findlib: k2pdfopt [2]
+ffi.load: libs/libk2pdfopt.so.2
+Shelf wait	220	false	500	true
+ffi.findlib: leptonica [6]
+ffi.load: libs/libleptonica.so.6
+ffi.findlib: k2pdfopt [2]
+ffi.load: libs/libk2pdfopt.so.2
+Shelf wait	240	false	500	true
+Shelf wait	260	false	500	true
+ffi.findlib: leptonica [6]
+ffi.load: libs/libleptonica.so.6
+ffi.findlib: k2pdfopt [2]
+ffi.load: libs/libk2pdfopt.so.2
+Shelf wait	280	false	500	true
+Shelf wait	300	false	500	true
+ffi.findlib: leptonica [6]
+ffi.load: libs/libleptonica.so.6
+ffi.findlib: k2pdfopt [2]
+ffi.load: libs/libk2pdfopt.so.2
+Shelf wait	320	false	500	false
+KindleSpouse shelf observations {"hotDirectoryScans":0,"hotDocumentOpens":0,"hotRebuilds":0,"hotPathResolutions":0,"runs":5,"books":500,"refreshMilliseconds":[3,3,2,2,2,2,3,5,3,6,3,2,2,2,2,2,2,5,2,2,4,2,2,3,3,5,2,2,2,2,2,3,3,6,2,2,2,1,2,2,2,6,4,2,2,2,2,2,2,4,2,3,2,3,3,3,7,2]}
+ffi.findlib: leptonica [6]
+ffi.load: libs/libleptonica.so.6
+ffi.findlib: k2pdfopt [2]
+ffi.load: libs/libk2pdfopt.so.2
+11/05/26-18:25:40 INFO  opening file /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/test500/books/group-0/part-0/shelf-0/1.epub 
+11/05/26-18:25:41 INFO  Inhibiting user input 
+11/05/26-18:25:41 INFO  Restoring user input handling 
+Reader return counters	0	0	upstream custom-cover sidecar lookups	1
+KindleSpouse home acceptance passed: 500-book local shelf and real reader return
+11/05/26-18:25:41 INFO  Preparing to quit UIManager 
+11/05/26-18:25:41 INFO  UIManager: No dialogs left to show 
+11/05/26-18:25:41 INFO  Tearing down UIManager with exit code: 0 

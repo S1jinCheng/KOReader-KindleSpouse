@@ -1,0 +1,50 @@
+ [*] Current time: 11/05/26-18:23:41
+has monolibtic? no (libs/libkoreader-monolibtic.so: cannot open shared object file: No such file or directory)
+lib_search_path: libs/?
+lib_basic_format: lib%s.so
+lib_version_format: lib%s.so.%s
+ [*] Version: v2026.07.1
+
+ffi.load: rt.so.1 (RTLD_GLOBAL)
+ffi.findlib: utf8proc [3]
+ffi.load: libs/libutf8proc.so.3
+ffi.findlib: blitbuffer
+ffi.load: libs/libblitbuffer.so
+ffi.findlib: SDL3 [0]
+ffi.load: libs/libSDL3.so.0
+Started SDL in /mnt/d/kindleBooming/KindleSpouse/native/tools/koreader/squashfs-root/usr/lib/koreader/ using dummy video driver
+ffi.findlib: lodepng
+ffi.load: libs/liblodepng.so
+11/05/26-18:23:43 INFO  initializing for device Emulator 
+11/05/26-18:23:43 INFO  framebuffer resolution: {
+  h = 2480,
+  w = 1860
+} --[[table: 0x78d48af69bc0]] 
+ffi.findlib: wrap-mupdf
+ffi.load: libs/libwrap-mupdf.so
+ffi.findlib: sqlite3 [0]
+ffi.load: libs/libsqlite3.so.0
+11/05/26-18:23:43 INFO  Applying patch: /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/cached-startup-checks/run-oq7xl0gu/patches/2-cached-startup-test.lua 
+ffi.findlib: freetype [6]
+ffi.load: libs/libfreetype.so.6
+ffi.findlib: harfbuzz [0]
+ffi.load: libs/libharfbuzz.so.0
+ffi.findlib: zstd [1]
+ffi.load: libs/libzstd.so.1
+ffi.findlib: archive [13]
+ffi.load: libs/libarchive.so.13
+11/05/26-18:23:44 INFO  Looking for plugins in directory: plugins 
+11/05/26-18:23:44 INFO  Looking for plugins in directory: /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/cached-startup-checks/run-oq7xl0gu/plugins/ 
+11/05/26-18:23:44 WARN  PluginLoader: kindlespouse name in _meta.lua, is deprecated and will be ignored. 
+ffi.findlib: leptonica [6]
+ffi.load: libs/libleptonica.so.6
+ffi.findlib: k2pdfopt [2]
+ffi.load: libs/libk2pdfopt.so.2
+ffi.findlib: leptonica [6]
+ffi.load: libs/libleptonica.so.6
+ffi.findlib: k2pdfopt [2]
+ffi.load: libs/libk2pdfopt.so.2
+KindleSpouse cached startup cached acceptance passed {"snapshotScanning":true,"snapshotCount":120,"quietReopen":true,"hotDirectoryScans":0,"pid":566,"finalCount":121,"directoryScans":8,"scanningEvents":0}
+11/05/26-18:23:46 INFO  Preparing to quit UIManager 
+11/05/26-18:23:46 INFO  UIManager: No dialogs left to show 
+11/05/26-18:23:46 INFO  Tearing down UIManager with exit code: 0 

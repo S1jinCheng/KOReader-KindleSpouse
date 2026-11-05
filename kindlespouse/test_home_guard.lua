@@ -47,6 +47,7 @@ if mode == "layout" or mode == "layout_missing" then
         error("synthetic Home.layout failure")
     end
 elseif mode == "postinit" then
+    Home.layout = function() end
     Home.prepare = function() error("synthetic post-init failure") end
 elseif mode == "books" then
     Home.books = function() error("synthetic catalog projection failure") end
@@ -143,21 +144,21 @@ UIManager:tickAfterNext(function()
         local ui = assert(FileManager.instance)
         if mode == "supported" then
             assert(Home.enabled() and ui.kindlespouse_shelf and #ui.file_chooser.item_table == 8)
-            assert(setup_calls == 2 and chooser_calls == 2 and generator_calls == 0 and warnings == 0)
+            assert(setup_calls == 1 and chooser_calls == 1 and generator_calls == 0 and warnings == 0)
             local shelf, chooser = ui.kindlespouse_shelf, ui.file_chooser
             ui.layout[#ui.layout][2].callback()
             ui.layout[#ui.layout][1].callback()
-            assert(ui.kindlespouse_shelf == shelf and ui.file_chooser == chooser and setup_calls == 2)
+            assert(ui.kindlespouse_shelf == shelf and ui.file_chooser == chooser and setup_calls == 1)
             print("HOME GUARD PASSED supported")
             UIManager:quit()
         elseif mode == "tab" then
             Home.switchTab = function() error("synthetic delayed tab failure") end
             ui.layout[#ui.layout][2].callback()
-            restored(ui, 2)
+            restored(ui, 1)
         elseif mode == "catalog" then
             Library.refresh = function() error("synthetic delayed catalog failure") end
             Catalog.subscribers[ui]({ scanning = false })
-            after(0.1, function() restored(ui, 2) end)
+            after(0.1, function() restored(ui, 1) end)
         else
             if mode == "unknown" then
                 assert(not G_reader_settings:readSetting("kindlespouse_home_saved") and not G_reader_settings:readSetting("kindlespouse_home_start_saved"))

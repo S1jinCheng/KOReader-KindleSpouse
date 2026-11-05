@@ -1,0 +1,50 @@
+ [*] Current time: 11/05/26-18:23:47
+has monolibtic? no (libs/libkoreader-monolibtic.so: cannot open shared object file: No such file or directory)
+lib_search_path: libs/?
+lib_basic_format: lib%s.so
+lib_version_format: lib%s.so.%s
+ [*] Version: v2026.07.1
+
+ffi.load: rt.so.1 (RTLD_GLOBAL)
+ffi.findlib: utf8proc [3]
+ffi.load: libs/libutf8proc.so.3
+ffi.findlib: blitbuffer
+ffi.load: libs/libblitbuffer.so
+ffi.findlib: SDL3 [0]
+ffi.load: libs/libSDL3.so.0
+Started SDL in /mnt/d/kindleBooming/KindleSpouse/native/tools/koreader/squashfs-root/usr/lib/koreader/ using dummy video driver
+ffi.findlib: lodepng
+ffi.load: libs/liblodepng.so
+11/05/26-18:23:48 INFO  initializing for device Emulator 
+11/05/26-18:23:48 INFO  framebuffer resolution: {
+  h = 2480,
+  w = 1860
+} --[[table: 0x7e59869f5b80]] 
+ffi.findlib: wrap-mupdf
+ffi.load: libs/libwrap-mupdf.so
+ffi.findlib: sqlite3 [0]
+ffi.load: libs/libsqlite3.so.0
+11/05/26-18:23:48 INFO  Applying patch: /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/notebook-summary-checks/summary-vjnz00zx/patches/2-notebook-summary-check.lua 
+ffi.findlib: archive [13]
+ffi.load: libs/libarchive.so.13
+ffi.findlib: freetype [6]
+ffi.load: libs/libfreetype.so.6
+ffi.findlib: harfbuzz [0]
+ffi.load: libs/libharfbuzz.so.0
+ffi.findlib: zstd [1]
+ffi.load: libs/libzstd.so.1
+11/05/26-18:23:48 INFO  /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/notebook-summary-checks/summary-vjnz00zx/cache/fontlist/fontinfo.dat fopen: No such file or directory -> initializing it 
+ffi.findlib: leptonica [6]
+ffi.load: libs/libleptonica.so.6
+ffi.findlib: k2pdfopt [2]
+ffi.load: libs/libk2pdfopt.so.2
+11/05/26-18:23:49 INFO  opening file /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/notebook-summary-checks/summary-vjnz00zx/generated.epub 
+11/05/26-18:23:49 INFO  Inhibiting user input 
+11/05/26-18:23:50 INFO  Looking for plugins in directory: plugins 
+11/05/26-18:23:50 INFO  Looking for plugins in directory: /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/notebook-summary-checks/summary-vjnz00zx/plugins/ 
+11/05/26-18:23:50 INFO  Restoring user input handling 
+11/05/26-18:23:54 WARN  KindleSpouse: empty or invalid annotation sidecar /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/notebook-summary-checks/summary-vjnz00zx/books/fixture-5.sdr/metadata.txt.lua 
+NOTEBOOK SUMMARY CHECK PASSED: real sidecars, primary counts, cache, catalog title, rich layers, search, paging, focus, taps, navigation and cancellation
+11/05/26-18:24:00 INFO  Preparing to quit UIManager 
+11/05/26-18:24:00 INFO  UIManager: No dialogs left to show 
+11/05/26-18:24:00 INFO  Tearing down UIManager with exit code: 0 

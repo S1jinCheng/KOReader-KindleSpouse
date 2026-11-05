@@ -1,0 +1,113 @@
+{
+  "expected_version": 202607010000,
+  "runtime": "/mnt/d/kindleBooming/KindleSpouse/native/tools/koreader/squashfs-root/usr/lib/koreader",
+  "luajit_sha256": "d45e2e20df501f0aabc2eb55c5e6138090d48bae423d4de87ac3df113e8eee3c",
+  "passed": true,
+  "checks": [
+    {
+      "name": "annotation",
+      "exit_code": 0
+    },
+    {
+      "name": "patches",
+      "exit_code": 0
+    },
+    {
+      "name": "scheduler",
+      "exit_code": 0
+    },
+    {
+      "name": "launcher",
+      "exit_code": 0
+    },
+    {
+      "name": "scheduler_integration",
+      "exit_code": 0
+    },
+    {
+      "name": "main_lifecycle",
+      "exit_code": 0
+    },
+    {
+      "name": "services-UTC",
+      "exit_code": 0
+    },
+    {
+      "name": "services-Asia-Shanghai",
+      "exit_code": 0
+    },
+    {
+      "name": "services-America-New_York",
+      "exit_code": 0
+    },
+    {
+      "name": "localization",
+      "exit_code": 0
+    },
+    {
+      "name": "version-guard",
+      "exit_code": 0
+    },
+    {
+      "name": "home-guard",
+      "exit_code": 0
+    },
+    {
+      "name": "catalog-500",
+      "exit_code": 0
+    },
+    {
+      "name": "cached-startup",
+      "exit_code": 0
+    },
+    {
+      "name": "notebook",
+      "exit_code": 0
+    },
+    {
+      "name": "home",
+      "exit_code": 0
+    },
+    {
+      "name": "home-en",
+      "exit_code": 0
+    },
+    {
+      "name": "home-zh_CN",
+      "exit_code": 0
+    },
+    {
+      "name": "home-500",
+      "exit_code": 0
+    },
+    {
+      "name": "highlight",
+      "exit_code": 0
+    },
+    {
+      "name": "reader-monochrome",
+      "exit_code": 0
+    },
+    {
+      "name": "package-reader-monochrome",
+      "exit_code": 0
+    },
+    {
+      "name": "reader-color",
+      "exit_code": 0
+    },
+    {
+      "name": "package-reader-color",
+      "exit_code": 0
+    },
+    {
+      "name": "reader-pdf",
+      "exit_code": 0
+    },
+    {
+      "name": "package-home",
+      "exit_code": 0
+    }
+  ],
+  "version_verified": true
+}

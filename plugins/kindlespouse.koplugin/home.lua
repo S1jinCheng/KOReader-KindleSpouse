@@ -155,7 +155,7 @@ function Home.returnToKindle(companion)
     UIManager:quit()
 end
 
-function Home.notebook(companion, height)
+function Home.nativeNotebook(companion, height)
     local CenterContainer = require("ui/widget/container/centercontainer")
     local VerticalGroup = require("ui/widget/verticalgroup")
     local VerticalSpan = require("ui/widget/verticalspan")
@@ -179,6 +179,50 @@ function Home.notebook(companion, height)
                 callback = function() Home.returnToKindle(companion) end },
         },
     }
+end
+
+function Home.notebook(companion, height)
+    if not require("notebook/settings").enabled() then return Home.nativeNotebook(companion, height) end
+    local ui = companion.ui
+    local padding = math.max(0, Screen:scaleBySize(64) - Home.navigationHeight()) + Screen:scaleBySize(4)
+    local panel = require("notebook/view").open(companion, height - padding, { root = Home.root(ui), catalog = Catalog })
+    panel.kindlespouse_bottom_padding = padding
+    Patches.wrap(Patches.scope(ui) .. "notebook:search", panel, "search", function(original, widget, query)
+        if widget.closed then return end
+        local ok, result = Home.safe(ui, original, widget, query)
+        if not ok then return end
+        if query ~= nil and not widget.closed then
+            ui.kindlespouse_notebook_query = widget.query
+            if ui.kindlespouse_tab == "Notebook" then Library.updateSearch(ui) end
+        end
+        return result
+    end)
+    for _, name in ipairs({ "render", "refresh" }) do
+        Patches.wrap(Patches.scope(ui) .. "notebook:" .. name, panel, name, function(original, widget, ...)
+            local ok, result = Home.safe(ui, original, widget, ...)
+            if ok then return result end
+        end)
+    end
+    panel:search(ui.kindlespouse_notebook_query or "")
+    return panel
+end
+
+function Home.clearCachedNotebook(ui, companion)
+    local body = ui.kindlespouse_notebook_body
+    if body then
+        if body.onCloseWidget and not body.closed then body:onCloseWidget() end
+        if ui.kindlespouse_content and ui.kindlespouse_content[1] == ui.kindlespouse_notebook_group then
+            ui.kindlespouse_content[1] = ui.kindlespouse_library_group
+        end
+        body:free()
+    end
+    Patches.revertPrefix(Patches.scope(ui) .. "notebook:")
+    ui.kindlespouse_notebook_body = nil
+    ui.kindlespouse_notebook_group = nil
+    ui.kindlespouse_notebook_paused = nil
+    ui.kindlespouse_notebook_search = nil
+    ui.kindlespouse_notebook_query = nil
+    if companion and ui.kindlespouse_tab == "Notebook" then Home.switchTab(ui, companion, "Notebook") end
 end
 
 function Home.lastBook()
@@ -259,6 +303,7 @@ function Home.pauseBody(ui)
             if notebook.onCloseWidget and not notebook.closed then notebook:onCloseWidget() end
             ui.kindlespouse_notebook_paused = true
         end
+        ui.kindlespouse_notebook_search = nil
     elseif ui.kindlespouse_shelf then
         local shelf = ui.kindlespouse_shelf
         if shelf.on_close then shelf:on_close() end
@@ -273,7 +318,7 @@ function Home.releaseLayout(ui)
     if ui.kindlespouse_shelf then cleanup(ui.kindlespouse_shelf.onCloseWidget, ui.kindlespouse_shelf) end
     local toolbar = ui.kindlespouse_library_group and ui.kindlespouse_library_group[2]
     if toolbar then cleanup(toolbar.free, toolbar) end
-    if ui.kindlespouse_notebook_body then cleanup(ui.kindlespouse_notebook_body.free, ui.kindlespouse_notebook_body) end
+    cleanup(Home.clearCachedNotebook, ui)
     if ui.kindlespouse_header then cleanup(ui.kindlespouse_header.free, ui.kindlespouse_header) end
     if ui.kindlespouse_recent then cleanup(ui.kindlespouse_recent.free, ui.kindlespouse_recent) end
     if ui.kindlespouse_navigation then
@@ -299,13 +344,19 @@ function Home.switchTab(ui, companion, tab)
             local height = Screen:getHeight() - Home.navigationHeight() - ui.kindlespouse_header:getSize().h
             local body = Home.notebook(companion, height)
             ui.kindlespouse_notebook_body = body
-            ui.kindlespouse_notebook_group = require("ui/widget/verticalgroup"):new {
-                align = "left", ui.kindlespouse_header, body,
-            }
+            local group = { align = "left", ui.kindlespouse_header, body }
+            if body.kindlespouse_bottom_padding then
+                group[3] = require("ui/widget/verticalspan"):new { width = body.kindlespouse_bottom_padding }
+            end
+            ui.kindlespouse_notebook_group = require("ui/widget/verticalgroup"):new(group)
         elseif ui.kindlespouse_notebook_paused then
             if ui.kindlespouse_notebook_body.refresh then ui.kindlespouse_notebook_body:refresh() end
         end
         ui.kindlespouse_notebook_paused = nil
+        local body = ui.kindlespouse_notebook_body
+        if body.search and require("notebook/settings").enabled() then
+            ui.kindlespouse_notebook_search = function() return body:search() end
+        end
         ui.kindlespouse_content[1] = ui.kindlespouse_notebook_group
         ui.cropping_widget = nil
     else
@@ -463,7 +514,7 @@ local function install(companion)
     ui.kindlespouse_post_init_callback = function()
         ui.kindlespouse_post_init_running = true
         Home.safe(ui, function()
-            if Home.enabled() then Home.prepare(ui); ui:reinit(Home.root(ui)) end
+            if Home.enabled() and not ui.kindlespouse_content then Home.prepare(ui); ui:reinit(Home.root(ui)) end
         end)
         ui.kindlespouse_post_init_running = nil
         ui.kindlespouse_post_init_callback = nil

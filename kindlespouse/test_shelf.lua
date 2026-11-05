@@ -10,6 +10,12 @@ require("ui/widget/filechooser").is_enable_shortcut = false
 local project = assert(os.getenv("KINDLESPOUSE_TEST_ROOT"))
 package.path = project .. "/plugins/kindlespouse.koplugin/?.lua;" .. package.path
 local Home = require("home")
+local layouts = {}
+local layout = Home.layout
+Home.layout = function(ui, ...)
+    layouts[ui] = (layouts[ui] or 0) + 1
+    return layout(ui, ...)
+end
 local Library = require("library")
 G_reader_settings:saveSetting("kindlespouse_library", { sort = "title" })
 G_reader_settings:delSetting("kindlespouse_native_library")
@@ -17,13 +23,16 @@ local original_init = FileManager.init
 function FileManager:init()
     local original_setup = self.setupLayout
     local installed = false
-    self.setupLayout = function(manager)
+    local entry
+    entry = function(manager)
         if not installed then
             installed = true
             Home.install { ui = manager, notify = function() end }
+            if manager.setupLayout ~= entry then return manager:setupLayout() end
         end
         return original_setup(manager)
     end
+    self.setupLayout = entry
     original_init(self)
 end
 local lfs = require("libs/libkoreader-lfs")
@@ -65,6 +74,7 @@ local function ready()
             return
         end
         local ui = assert(FileManager.instance)
+        assert(layouts[ui] == 1, "Cold startup must construct the home once")
         local shelf = assert(ui.kindlespouse_shelf)
         local old_reinit = ui.reinit
         ui.reinit = function(manager, ...) rebuilds = rebuilds + 1; return old_reinit(manager, ...) end
@@ -111,6 +121,7 @@ local function ready()
                 reader:onHome()
                 UIManager:scheduleIn(0.2, function() check(function()
                     assert(FileManager.instance and #FileManager.instance.file_chooser.item_table == 500)
+                    assert(layouts[FileManager.instance] == 1, "Reader return must construct the new home exactly once")
                     print("Reader return counters", scans, opens, "upstream custom-cover sidecar lookups", sidecar_scans)
                     assert(scans == 0 and opens == 0, "Reader return must reuse the catalog")
                     registry.openDocument = original_open

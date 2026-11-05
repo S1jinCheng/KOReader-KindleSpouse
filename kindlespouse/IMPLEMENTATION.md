@@ -16,8 +16,12 @@ Integration base: codex/improvement-baseline-v1. The existing notebook experimen
 | 09 | P4 version guard and main module split | Verified lifecycle/version/rollback and extracted package; device pending |
 | 10 | P3 highlight bar | Verified real selections, saved annotations, More/restoration and automatic plugin wiring; device pending |
 | 11 | P3 reader toolbar | Verified loaded plugin, real navigation/actions, statistics and reversible toggles; device pending |
-| 12 | P3 annotation notebook and navigation | Pending |
+| 12 | P3 annotation notebook and navigation | Verified primary-only sidecars/live state, search/jumps, toggles and extracted final package; device pending |
 
 Each unit is a separate stacked PR and is verified in the pinned AppImage runtime before the next dependent unit. PRs remain unmerged for user review. Device checks are reported separately from simulator checks. Repository migration, core changes, firmware updates, Amazon NBK editing, DRM work and desktop changes are outside this implementation.
 
 Implementation adaptations: positive-delay scan chunks yield actual input time; the custom shelf must update its own items and scroll geometry as well as the FileChooser; background metadata extraction is serialized because starting a new batch terminates an active batch. These adapt the plan to verified upstream and current plugin APIs.
+
+All twelve units are implemented as unmerged draft PRs: https://github.com/S1jinCheng/KOReader-KindleSpouse/pulls?q=is%3Apr+is%3Aopen
+
+The final installation ZIP is tested from a fresh extraction for both the library/notebook UI and real reading actions. Tests use synthetic books and notes only. The 600-second idle result is real wall-clock simulator evidence, not a Scribe power or live cloud measurement. Device installation and the optional repository move have not been performed.

@@ -1,0 +1,50 @@
+lib_search_path: libs/?
+lib_basic_format: lib%s.so
+lib_version_format: lib%s.so.%s
+ [*] Version: v2026.07.1
+
+ffi.load: rt.so.1 (RTLD_GLOBAL)
+ffi.findlib: utf8proc [3]
+ffi.load: libs/libutf8proc.so.3
+ffi.findlib: blitbuffer
+ffi.load: libs/libblitbuffer.so
+ffi.findlib: SDL3 [0]
+ffi.load: libs/libSDL3.so.0
+Started SDL in /mnt/d/kindleBooming/KindleSpouse/native/tools/koreader/squashfs-root/usr/lib/koreader/ using dummy video driver
+ffi.findlib: lodepng
+ffi.load: libs/liblodepng.so
+11/04/26-22:09:47 INFO  initializing for device Emulator 
+11/04/26-22:09:47 INFO  framebuffer resolution: {
+  h = 2480,
+  w = 1860
+} --[[table: 0x70e6e92ebf90]] 
+ffi.findlib: wrap-mupdf
+ffi.load: libs/libwrap-mupdf.so
+ffi.findlib: sqlite3 [0]
+ffi.load: libs/libsqlite3.so.0
+11/04/26-22:09:48 INFO  Applying patch: /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/reader-checks/highlight-z3e0pluv/patches/2-reader-check.lua 
+ffi.findlib: archive [13]
+ffi.load: libs/libarchive.so.13
+ffi.findlib: freetype [6]
+ffi.load: libs/libfreetype.so.6
+ffi.findlib: harfbuzz [0]
+ffi.load: libs/libharfbuzz.so.0
+ffi.findlib: zstd [1]
+ffi.load: libs/libzstd.so.1
+11/04/26-22:09:48 INFO  /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/reader-checks/highlight-z3e0pluv/cache/fontlist/fontinfo.dat fopen: No such file or directory -> initializing it 
+ffi.findlib: leptonica [6]
+ffi.load: libs/libleptonica.so.6
+ffi.findlib: k2pdfopt [2]
+ffi.load: libs/libk2pdfopt.so.2
+11/04/26-22:09:49 INFO  opening file /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/reader-checks/highlight-z3e0pluv/generated.epub 
+11/04/26-22:09:49 INFO  Inhibiting user input 
+11/04/26-22:09:49 INFO  Looking for plugins in directory: plugins 
+11/04/26-22:09:49 INFO  Looking for plugins in directory: /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/reader-checks/highlight-z3e0pluv/plugins/ 
+11/04/26-22:09:49 WARN  PluginLoader: kindlespouse name in _meta.lua, is deprecated and will be ignored. 
+11/04/26-22:09:50 INFO  Restoring user input handling 
+READER CHECK highlight: monochrome, all drawer styles, per-selection overrides, defaults, stale callbacks, More, third-party builders and lifecycle passed
+READER CHECK persisted: 5 annotation drawers and colors plus document defaults passed
+READER CHECK PASSED highlight
+11/04/26-22:09:53 INFO  Preparing to quit UIManager with exit code: 0 
+11/04/26-22:09:53 INFO  UIManager: No dialogs left to show 
+11/04/26-22:09:53 INFO  Tearing down UIManager with exit code: 0 

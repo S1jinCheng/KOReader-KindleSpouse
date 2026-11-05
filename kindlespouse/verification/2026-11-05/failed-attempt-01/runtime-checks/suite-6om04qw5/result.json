@@ -1,0 +1,37 @@
+{
+  "expected_version": 202607010000,
+  "runtime": "/mnt/d/kindleBooming/KindleSpouse/native/tools/koreader/squashfs-root/usr/lib/koreader",
+  "luajit_sha256": "d45e2e20df501f0aabc2eb55c5e6138090d48bae423d4de87ac3df113e8eee3c",
+  "passed": false,
+  "checks": [
+    {
+      "name": "annotation",
+      "exit_code": 0
+    },
+    {
+      "name": "patches",
+      "exit_code": 0
+    },
+    {
+      "name": "scheduler",
+      "exit_code": 0
+    },
+    {
+      "name": "launcher",
+      "exit_code": 0
+    },
+    {
+      "name": "scheduler_integration",
+      "exit_code": 0
+    },
+    {
+      "name": "main_lifecycle",
+      "exit_code": 0
+    },
+    {
+      "name": "services-UTC",
+      "exit_code": 1
+    }
+  ],
+  "version_verified": true
+}

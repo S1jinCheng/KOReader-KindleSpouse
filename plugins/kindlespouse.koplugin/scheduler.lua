@@ -1,3 +1,5 @@
+local I18n = require("i18n")
+local logger
 local Scheduler = {}
 local dependencies
 local owner
@@ -66,7 +68,14 @@ local function release(job)
     job.reservation = nil
 end
 
-local function failed(job, message)
+local function failed(job, key, diagnostic)
+    local semantic = key and (I18n.keys[key] or key) or "scheduler_failed"
+    if not I18n.en[semantic] then
+        diagnostic = diagnostic or key
+        semantic = "scheduler_failed"
+    end
+    if diagnostic then logger.warn("KindleSpouse:", "synchronization failed", tostring(diagnostic)) end
+    local message = I18n.T(semantic)
     release(job)
     active = nil
     failures = math.min(failures + 1, 5)
@@ -127,7 +136,7 @@ local function monitor()
             completed(job, value)
             return
         elseif value.state == "failed" then
-            failed(job, value.error or "Sync failed")
+            failed(job, value.error or "scheduler_failed", value.error)
             return
         elseif value.state == "paused" then
             release(job)
@@ -138,9 +147,9 @@ local function monitor()
         end
     end
     if not running and job.observed then
-        failed(job, "Sync stopped before a matching result was available")
+        failed(job, "scheduler_stopped")
     elseif not job.observed and now() >= job.launchedAt + 20 then
-        failed(job, "Sync did not publish a fresh result within 20 seconds")
+        failed(job, "scheduler_timeout")
     end
 end
 
@@ -151,15 +160,21 @@ local function launch(request)
     active = job
     if dependencies.reserve then
         local ok, token, message = pcall(dependencies.reserve, job.mode, job.manual)
-        if not ok or not token then failed(job, ok and (message or "Another launch is reserved") or tostring(token)); return end
+        if not ok or not token then failed(job, ok and message and I18n.keys[message] or "scheduler_reserved", not ok and token or message); return end
         job.reservation = token
     end
     local ok, accepted, message = pcall(dependencies.launch, job.mode, job.manual, owner.host)
     if not ok or not accepted then
-        failed(job, ok and (message or "Cannot launch sync") or tostring(accepted))
+        failed(job, ok and message and I18n.keys[message] or "scheduler_cannot_launch", not ok and accepted or message)
         return
     end
     if pending[request.mode] == request then pending[request.mode] = nil end
+end
+
+local function reading_deadline()
+    if dependencies.reading() and read("kindlespouse_reading_dirty", false) and allowed("full", false) then
+        return math.max((tonumber(read("kindlespouse_last_sync", 0)) or 0) + 600, retry_at, network_ready_at)
+    end
 end
 
 local function fallback_interval()
@@ -178,6 +193,8 @@ step = function()
     end
     if not dependencies.connected() then arm(); return end
     local current = now()
+    local reading_due = reading_deadline()
+    if reading_due and current >= reading_due then enqueue("full", false, current, false) end
     if current >= fallback_anchor + fallback_interval() then
         fallback_anchor = current
         for _, mode in ipairs({ "books", "updates" }) do
@@ -207,8 +224,11 @@ arm = function()
         return
     end
     if not dependencies.connected() then return end
-    local due
-    if enabled("books") or enabled("updates") then due = fallback_anchor + fallback_interval() end
+    local due = reading_deadline()
+    if enabled("books") or enabled("updates") then
+        local fallback_due = fallback_anchor + fallback_interval()
+        due = due and math.min(due, fallback_due) or fallback_due
+    end
     for mode, request in pairs(pending) do
         if allowed(mode, request.manual) then
             local deadline = math.max(request.due, retry_at, request.manual and 0 or network_ready_at)
@@ -224,6 +244,7 @@ function Scheduler.configure(value)
     end
     if dependencies then dependencies.unschedule(tick); dependencies.unschedule(watch) end
     dependencies = value
+    logger = value.logger or require("logger")
     fallback_anchor = fallback_anchor or now()
     if not dependencies.connected() then fallback_inactive_at = fallback_inactive_at or now() end
     arm()

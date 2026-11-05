@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "processes": {
+    "warm": {
+      "quietReopen": false,
+      "finalCount": 120,
+      "directoryScans": 5,
+      "scanningEvents": 2,
+      "snapshotScanning": false,
+      "snapshotCount": 0,
+      "pid": 560,
+      "hotDirectoryScans": 0
+    },
+    "cached": {
+      "snapshotScanning": true,
+      "snapshotCount": 120,
+      "quietReopen": true,
+      "hotDirectoryScans": 0,
+      "pid": 566,
+      "finalCount": 121,
+      "directoryScans": 8,
+      "scanningEvents": 0
+    }
+  }
+}

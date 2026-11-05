@@ -11,13 +11,14 @@ local HorizontalSpan = require("ui/widget/horizontalspan")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local Patches = require("patches")
 local ProgressWidget = require("ui/widget/progresswidget")
+local RenderImage = require("ui/renderimage")
 local T = require("i18n").T
 local TextWidget = require("ui/widget/textwidget")
 local UIManager = require("ui/uimanager")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local Screen = Device.screen
 local ReaderBar = {}
-local Bar = InputContainer:extend { covers_fullscreen = false, modal = true }
+local Bar = InputContainer:extend { covers_fullscreen = true, modal = true }
 
 local function has(target, name)
     return target and type(target[name]) == "function"
@@ -39,13 +40,18 @@ function Bar:refreshProgress(ratio)
     ratio = ratio or actual
     self.progress.percentage = ratio
     local text = T("reader.progress", page, pages, math.floor(ratio * 100 + 0.5))
-    if has(self.ui.statistics, "getTimeForPages") then
-        local remaining = self.ui.statistics:getTimeForPages(math.max(0, pages - page))
-        if remaining then text = text .. " · " .. T("reader.remaining", remaining) end
+    local statistics = self.ui.statistics
+    local average = statistics and statistics.avg_time
+    if statistics and statistics.settings and statistics.settings.is_enabled
+        and type(average) == "number" and average == average and average >= 0 and average < math.huge then
+        local minutes = math.floor(math.max(0, pages - page) * average / 60 + 0.5)
+        local remaining = minutes < 60 and T("reader.remaining.minutes", minutes)
+            or T("reader.remaining.hours", math.floor(minutes / 60), minutes % 60)
+        text = text .. " · " .. remaining
     end
     self.progress_text:setText(text)
     self.bottom[1]:resetLayout()
-    UIManager:setDirty(self, "ui", self.bottom_rect)
+    UIManager:setDirty(self, "ui", self.dimen)
 end
 
 function Bar:jump(ratio)
@@ -87,6 +93,8 @@ function Bar:init()
     local back_width = math.min(math.floor(width / 3), Screen:scaleBySize(90))
     local title = self.ui.doc_props and (self.ui.doc_props.display_title or self.ui.doc_props.title)
         or self.ui.document.file and self.ui.document.file:match("[^/]+$") or T("reader.book")
+    title = title:gsub("%s*·%s+阅读%s*$", "")
+    self.title = title
     local heading = HorizontalGroup:new {
         align = "center",
         button("library", T("reader.library"), self.ui, "onHome", nil, back_width),
@@ -137,14 +145,36 @@ function Bar:init()
     self[1], self[2] = self.top, self.bottom
     self.top_rect = Geom:new { x = 0, y = 0, w = width, h = self.top:getSize().h }
     self.bottom_rect = Geom:new { x = 0, y = Screen:getHeight() - self.bottom:getSize().h, w = width, h = self.bottom:getSize().h }
+    self.body_rect = Geom:new { x = 0, y = self.top_rect.h + 1, w = width, h = self.bottom_rect.y - self.top_rect.h - 2 }
+    local scale = math.min(1, self.body_rect.w / width, self.body_rect.h / Screen:getHeight())
+    self.viewport_rect = Geom:new {
+        w = math.max(1, math.floor(width * scale)), h = math.max(1, math.floor(Screen:getHeight() * scale)),
+    }
+    self.viewport_rect.x = math.floor((width - self.viewport_rect.w) / 2)
+    self.viewport_rect.y = self.body_rect.y + math.floor((self.body_rect.h - self.viewport_rect.h) / 2)
     self.ges_events.Dismiss = { GestureRange:new { ges = "tap", range = Screen:getSize() } }
     if Device:hasKeys() and Device.input.group.Back then self.key_events.Close = { { Device.input.group.Back } } end
     self:refreshProgress()
 end
 
 function Bar:paintTo(bb)
+    if self.painting then return end
+    local source = Blitbuffer.new(self.dimen.w, self.dimen.h, bb:getType())
+    source:fill(Blitbuffer.COLOR_WHITE)
+    self.painting = true
+    local ok, err = pcall(self.ui.view.paintTo, self.ui.view, source, 0, 0)
+    self.painting = false
+    if not ok then source:free(); error(err) end
+    local scaled, viewport = pcall(RenderImage.scaleBlitBuffer, RenderImage, source, self.viewport_rect.w, self.viewport_rect.h, false)
+    if not scaled then source:free(); error(viewport) end
+    if viewport ~= source then source:free() end
+    bb:paintRect(0, 0, self.dimen.w, self.dimen.h, Blitbuffer.COLOR_WHITE)
+    bb:blitFrom(viewport, self.viewport_rect.x, self.viewport_rect.y, 0, 0, self.viewport_rect.w, self.viewport_rect.h)
+    viewport:free()
     self.top:paintTo(bb, 0, 0)
     self.bottom:paintTo(bb, 0, self.bottom_rect.y)
+    bb:paintRect(0, self.top_rect.h, self.dimen.w, 1, Blitbuffer.COLOR_BLACK)
+    bb:paintRect(0, self.bottom_rect.y - 1, self.dimen.w, 1, Blitbuffer.COLOR_BLACK)
 end
 
 function Bar:onDismiss()
@@ -158,22 +188,20 @@ function Bar:onClose()
 end
 
 function Bar:onShow()
-    UIManager:setDirty(self, "ui", self.top_rect)
-    UIManager:setDirty(self, "ui", self.bottom_rect)
+    UIManager:setDirty(self, "ui", self.dimen)
 end
 
 function Bar:onCloseWidget()
     self.closed = true
     if self.state.overlay == self then self.state.overlay = nil end
-    UIManager:setDirty(nil, "ui", self.top_rect)
-    UIManager:setDirty(nil, "ui", self.bottom_rect)
+    UIManager:setDirty(nil, "ui", self.dimen)
 end
 
 function ReaderBar.install(ui)
     local settings = Highlight.settings()
     if not settings.reader_bar or ui._kindlespouse_reader_bar then return false end
     local menu = ui.menu
-    if not menu or not ui.document or type(menu.onTapShowMenu) ~= "function" then return false end
+    if not menu or not ui.document or not has(ui.view, "paintTo") or type(menu.onTapShowMenu) ~= "function" then return false end
     local state = { scope = "reader:" .. tostring(ui) .. ":bar:" }
     ui._kindlespouse_reader_bar = state
     Patches.wrap(state.scope .. "tap", menu, "onTapShowMenu", function(original, self, gesture)

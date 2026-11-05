@@ -129,17 +129,75 @@ end
 local function verifyReload()
     Catalog.entries[files[2]].meta_ready = false
     Catalog.flush()
-    local previous_scans = scans
+    local removed, changed, added = files[8], files[4], root .. "/restart-added.epub"
+    assert(os.remove(removed))
+    local source = assert(io.open(files[7], "rb"))
+    local bytes = source:read("*a"); source:close()
+    local output = assert(io.open(changed, "wb")); output:write(bytes .. "restart change"); output:close()
+    output = assert(io.open(added, "wb")); output:write(bytes); output:close()
+    local previous_scans, previous_extracted = scans, extracted
     package.loaded.catalog = nil
     Catalog = require("catalog")
-    Catalog.ensure(root, function()
-        assert(count() == 500 and scans == previous_scans, "Persisted complete root must be hot")
-        assert(Catalog.entries[files[1]].title == "迁移标题" and Catalog.entries[files[1]].added == 1234)
-        waitFor(function() return Catalog.entries[files[2]].meta_ready and idle() end, verifyQueue)
+    for _, failure in ipairs({ "open", "iterate" }) do
+        local state = Catalog.ensure(root)
+        UIManager:unschedule(state.scan.step)
+        local directory = lfs.dir
+        lfs.dir = function(path)
+            if path ~= root then return directory(path) end
+            if failure == "open" then error("Fixture directory open failure") end
+            return function() error("Fixture directory iterator failure") end
+        end
+        state.scan.step()
+        lfs.dir = directory
+        assert(state.complete and state.startup_pending and not state.scanning and not state.scan and count() == 500,
+            "Failed cached startup scans must preserve the completed cache and stay quiet on retry")
+    end
+    local completed, startup_events, touch_events = 0, 0, 0
+    local startup_owner = {}
+    Catalog.subscribe(startup_owner, function(event)
+        assert(not event.scanning, "Cached startup must never publish a scanning event")
+        if event.kind == "touch" then touch_events = touch_events + 1
+        else startup_events = startup_events + 1 end
     end)
+    local state = Catalog.ensure(root, function()
+        completed = completed + 1
+        assert(startup_events == 1, "Cached startup must publish its first update only after enumeration")
+        Catalog.unsubscribe(startup_owner)
+        assert(count() == 500 and scans > previous_scans, "A fresh module must rescan persisted roots at startup")
+        assert(not Catalog.entries[removed] and Catalog.entries[added], "Startup must find externally added and removed books")
+        assert(Catalog.entries[files[1]].title == "迁移标题" and Catalog.entries[files[1]].added == 1234)
+        waitFor(function() return Catalog.entries[files[2]].meta_ready and idle() end, function()
+            assert(Catalog.entries[changed].title == "Fixture Book 006", "Startup must refresh changed file metadata")
+            assert(extracted - previous_extracted == 2, "Startup must extract only added and changed files")
+            local hot_scans = scans
+            local ui = require("apps/filemanager/filemanager").instance
+            local chooser, previous_path = ui.file_chooser, ui.file_chooser.path
+            chooser.path = root
+            for _ = 1, 4 do
+                Catalog.ensure(root)
+                assert(#Catalog.items(chooser) == 500 and #Catalog.records(root) == 500)
+            end
+            chooser.path = previous_path
+            later(function()
+                assert(scans == hot_scans and completed == 2, "Hot ensures and multiple hosts must share exactly one startup scan")
+                verifyQueue()
+            end)
+        end)
+    end)
+    local scan = assert(state.scan)
+    assert(state.quiet_startup and #Catalog.records(root) == 500, "Cached startup must retain its complete library")
+    assert(scans == previous_scans, "Startup enumeration must be scheduled in the background")
+    assert(Catalog.ensure(root, function() completed = completed + 1 end).scan == scan,
+        "Concurrent hosts must reuse the startup scan")
+    Catalog.touch(files[1])
+    assert(touch_events == 1 and startup_events == 0, "Explicit book changes must stay observable during quiet startup")
 end
 local function verifyIncremental()
     local before = extracted
+    local manual_owner, scanning_events = {}, 0
+    Catalog.subscribe(manual_owner, function(event)
+        if event.scanning then scanning_events = scanning_events + 1 end
+    end)
     local removed = files[3]
     assert(os.remove(removed))
     local changed = assert(io.open(files[4], "ab")); changed:write("changed fixture"); changed:close()
@@ -147,6 +205,8 @@ local function verifyIncremental()
     local added = root .. "/added.epub"
     local output = assert(io.open(added, "wb")); output:write(source:read("*a")); output:close(); source:close()
     Catalog.rescan(root, function()
+        assert(scanning_events > 0, "Manual rescans must retain scanning feedback")
+        Catalog.unsubscribe(manual_owner)
         assert(count() == 500 and not Catalog.entries[removed] and Catalog.entries[added])
         waitFor(idle, function()
             assert(extracted - before == 2, "Rescan must extract only changed and added files")
@@ -191,13 +251,14 @@ UIManager:tickAfterNext(function() later(function()
         return props(self, file, value, no_open)
     end
     Catalog.attachBookInfo(ui.bookinfo)
-    local owner, events = {}, 0
+    local owner, events, scanning_events = {}, 0, 0
     Catalog.subscribe(owner, function(event)
         assert(event.root == root and event.count <= 501)
         events = events + 1
+        if event.scanning then scanning_events = scanning_events + 1 end
     end)
     Catalog.ensure(root, function()
-        assert(count() == 500 and input_waits > 0 and events > 1)
+        assert(count() == 500 and input_waits > 0 and events > 1 and scanning_events > 0)
         assert(Catalog.entries[files[1]].title == "迁移标题" and Catalog.entries[files[1]].author == "旧作者")
         local previous_scans = scans
         local chooser = ui.file_chooser
