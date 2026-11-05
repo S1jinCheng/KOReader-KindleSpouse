@@ -1,0 +1,139 @@
+{
+  "tested_commit": "3fc62b8b5356e3d825ab87814bd08fc57a465c1c",
+  "suite": "kindlespouse/build/runtime-checks/suite-6om04qw5",
+  "runner_exit_code": 1,
+  "failure_group": "services-UTC",
+  "reason": "test_services.lua still called removed reader.remaining translation key; updated assertions must exercise new minutes/hours keys.",
+  "not_run_groups": 19,
+  "collector_failure": "Early runner stop left cached-startup directory absent. Original suite copied before collector failed; remaining executed-group tails copied without editing source results.",
+  "files": [
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-6om04qw5/annotation.log",
+      "archive": "runtime-checks/suite-6om04qw5/annotation.log",
+      "operation": "copy_bytes",
+      "source_sha256": "372c386d0be7e50fb8e3ecb4f450afa2b2b50a34aaf841de2d515875c02295ae",
+      "archived_sha256": "372c386d0be7e50fb8e3ecb4f450afa2b2b50a34aaf841de2d515875c02295ae",
+      "bytes": 1970
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-6om04qw5/launcher.log",
+      "archive": "runtime-checks/suite-6om04qw5/launcher.log",
+      "operation": "copy_bytes",
+      "source_sha256": "f61b7bebb21846c202241b39f0ad3577dc6701cab2cac3e70b106e60032e116c",
+      "archived_sha256": "f61b7bebb21846c202241b39f0ad3577dc6701cab2cac3e70b106e60032e116c",
+      "bytes": 554
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-6om04qw5/main_lifecycle.log",
+      "archive": "runtime-checks/suite-6om04qw5/main_lifecycle.log",
+      "operation": "copy_bytes",
+      "source_sha256": "7ab12cd7dfa2cd094df4e863f0f30a333b563be40560820e2b7f36057186aff8",
+      "archived_sha256": "7ab12cd7dfa2cd094df4e863f0f30a333b563be40560820e2b7f36057186aff8",
+      "bytes": 3272
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-6om04qw5/patches.log",
+      "archive": "runtime-checks/suite-6om04qw5/patches.log",
+      "operation": "copy_bytes",
+      "source_sha256": "72adb2851dd27083def7ce49d5cf00e8830da3fb4ac7835b08e49d4444611b40",
+      "archived_sha256": "72adb2851dd27083def7ce49d5cf00e8830da3fb4ac7835b08e49d4444611b40",
+      "bytes": 234
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-6om04qw5/result.json",
+      "archive": "runtime-checks/suite-6om04qw5/result.json",
+      "operation": "copy_bytes",
+      "source_sha256": "57d190b2e3080887f6080e3a6b89e34668e8f6e63d91d7c7e6d556e8e2b82960",
+      "archived_sha256": "57d190b2e3080887f6080e3a6b89e34668e8f6e63d91d7c7e6d556e8e2b82960",
+      "bytes": 739
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-6om04qw5/scheduler.log",
+      "archive": "runtime-checks/suite-6om04qw5/scheduler.log",
+      "operation": "copy_bytes",
+      "source_sha256": "82293033f95fea593825a8587715126f23fe5aa96dbab7ec2b1058cc954ca967",
+      "archived_sha256": "82293033f95fea593825a8587715126f23fe5aa96dbab7ec2b1058cc954ca967",
+      "bytes": 1885
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-6om04qw5/scheduler_integration.log",
+      "archive": "runtime-checks/suite-6om04qw5/scheduler_integration.log",
+      "operation": "copy_bytes",
+      "source_sha256": "02ce30eb192d62b9b6bcf0dd57ad4a069678e2ef988dd93c876187f55eddbd47",
+      "archived_sha256": "02ce30eb192d62b9b6bcf0dd57ad4a069678e2ef988dd93c876187f55eddbd47",
+      "bytes": 1781
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-6om04qw5/services-UTC.log",
+      "archive": "runtime-checks/suite-6om04qw5/services-UTC.log",
+      "operation": "copy_bytes",
+      "source_sha256": "6824c45b5b43214614795ff9f8026290fab4d58d5fd78cbbf745d7caca5142a9",
+      "archived_sha256": "6824c45b5b43214614795ff9f8026290fab4d58d5fd78cbbf745d7caca5142a9",
+      "bytes": 1575
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-6om04qw5/version.log",
+      "archive": "runtime-checks/suite-6om04qw5/version.log",
+      "operation": "copy_bytes",
+      "source_sha256": "1a173c52d438ba647af7055bf03e5848b57d341fc57eff37c1d7d9a6767abd6e",
+      "archived_sha256": "1a173c52d438ba647af7055bf03e5848b57d341fc57eff37c1d7d9a6767abd6e",
+      "bytes": 228
+    },
+    {
+      "source": "kindlespouse/build/checks/annotation-0fah6fno/runtime.log",
+      "archive": "groups/annotation/checks/annotation-0fah6fno/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "1a3259387ab9d45dccffe4a38f14939acb29c1f2128802940e1b51293083c3d3",
+      "archived_sha256": "1a3259387ab9d45dccffe4a38f14939acb29c1f2128802940e1b51293083c3d3",
+      "bytes": 1969
+    },
+    {
+      "source": "kindlespouse/build/checks/patches-vv9146pc/runtime.log",
+      "archive": "groups/patches/checks/patches-vv9146pc/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "87459528f6ef06732ccc81fd8a9933e96ebe51f76f1bb3d7c2bf0e627341107a",
+      "archived_sha256": "87459528f6ef06732ccc81fd8a9933e96ebe51f76f1bb3d7c2bf0e627341107a",
+      "bytes": 233
+    },
+    {
+      "source": "kindlespouse/build/checks/scheduler-0_izbplw/runtime.log",
+      "archive": "groups/scheduler/checks/scheduler-0_izbplw/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "684ff920dfd1a32d0f86d82a162239558fb1ba9a56ff161ca194dfd8b1e2266a",
+      "archived_sha256": "684ff920dfd1a32d0f86d82a162239558fb1ba9a56ff161ca194dfd8b1e2266a",
+      "bytes": 1884
+    },
+    {
+      "source": "kindlespouse/build/checks/launcher-h9y2rj3a/runtime.log",
+      "archive": "groups/launcher/checks/launcher-h9y2rj3a/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "3cff714a709395d9938d737371efc969d43bed96e3382e7946f4501b98673c80",
+      "archived_sha256": "3cff714a709395d9938d737371efc969d43bed96e3382e7946f4501b98673c80",
+      "bytes": 553
+    },
+    {
+      "source": "kindlespouse/build/checks/scheduler_integration-ocl376r3/runtime.log",
+      "archive": "groups/scheduler_integration/checks/scheduler_integration-ocl376r3/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "bd31f49644c39f7efbe4048bdfe253addc4fc30335c4175e4fc94fcc8fb44048",
+      "archived_sha256": "bd31f49644c39f7efbe4048bdfe253addc4fc30335c4175e4fc94fcc8fb44048",
+      "bytes": 1780
+    },
+    {
+      "source": "kindlespouse/build/checks/main_lifecycle-aj3botoe/runtime.log",
+      "archive": "groups/main_lifecycle/checks/main_lifecycle-aj3botoe/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "79d323861efbacc6ce851dc0273d01a587f3b81c5fbdb4e38d6688c20025341f",
+      "archived_sha256": "1ae13c29dc7066e298bc61ff2604d13d60c9febb62cf7ac78177990131dbedca",
+      "bytes": 3136
+    },
+    {
+      "source": "kindlespouse/build/checks/services-a6tdfp2f/runtime.log",
+      "archive": "groups/services-UTC/checks/services-a6tdfp2f/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "6813d63553db2395b4b6fbc583ee8477c3bad1a6e72cfa4290c62f9aec09ea04",
+      "archived_sha256": "6813d63553db2395b4b6fbc583ee8477c3bad1a6e72cfa4290c62f9aec09ea04",
+      "bytes": 1573
+    }
+  ]
+}

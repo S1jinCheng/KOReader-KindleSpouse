@@ -1,0 +1,50 @@
+has monolibtic? no (libs/libkoreader-monolibtic.so: cannot open shared object file: No such file or directory)
+lib_search_path: libs/?
+lib_basic_format: lib%s.so
+lib_version_format: lib%s.so.%s
+ [*] Version: v2026.07.1
+
+ffi.load: rt.so.1 (RTLD_GLOBAL)
+ffi.findlib: utf8proc [3]
+ffi.load: libs/libutf8proc.so.3
+ffi.findlib: blitbuffer
+ffi.load: libs/libblitbuffer.so
+ffi.findlib: SDL3 [0]
+ffi.load: libs/libSDL3.so.0
+Started SDL in /mnt/d/kindleBooming/KindleSpouse/native/tools/koreader/squashfs-root/usr/lib/koreader/ using dummy video driver
+ffi.findlib: lodepng
+ffi.load: libs/liblodepng.so
+11/05/26-18:24:02 INFO  initializing for device Emulator 
+11/05/26-18:24:02 INFO  framebuffer resolution: {
+  h = 2480,
+  w = 1860
+} --[[table: 0x70a40aaeeab0]] 
+ffi.findlib: wrap-mupdf
+ffi.load: libs/libwrap-mupdf.so
+ffi.findlib: sqlite3 [0]
+ffi.load: libs/libsqlite3.so.0
+11/05/26-18:24:02 INFO  Applying patch: /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/test/patches/2-home-test.lua 
+ffi.findlib: freetype [6]
+ffi.load: libs/libfreetype.so.6
+ffi.findlib: harfbuzz [0]
+ffi.load: libs/libharfbuzz.so.0
+ffi.findlib: zstd [1]
+ffi.load: libs/libzstd.so.1
+ffi.findlib: archive [13]
+ffi.load: libs/libarchive.so.13
+11/05/26-18:24:03 INFO  Looking for plugins in directory: plugins 
+11/05/26-18:24:03 INFO  Looking for plugins in directory: /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/test/plugins/ 
+ffi.findlib: leptonica [6]
+ffi.load: libs/libleptonica.so.6
+ffi.findlib: k2pdfopt [2]
+ffi.load: libs/libk2pdfopt.so.2
+ffi.findlib: leptonica [6]
+ffi.load: libs/libleptonica.so.6
+ffi.findlib: k2pdfopt [2]
+ffi.load: libs/libk2pdfopt.so.2
+KindleSpouse integrated summary acceptance passed: 2 books, 2 highlights, 1 note, local search, reversible schema1 toggle
+KindleSpouse body-only tab acceptance passed: 20 round trips, cached Home, zero rebuilds/scans, nonzero scroll and cleanup
+KindleSpouse home acceptance passed
+11/05/26-18:24:11 INFO  Preparing to quit UIManager 
+11/05/26-18:24:11 INFO  UIManager: No dialogs left to show 
+11/05/26-18:24:11 INFO  Tearing down UIManager with exit code: 0 

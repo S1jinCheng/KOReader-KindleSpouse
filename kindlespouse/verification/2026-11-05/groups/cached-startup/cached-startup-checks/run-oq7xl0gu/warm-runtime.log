@@ -1,0 +1,50 @@
+ffi.findlib: SDL3 [0]
+ffi.load: libs/libSDL3.so.0
+Started SDL in /mnt/d/kindleBooming/KindleSpouse/native/tools/koreader/squashfs-root/usr/lib/koreader/ using dummy video driver
+ffi.findlib: lodepng
+ffi.load: libs/liblodepng.so
+11/05/26-18:23:23 INFO  initializing for device Emulator 
+11/05/26-18:23:23 INFO  framebuffer resolution: {
+  h = 2480,
+  w = 1860
+} --[[table: 0x7d093b46f650]] 
+ffi.findlib: wrap-mupdf
+ffi.load: libs/libwrap-mupdf.so
+ffi.findlib: sqlite3 [0]
+ffi.load: libs/libsqlite3.so.0
+11/05/26-18:23:23 INFO  Applying patch: /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/cached-startup-checks/run-oq7xl0gu/patches/2-cached-startup-test.lua 
+ffi.findlib: freetype [6]
+ffi.load: libs/libfreetype.so.6
+ffi.findlib: harfbuzz [0]
+ffi.load: libs/libharfbuzz.so.0
+ffi.findlib: zstd [1]
+ffi.load: libs/libzstd.so.1
+11/05/26-18:23:23 INFO  /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/cached-startup-checks/run-oq7xl0gu/cache/fontlist/fontinfo.dat fopen: No such file or directory -> initializing it 
+ffi.findlib: archive [13]
+ffi.load: libs/libarchive.so.13
+11/05/26-18:23:24 INFO  Looking for plugins in directory: plugins 
+11/05/26-18:23:24 INFO  Looking for plugins in directory: /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/cached-startup-checks/run-oq7xl0gu/plugins/ 
+11/05/26-18:23:25 WARN  PluginLoader: kindlespouse name in _meta.lua, is deprecated and will be ignored. 
+11/05/26-18:23:25 INFO  CoverBrowser: setting default display modes 
+11/05/26-18:23:25 WARN  BookInfo cache DB schema updated from version 0 to version 20201210 
+11/05/26-18:23:25 WARN  Deleting existing /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/cached-startup-checks/run-oq7xl0gu/settings/bookinfo_cache.sqlite3 to recreate it 
+ffi.findlib: leptonica [6]
+ffi.load: libs/libleptonica.so.6
+ffi.findlib: k2pdfopt [2]
+ffi.load: libs/libk2pdfopt.so.2
+ffi.findlib: leptonica [6]
+ffi.load: libs/libleptonica.so.6
+ffi.findlib: k2pdfopt [2]
+ffi.load: libs/libk2pdfopt.so.2
+ffi.findlib: leptonica [6]
+ffi.load: libs/libleptonica.so.6
+ffi.findlib: k2pdfopt [2]
+ffi.load: libs/libk2pdfopt.so.2
+ffi.findlib: leptonica [6]
+ffi.load: libs/libleptonica.so.6
+ffi.findlib: k2pdfopt [2]
+ffi.load: libs/libk2pdfopt.so.2
+KindleSpouse cached startup warm acceptance passed {"quietReopen":false,"finalCount":120,"directoryScans":5,"scanningEvents":2,"snapshotScanning":false,"snapshotCount":0,"pid":560,"hotDirectoryScans":0}
+11/05/26-18:23:41 INFO  Preparing to quit UIManager 
+11/05/26-18:23:41 INFO  UIManager: No dialogs left to show 
+11/05/26-18:23:41 INFO  Tearing down UIManager with exit code: 0 

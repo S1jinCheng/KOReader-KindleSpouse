@@ -1,0 +1,36 @@
+has monolibtic? no (libs/libkoreader-monolibtic.so: cannot open shared object file: No such file or directory)
+lib_search_path: libs/?
+lib_basic_format: lib%s.so
+lib_version_format: lib%s.so.%s
+ffi.load: rt.so.1 (RTLD_GLOBAL)
+ffi.findlib: utf8proc [3]
+ffi.load: libs/libutf8proc.so.3
+ffi.findlib: SDL3 [0]
+ffi.load: libs/libSDL3.so.0
+ffi.findlib: blitbuffer
+ffi.load: libs/libblitbuffer.so
+Started SDL in /mnt/d/kindleBooming/KindleSpouse/native/tools/koreader/squashfs-root/usr/lib/koreader/ using dummy video driver
+ffi.findlib: lodepng
+ffi.load: libs/liblodepng.so
+11/05/26-10:17:00 INFO  initializing for device Emulator 
+11/05/26-10:17:00 INFO  framebuffer resolution: {
+  h = 800,
+  w = 600
+} --[[table: 0x79008707d3a0]] 
+ffi.findlib: wrap-mupdf
+ffi.load: libs/libwrap-mupdf.so
+ffi.findlib: freetype [6]
+ffi.load: libs/libfreetype.so.6
+ffi.findlib: harfbuzz [0]
+ffi.load: libs/libharfbuzz.so.0
+ffi.findlib: zstd [1]
+ffi.load: libs/libzstd.so.1
+11/05/26-10:17:00 INFO  /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/checks/services-a6tdfp2f/cache/fontlist/fontinfo.dat fopen: No such file or directory -> initializing it 
+
+/mnt/d/kindleBooming/KindleSpouse/native/tools/koreader/squashfs-root/usr/lib/koreader/luajit: ...ader-kindlespouse/plugins/kindlespouse.koplugin/i18n.lua:284: Unknown translation key: reader.remaining
+stack traceback:
+	[C]: in function 'assert'
+	...ader-kindlespouse/plugins/kindlespouse.koplugin/i18n.lua:284: in function 'T'
+	...ing/koreader-kindlespouse/kindlespouse/test_services.lua:36: in main chunk
+	[C]: at 0x580eaf6263b0
+

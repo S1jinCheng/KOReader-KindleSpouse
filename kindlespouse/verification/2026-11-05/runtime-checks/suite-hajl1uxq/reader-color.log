@@ -1,0 +1,6 @@
+/mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/reader-checks/all-hzszj9yh
+READER CHECK highlight: color, all drawer styles, per-selection overrides, defaults, stale callbacks, More, third-party builders and lifecycle passed
+READER CHECK pixels: complete viewport, blank gutters, 1 physical pixel separators and exact restoration passed
+READER CHECK bar: gesture condition, outside dismiss, real upstream hooks, drag/tap navigation and lifecycle restoration passed
+READER CHECK persisted: 20 annotation drawers and colors plus document defaults passed
+READER CHECK PASSED all

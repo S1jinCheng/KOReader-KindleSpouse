@@ -1,0 +1,50 @@
+lib_basic_format: lib%s.so
+lib_version_format: lib%s.so.%s
+ffi.load: rt.so.1 (RTLD_GLOBAL)
+ffi.findlib: utf8proc [3]
+ffi.load: libs/libutf8proc.so.3
+ffi.findlib: SDL3 [0]
+ffi.load: libs/libSDL3.so.0
+ffi.findlib: blitbuffer
+ffi.load: libs/libblitbuffer.so
+Started SDL in /mnt/d/kindleBooming/KindleSpouse/native/tools/koreader/squashfs-root/usr/lib/koreader/ using dummy video driver
+ffi.findlib: lodepng
+ffi.load: libs/liblodepng.so
+11/05/26-18:21:00 INFO  initializing for device Emulator 
+11/05/26-18:21:00 INFO  framebuffer resolution: {
+  h = 800,
+  w = 600
+} --[[table: 0x775ee7a4f9f0]] 
+ffi.findlib: wrap-mupdf
+ffi.load: libs/libwrap-mupdf.so
+ffi.findlib: freetype [6]
+ffi.load: libs/libfreetype.so.6
+ffi.findlib: harfbuzz [0]
+ffi.load: libs/libharfbuzz.so.0
+ffi.findlib: zstd [1]
+ffi.load: libs/libzstd.so.1
+11/05/26-18:21:00 INFO  /mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/checks/main_lifecycle-m_vuq0yv/cache/fontlist/fontinfo.dat fopen: No such file or directory -> initializing it 
+PASS supported interface preserves shared synchronization
+11/05/26-18:21:01 WARN  KindleSpouse: unsupported KOReader version (normalized 202601010000); expected v2026.07.1 
+PASS unsupported interface preserves shared synchronization
+11/05/26-18:21:02 WARN  KindleSpouse: interface installation failed: ...reader-kindlespouse/kindlespouse/test_main_lifecycle.lua:76: Generated missing upstream UI method 
+PASS throw interface preserves shared synchronization
+11/05/26-18:21:02 WARN  KindleSpouse: interface installation failed: ...reader-kindlespouse/kindlespouse/test_main_lifecycle.lua:79: Generated missing deferred upstream UI method 
+PASS deferred PostInit failures are guarded and do not stop sync
+PASS reader hook passes the ReaderUI instance to its adapter
+PASS closing current host cancels annotation title status and sleep callbacks
+PASS late old close cannot cancel successor synchronization status or sleep preparation
+PASS menu and sleep operations delegate to their shared helpers
+PASS queued title collection and retired PostInit callbacks stop on close
+PASS Home registration guard never wraps another plugin's PostInit callback
+11/05/26-18:21:02 WARN  KindleSpouse: sleep cover preset is not installed 
+PASS missing preset preserves the previous persisted sleep profile and acknowledgment
+11/05/26-18:21:02 WARN  KindleSpouse: cannot write sleep preference Generated write failure 
+PASS write failure preserves the old sleep profile and settings
+11/05/26-18:21:03 WARN  KindleSpouse: cannot publish sleep preference Generated atomic rename failure 
+PASS rename failure preserves the old sleep profile and settings
+PASS user preference persists atomically before preparation and disabling restores the old screen
+PASS incoming profiles apply without rewriting their bytes through preference persistence
+11/05/26-18:21:03 WARN  KindleSpouse: interface installation failed: ...reader-kindlespouse/kindlespouse/test_main_lifecycle.lua:334: Generated Home module load failure 
+PASS a failed Home module require cannot break synchronization or teardown
+KindleSpouse main lifecycle acceptance passed: 16 scenarios

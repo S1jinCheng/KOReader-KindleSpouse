@@ -1,0 +1,2035 @@
+{
+  "branch": "codex/improvement-12-notebook",
+  "tested_commit": "99f438572d9d55261c90bec4b7ad58b8d393a56f",
+  "started_at": "2026-11-05T18:20:53.376619+08:00",
+  "finished_at": "2026-11-05T18:27:21.097855+08:00",
+  "command": [
+    "/usr/bin/python3",
+    "kindlespouse/test_runtime.py",
+    "--runtime",
+    "/mnt/d/kindleBooming/KindleSpouse/native/tools/koreader/squashfs-root/usr/lib/koreader",
+    "--fonts",
+    "/mnt/d/kindleBooming/KindleSpouse/native/tools/reader-fonts",
+    "--package",
+    "/mnt/d/kindleBooming/koreader-kindlespouse/kindlespouse/build/KindleSpouse-Scribe-Overlay.zip",
+    "--expected-version",
+    "202607010000"
+  ],
+  "runner_exit_code": 0,
+  "suite": "kindlespouse/build/runtime-checks/suite-hajl1uxq",
+  "package_sha256": "8dca5376a20d0861b9cf727facb2014507387d857c43bf7576530e7738322658",
+  "groups": {
+    "annotation": [
+      "checks/annotation-xoznvdzv"
+    ],
+    "patches": [
+      "checks/patches-e5r9brds"
+    ],
+    "scheduler": [
+      "checks/scheduler-g3jrs1h5"
+    ],
+    "launcher": [
+      "checks/launcher-zs1v2yp_"
+    ],
+    "scheduler_integration": [
+      "checks/scheduler_integration-0k_tk1z3"
+    ],
+    "main_lifecycle": [
+      "checks/main_lifecycle-m_vuq0yv"
+    ],
+    "services-UTC": [
+      "checks/services-ikryz_sy"
+    ],
+    "services-Asia-Shanghai": [
+      "checks/services-hfbrgvgk"
+    ],
+    "services-America-New_York": [
+      "checks/services-yhdf5rdm"
+    ],
+    "version-guard": [
+      "version-checks/guard-hx0vsm87"
+    ],
+    "home-guard": [
+      "home-guard-checks/supported-q6k4k_tl",
+      "home-guard-checks/unknown-grdjorko",
+      "home-guard-checks/missing-943_hfpo",
+      "home-guard-checks/layout-n2rlcub4",
+      "home-guard-checks/layout_missing-e0027z12",
+      "home-guard-checks/postinit-t6cogq49",
+      "home-guard-checks/chooser-aove0grs",
+      "home-guard-checks/books-hd1_k18v",
+      "home-guard-checks/tab-4k1thoko",
+      "home-guard-checks/catalog-_f8hqe5n"
+    ],
+    "catalog-500": [
+      "catalog-tests/run-8mcc7m4v"
+    ],
+    "cached-startup": [
+      "cached-startup-checks/run-oq7xl0gu"
+    ],
+    "notebook": [
+      "notebook-summary-checks/summary-vjnz00zx"
+    ],
+    "highlight": [
+      "reader-checks/highlight-z_ukt9xr"
+    ],
+    "reader-monochrome": [
+      "reader-checks/all-drt3t_1m"
+    ],
+    "package-reader-monochrome": [
+      "reader-checks/all-yht_tz1i"
+    ],
+    "reader-color": [
+      "reader-checks/all-hzszj9yh"
+    ],
+    "package-reader-color": [
+      "reader-checks/all-i7h15g0e"
+    ],
+    "home": [
+      "test"
+    ],
+    "home-en": [
+      "integrated-en"
+    ],
+    "home-zh_CN": [
+      "integrated-zh_CN"
+    ],
+    "home-500": [
+      "test500"
+    ],
+    "reader-pdf": [
+      "reader-checks/reader-l48gsqqx"
+    ],
+    "package-home": [
+      "packaged-zh_CN-xfuful90"
+    ]
+  },
+  "files": [
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/annotation.log",
+      "archive": "runtime-checks/suite-hajl1uxq/annotation.log",
+      "operation": "copy_bytes",
+      "source_sha256": "1b482aedd63e8b61b855bd67504ef3ac17ab811ffb58a380c0b87e55184e9e7f",
+      "archived_sha256": "1b482aedd63e8b61b855bd67504ef3ac17ab811ffb58a380c0b87e55184e9e7f",
+      "bytes": 1970,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/cached-startup.log",
+      "archive": "runtime-checks/suite-hajl1uxq/cached-startup.log",
+      "operation": "copy_bytes",
+      "source_sha256": "de415eb95cfe415a80c9e4527e653b0fe7029703f1653e96ed8755db734f2db4",
+      "archived_sha256": "de415eb95cfe415a80c9e4527e653b0fe7029703f1653e96ed8755db734f2db4",
+      "bytes": 263,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/catalog-500.log",
+      "archive": "runtime-checks/suite-hajl1uxq/catalog-500.log",
+      "operation": "copy_bytes",
+      "source_sha256": "3753f4e6d046882d3f1d608d94f144c734446c5dc6c6fda4fc7a9c80abcc343d",
+      "archived_sha256": "3753f4e6d046882d3f1d608d94f144c734446c5dc6c6fda4fc7a9c80abcc343d",
+      "bytes": 478,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/highlight.log",
+      "archive": "runtime-checks/suite-hajl1uxq/highlight.log",
+      "operation": "copy_bytes",
+      "source_sha256": "3cfba549fd32abfef5854da7afae22a030a0a8730f08aa90891f6c3e41aaa64e",
+      "archived_sha256": "3cfba549fd32abfef5854da7afae22a030a0a8730f08aa90891f6c3e41aaa64e",
+      "bytes": 366,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/home-500.log",
+      "archive": "runtime-checks/suite-hajl1uxq/home-500.log",
+      "operation": "copy_bytes",
+      "source_sha256": "475a63a04217aa4bbe2d94ae761be76a4b2e146f0979b2b53bb9ae57ad0e1b18",
+      "archived_sha256": "475a63a04217aa4bbe2d94ae761be76a4b2e146f0979b2b53bb9ae57ad0e1b18",
+      "bytes": 176,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/home-en.log",
+      "archive": "runtime-checks/suite-hajl1uxq/home-en.log",
+      "operation": "copy_bytes",
+      "source_sha256": "475a63a04217aa4bbe2d94ae761be76a4b2e146f0979b2b53bb9ae57ad0e1b18",
+      "archived_sha256": "475a63a04217aa4bbe2d94ae761be76a4b2e146f0979b2b53bb9ae57ad0e1b18",
+      "bytes": 176,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/home-guard.log",
+      "archive": "runtime-checks/suite-hajl1uxq/home-guard.log",
+      "operation": "copy_bytes",
+      "source_sha256": "b6a67dce7862c42e61ee67a7295a784003e5f1a7e4b63e10fbcb3bf174c19013",
+      "archived_sha256": "b6a67dce7862c42e61ee67a7295a784003e5f1a7e4b63e10fbcb3bf174c19013",
+      "bytes": 1287,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/home-zh_CN.log",
+      "archive": "runtime-checks/suite-hajl1uxq/home-zh_CN.log",
+      "operation": "copy_bytes",
+      "source_sha256": "475a63a04217aa4bbe2d94ae761be76a4b2e146f0979b2b53bb9ae57ad0e1b18",
+      "archived_sha256": "475a63a04217aa4bbe2d94ae761be76a4b2e146f0979b2b53bb9ae57ad0e1b18",
+      "bytes": 176,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/home.log",
+      "archive": "runtime-checks/suite-hajl1uxq/home.log",
+      "operation": "copy_bytes",
+      "source_sha256": "475a63a04217aa4bbe2d94ae761be76a4b2e146f0979b2b53bb9ae57ad0e1b18",
+      "archived_sha256": "475a63a04217aa4bbe2d94ae761be76a4b2e146f0979b2b53bb9ae57ad0e1b18",
+      "bytes": 176,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/launcher.log",
+      "archive": "runtime-checks/suite-hajl1uxq/launcher.log",
+      "operation": "copy_bytes",
+      "source_sha256": "f61b7bebb21846c202241b39f0ad3577dc6701cab2cac3e70b106e60032e116c",
+      "archived_sha256": "f61b7bebb21846c202241b39f0ad3577dc6701cab2cac3e70b106e60032e116c",
+      "bytes": 554,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/localization.log",
+      "archive": "runtime-checks/suite-hajl1uxq/localization.log",
+      "operation": "copy_bytes",
+      "source_sha256": "05abe249723ae76879254e2f6c87e3f0c149613612ac35c529145dad9bc6f583",
+      "archived_sha256": "05abe249723ae76879254e2f6c87e3f0c149613612ac35c529145dad9bc6f583",
+      "bytes": 339,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/main_lifecycle.log",
+      "archive": "runtime-checks/suite-hajl1uxq/main_lifecycle.log",
+      "operation": "copy_bytes",
+      "source_sha256": "de393520131b105f6e0e68c6100b2671f234a4b9a9466fec46dc1c11ef0d96d4",
+      "archived_sha256": "de393520131b105f6e0e68c6100b2671f234a4b9a9466fec46dc1c11ef0d96d4",
+      "bytes": 3272,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/notebook.log",
+      "archive": "runtime-checks/suite-hajl1uxq/notebook.log",
+      "operation": "copy_bytes",
+      "source_sha256": "05b796569a5922e4f0d882e8a758f0c3a803d72c52dc1ca8a7baaa05f81cfb0f",
+      "archived_sha256": "05b796569a5922e4f0d882e8a758f0c3a803d72c52dc1ca8a7baaa05f81cfb0f",
+      "bytes": 257,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/package-home.log",
+      "archive": "runtime-checks/suite-hajl1uxq/package-home.log",
+      "operation": "copy_bytes",
+      "source_sha256": "bf00374a0e6e1e8938d15a5c7c3aafffb94f740a0c7600909afe783e490c7bd8",
+      "archived_sha256": "bf00374a0e6e1e8938d15a5c7c3aafffb94f740a0c7600909afe783e490c7bd8",
+      "bytes": 241,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/package-reader-color.log",
+      "archive": "runtime-checks/suite-hajl1uxq/package-reader-color.log",
+      "operation": "copy_bytes",
+      "source_sha256": "c18379f1e10232cef7deefc900fe305184e657ef71879124ef56f11246574b5e",
+      "archived_sha256": "c18379f1e10232cef7deefc900fe305184e657ef71879124ef56f11246574b5e",
+      "bytes": 655,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/package-reader-monochrome.log",
+      "archive": "runtime-checks/suite-hajl1uxq/package-reader-monochrome.log",
+      "operation": "copy_bytes",
+      "source_sha256": "1f5fdc9a6bd43a3ee1d6e8d637fd40aa3393a52bbcb874908a3fbfe195c03200",
+      "archived_sha256": "1f5fdc9a6bd43a3ee1d6e8d637fd40aa3393a52bbcb874908a3fbfe195c03200",
+      "bytes": 659,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/patches.log",
+      "archive": "runtime-checks/suite-hajl1uxq/patches.log",
+      "operation": "copy_bytes",
+      "source_sha256": "72adb2851dd27083def7ce49d5cf00e8830da3fb4ac7835b08e49d4444611b40",
+      "archived_sha256": "72adb2851dd27083def7ce49d5cf00e8830da3fb4ac7835b08e49d4444611b40",
+      "bytes": 234,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/reader-color.log",
+      "archive": "runtime-checks/suite-hajl1uxq/reader-color.log",
+      "operation": "copy_bytes",
+      "source_sha256": "45e5732d90f3004b95849bab4b6fa04b44683f7b9ebbfd09d17946d7cd36ef8b",
+      "archived_sha256": "45e5732d90f3004b95849bab4b6fa04b44683f7b9ebbfd09d17946d7cd36ef8b",
+      "bytes": 590,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/reader-monochrome.log",
+      "archive": "runtime-checks/suite-hajl1uxq/reader-monochrome.log",
+      "operation": "copy_bytes",
+      "source_sha256": "a873cec4925483e3b7ec1fbbe859284b169d975bab2568c28e7158406b51dc43",
+      "archived_sha256": "a873cec4925483e3b7ec1fbbe859284b169d975bab2568c28e7158406b51dc43",
+      "bytes": 594,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/reader-pdf.log",
+      "archive": "runtime-checks/suite-hajl1uxq/reader-pdf.log",
+      "operation": "copy_bytes",
+      "source_sha256": "054e81bf063a4243ea28c327802042676fb729a645830e6c97a8b912737a54f8",
+      "archived_sha256": "054e81bf063a4243ea28c327802042676fb729a645830e6c97a8b912737a54f8",
+      "bytes": 359,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/result.json",
+      "archive": "runtime-checks/suite-hajl1uxq/result.json",
+      "operation": "copy_bytes",
+      "source_sha256": "ba704fb5cb88ad1c5f31324d5fab7a93a84917a9948b8fd03575d6777805b49d",
+      "archived_sha256": "ba704fb5cb88ad1c5f31324d5fab7a93a84917a9948b8fd03575d6777805b49d",
+      "bytes": 1975,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/scheduler.log",
+      "archive": "runtime-checks/suite-hajl1uxq/scheduler.log",
+      "operation": "copy_bytes",
+      "source_sha256": "82293033f95fea593825a8587715126f23fe5aa96dbab7ec2b1058cc954ca967",
+      "archived_sha256": "82293033f95fea593825a8587715126f23fe5aa96dbab7ec2b1058cc954ca967",
+      "bytes": 1885,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/scheduler_integration.log",
+      "archive": "runtime-checks/suite-hajl1uxq/scheduler_integration.log",
+      "operation": "copy_bytes",
+      "source_sha256": "56696c491aec274489af5ecf156bf9958532416e50379b1d8ff7f06d110174c8",
+      "archived_sha256": "56696c491aec274489af5ecf156bf9958532416e50379b1d8ff7f06d110174c8",
+      "bytes": 1781,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/services-America-New_York.log",
+      "archive": "runtime-checks/suite-hajl1uxq/services-America-New_York.log",
+      "operation": "copy_bytes",
+      "source_sha256": "f2271854d357c4de0a6ba861dc47183802f0fa0e54407adb47346cf8275936e2",
+      "archived_sha256": "f2271854d357c4de0a6ba861dc47183802f0fa0e54407adb47346cf8275936e2",
+      "bytes": 1337,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/services-Asia-Shanghai.log",
+      "archive": "runtime-checks/suite-hajl1uxq/services-Asia-Shanghai.log",
+      "operation": "copy_bytes",
+      "source_sha256": "7321d93233c755c332bfa6b92188d042cd23f715a7b1abe38332fce3c2b649a8",
+      "archived_sha256": "7321d93233c755c332bfa6b92188d042cd23f715a7b1abe38332fce3c2b649a8",
+      "bytes": 1337,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/services-UTC.log",
+      "archive": "runtime-checks/suite-hajl1uxq/services-UTC.log",
+      "operation": "copy_bytes",
+      "source_sha256": "6202a64b1ccc180c6d7b95fbe008e208a14a57c06b4906b509ff4996d84a1d64",
+      "archived_sha256": "6202a64b1ccc180c6d7b95fbe008e208a14a57c06b4906b509ff4996d84a1d64",
+      "bytes": 1337,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/version-guard.log",
+      "archive": "runtime-checks/suite-hajl1uxq/version-guard.log",
+      "operation": "copy_bytes",
+      "source_sha256": "64bcbb5a9118fbd60236445c2f68b9ab6adb5c9e2fe85b6b829111b50c08c9a4",
+      "archived_sha256": "64bcbb5a9118fbd60236445c2f68b9ab6adb5c9e2fe85b6b829111b50c08c9a4",
+      "bytes": 1771,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/runtime-checks/suite-hajl1uxq/version.log",
+      "archive": "runtime-checks/suite-hajl1uxq/version.log",
+      "operation": "copy_bytes",
+      "source_sha256": "1a173c52d438ba647af7055bf03e5848b57d341fc57eff37c1d7d9a6767abd6e",
+      "archived_sha256": "1a173c52d438ba647af7055bf03e5848b57d341fc57eff37c1d7d9a6767abd6e",
+      "bytes": 228,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/checks/annotation-xoznvdzv/runtime.log",
+      "archive": "groups/annotation/checks/annotation-xoznvdzv/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "c9e708aa8e84d22b72d1ff6f9b6e19d4997053bdd57b6739fd48f558aedba537",
+      "archived_sha256": "c9e708aa8e84d22b72d1ff6f9b6e19d4997053bdd57b6739fd48f558aedba537",
+      "bytes": 1969,
+      "source_lines": 35
+    },
+    {
+      "source": "kindlespouse/build/checks/patches-e5r9brds/runtime.log",
+      "archive": "groups/patches/checks/patches-e5r9brds/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "87459528f6ef06732ccc81fd8a9933e96ebe51f76f1bb3d7c2bf0e627341107a",
+      "archived_sha256": "87459528f6ef06732ccc81fd8a9933e96ebe51f76f1bb3d7c2bf0e627341107a",
+      "bytes": 233,
+      "source_lines": 5
+    },
+    {
+      "source": "kindlespouse/build/checks/scheduler-g3jrs1h5/runtime.log",
+      "archive": "groups/scheduler/checks/scheduler-g3jrs1h5/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "684ff920dfd1a32d0f86d82a162239558fb1ba9a56ff161ca194dfd8b1e2266a",
+      "archived_sha256": "684ff920dfd1a32d0f86d82a162239558fb1ba9a56ff161ca194dfd8b1e2266a",
+      "bytes": 1884,
+      "source_lines": 26
+    },
+    {
+      "source": "kindlespouse/build/checks/launcher-zs1v2yp_/runtime.log",
+      "archive": "groups/launcher/checks/launcher-zs1v2yp_/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "3cff714a709395d9938d737371efc969d43bed96e3382e7946f4501b98673c80",
+      "archived_sha256": "3cff714a709395d9938d737371efc969d43bed96e3382e7946f4501b98673c80",
+      "bytes": 553,
+      "source_lines": 9
+    },
+    {
+      "source": "kindlespouse/build/checks/scheduler_integration-0k_tk1z3/runtime.log",
+      "archive": "groups/scheduler_integration/checks/scheduler_integration-0k_tk1z3/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "bf8268bb535bc2a00c0891dd3680fab1906a8795046995f7f3859bc9ee7c9a73",
+      "archived_sha256": "bf8268bb535bc2a00c0891dd3680fab1906a8795046995f7f3859bc9ee7c9a73",
+      "bytes": 1780,
+      "source_lines": 33
+    },
+    {
+      "source": "kindlespouse/build/checks/main_lifecycle-m_vuq0yv/runtime.log",
+      "archive": "groups/main_lifecycle/checks/main_lifecycle-m_vuq0yv/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "77b6907c726224b06bd546a9b1e2b63bc17b43cd2346c2911f9a9d2693926282",
+      "archived_sha256": "b2a58f5f33c7e85880edc8dbaa13bb42541f421d7ea4a831e3106da81aba8c11",
+      "bytes": 3136,
+      "source_lines": 52
+    },
+    {
+      "source": "kindlespouse/build/checks/services-ikryz_sy/runtime.log",
+      "archive": "groups/services-UTC/checks/services-ikryz_sy/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "6a1c8e18503fd2466b0b20eabab0862966abceac1b85db2522216240f5f93653",
+      "archived_sha256": "6a1c8e18503fd2466b0b20eabab0862966abceac1b85db2522216240f5f93653",
+      "bytes": 1336,
+      "source_lines": 29
+    },
+    {
+      "source": "kindlespouse/build/checks/services-hfbrgvgk/runtime.log",
+      "archive": "groups/services-Asia-Shanghai/checks/services-hfbrgvgk/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "206c0eceea665bffc3fcad4f479fb3b8beef7b2b3b9ee9f0952175bc2e9ba3ca",
+      "archived_sha256": "206c0eceea665bffc3fcad4f479fb3b8beef7b2b3b9ee9f0952175bc2e9ba3ca",
+      "bytes": 1336,
+      "source_lines": 29
+    },
+    {
+      "source": "kindlespouse/build/checks/services-yhdf5rdm/runtime.log",
+      "archive": "groups/services-America-New_York/checks/services-yhdf5rdm/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "d2ebec776d9652d54f8c11e2e5c670653fc9e32c9e25452bbbe544d2adb040aa",
+      "archived_sha256": "d2ebec776d9652d54f8c11e2e5c670653fc9e32c9e25452bbbe544d2adb040aa",
+      "bytes": 1336,
+      "source_lines": 29
+    },
+    {
+      "source": "kindlespouse/build/version-checks/guard-hx0vsm87/runtime.log",
+      "archive": "groups/version-guard/version-checks/guard-hx0vsm87/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "d5c9e5992cc12f0c7ca9baf3893a744d97fdbfc7d193eeaa7f79e198116cb3e1",
+      "archived_sha256": "d5c9e5992cc12f0c7ca9baf3893a744d97fdbfc7d193eeaa7f79e198116cb3e1",
+      "bytes": 1678,
+      "source_lines": 26
+    },
+    {
+      "source": "kindlespouse/build/home-guard-checks/supported-q6k4k_tl/runtime.log",
+      "archive": "groups/home-guard/home-guard-checks/supported-q6k4k_tl/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "20419660353e29d2b131fc3e387cdd9e00c8b6280aab98fb1e1d38be5eae25bb",
+      "archived_sha256": "9d6294eab5d2792aee63fc477917568e1287ab4d2da77c94ebf77ca7e73fd810",
+      "bytes": 2314,
+      "source_lines": 62
+    },
+    {
+      "source": "kindlespouse/build/home-guard-checks/unknown-grdjorko/runtime.log",
+      "archive": "groups/home-guard/home-guard-checks/unknown-grdjorko/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "99bc979fda090d5de5c7d0f232ae2117de6fdbd38ff14a8c25a672a16638ebb4",
+      "archived_sha256": "7c9af82cad918768ae0ab40d3d707c9194bdc4056ec1d98e73fe1c753c6b0b4a",
+      "bytes": 2270,
+      "source_lines": 53
+    },
+    {
+      "source": "kindlespouse/build/home-guard-checks/unknown-grdjorko/unknown.png",
+      "archive": "groups/home-guard/home-guard-checks/unknown-grdjorko/unknown.png",
+      "operation": "copy_bytes",
+      "source_sha256": "8daf07e9c70761cfbdc323c5f5d221d5df7ea77eb9d1803445ab0f891dd3bd46",
+      "archived_sha256": "8daf07e9c70761cfbdc323c5f5d221d5df7ea77eb9d1803445ab0f891dd3bd46",
+      "bytes": 41722,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/home-guard-checks/missing-943_hfpo/runtime.log",
+      "archive": "groups/home-guard/home-guard-checks/missing-943_hfpo/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "98303f7ed24049f7abfbd3d7fa2dc09cd9357ce039c00044d50990ff9d04efab",
+      "archived_sha256": "fe9319d4fa0ea28f1fda1cd6244c71583b1db45de479e03e16bdc9271d65b13f",
+      "bytes": 2410,
+      "source_lines": 53
+    },
+    {
+      "source": "kindlespouse/build/home-guard-checks/missing-943_hfpo/missing.png",
+      "archive": "groups/home-guard/home-guard-checks/missing-943_hfpo/missing.png",
+      "operation": "copy_bytes",
+      "source_sha256": "8daf07e9c70761cfbdc323c5f5d221d5df7ea77eb9d1803445ab0f891dd3bd46",
+      "archived_sha256": "8daf07e9c70761cfbdc323c5f5d221d5df7ea77eb9d1803445ab0f891dd3bd46",
+      "bytes": 41722,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/home-guard-checks/layout-n2rlcub4/runtime.log",
+      "archive": "groups/home-guard/home-guard-checks/layout-n2rlcub4/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "066c30e6e56602dc1983945a1d8e7db96d1d53b2e3ef9e3b92842b94f595b5cf",
+      "archived_sha256": "6f6457021ec77a9fac27852c8708afde7cd8efb5543fe2205a455e0753f530b9",
+      "bytes": 2320,
+      "source_lines": 53
+    },
+    {
+      "source": "kindlespouse/build/home-guard-checks/layout-n2rlcub4/layout.png",
+      "archive": "groups/home-guard/home-guard-checks/layout-n2rlcub4/layout.png",
+      "operation": "copy_bytes",
+      "source_sha256": "8daf07e9c70761cfbdc323c5f5d221d5df7ea77eb9d1803445ab0f891dd3bd46",
+      "archived_sha256": "8daf07e9c70761cfbdc323c5f5d221d5df7ea77eb9d1803445ab0f891dd3bd46",
+      "bytes": 41722,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/home-guard-checks/layout_missing-e0027z12/runtime.log",
+      "archive": "groups/home-guard/home-guard-checks/layout_missing-e0027z12/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "79117a4fd1640ef15ee6a553e4ead8478854e076f18aa10af2a10bbd99a8bfcb",
+      "archived_sha256": "aa995b94cd20b25e98740d8eacf5fa620c6db22a7f2cdcfc43ff912d9188e236",
+      "bytes": 2373,
+      "source_lines": 53
+    },
+    {
+      "source": "kindlespouse/build/home-guard-checks/layout_missing-e0027z12/layout_missing.png",
+      "archive": "groups/home-guard/home-guard-checks/layout_missing-e0027z12/layout_missing.png",
+      "operation": "copy_bytes",
+      "source_sha256": "8daf07e9c70761cfbdc323c5f5d221d5df7ea77eb9d1803445ab0f891dd3bd46",
+      "archived_sha256": "8daf07e9c70761cfbdc323c5f5d221d5df7ea77eb9d1803445ab0f891dd3bd46",
+      "bytes": 41722,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/home-guard-checks/postinit-t6cogq49/runtime.log",
+      "archive": "groups/home-guard/home-guard-checks/postinit-t6cogq49/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "a4f68842c1c6fc220de5fa4f001346ae4e2f124c73800c950f5f7899286b223e",
+      "archived_sha256": "e089515706a48983ec62bc6e15f505fb10ea4b10f8cb7879144404d174beb592",
+      "bytes": 2326,
+      "source_lines": 53
+    },
+    {
+      "source": "kindlespouse/build/home-guard-checks/postinit-t6cogq49/postinit.png",
+      "archive": "groups/home-guard/home-guard-checks/postinit-t6cogq49/postinit.png",
+      "operation": "copy_bytes",
+      "source_sha256": "0e383502f8663b65579f175a50c983cbce3948fd7f563b7fa291e4de2a86425f",
+      "archived_sha256": "0e383502f8663b65579f175a50c983cbce3948fd7f563b7fa291e4de2a86425f",
+      "bytes": 40166,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/home-guard-checks/chooser-aove0grs/runtime.log",
+      "archive": "groups/home-guard/home-guard-checks/chooser-aove0grs/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "4267116a0d33237a02262831d928bdb43ab1348d3630a43606139d9ca2c7990e",
+      "archived_sha256": "eca689fd3792e6a4feda1b23ef71f80f599359f57ac428716b6e5bfe6f3ff6e5",
+      "bytes": 2332,
+      "source_lines": 53
+    },
+    {
+      "source": "kindlespouse/build/home-guard-checks/chooser-aove0grs/chooser.png",
+      "archive": "groups/home-guard/home-guard-checks/chooser-aove0grs/chooser.png",
+      "operation": "copy_bytes",
+      "source_sha256": "8daf07e9c70761cfbdc323c5f5d221d5df7ea77eb9d1803445ab0f891dd3bd46",
+      "archived_sha256": "8daf07e9c70761cfbdc323c5f5d221d5df7ea77eb9d1803445ab0f891dd3bd46",
+      "bytes": 41722,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/home-guard-checks/books-hd1_k18v/runtime.log",
+      "archive": "groups/home-guard/home-guard-checks/books-hd1_k18v/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "c5ff9e478a7d98e1404993680d88cf916534e61d2b1dd69db4e29c2eadd42081",
+      "archived_sha256": "32dfdd6c2c57280f9ef2793e101f73e2959eae1fa1210853930930e55c6ab101",
+      "bytes": 2323,
+      "source_lines": 53
+    },
+    {
+      "source": "kindlespouse/build/home-guard-checks/books-hd1_k18v/books.png",
+      "archive": "groups/home-guard/home-guard-checks/books-hd1_k18v/books.png",
+      "operation": "copy_bytes",
+      "source_sha256": "8daf07e9c70761cfbdc323c5f5d221d5df7ea77eb9d1803445ab0f891dd3bd46",
+      "archived_sha256": "8daf07e9c70761cfbdc323c5f5d221d5df7ea77eb9d1803445ab0f891dd3bd46",
+      "bytes": 41722,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/home-guard-checks/tab-4k1thoko/runtime.log",
+      "archive": "groups/home-guard/home-guard-checks/tab-4k1thoko/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "6c4d9092baf95b11117a32922811c3e3601c195068ffd4bce4487a7b40043f8c",
+      "archived_sha256": "130559dd97e7d47e96bddd82666cc0a5152d5e3945575d0242ab1e9cdb2a098a",
+      "bytes": 2425,
+      "source_lines": 63
+    },
+    {
+      "source": "kindlespouse/build/home-guard-checks/tab-4k1thoko/tab.png",
+      "archive": "groups/home-guard/home-guard-checks/tab-4k1thoko/tab.png",
+      "operation": "copy_bytes",
+      "source_sha256": "0e383502f8663b65579f175a50c983cbce3948fd7f563b7fa291e4de2a86425f",
+      "archived_sha256": "0e383502f8663b65579f175a50c983cbce3948fd7f563b7fa291e4de2a86425f",
+      "bytes": 40166,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/home-guard-checks/catalog-_f8hqe5n/runtime.log",
+      "archive": "groups/home-guard/home-guard-checks/catalog-_f8hqe5n/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "015ad1cbdf385ce446abaf64a0d9b835f6601a51a48564ffe69f134ec25c9912",
+      "archived_sha256": "a901e8aa9e607ec1127526aff600f3f7c94447cd501a8173ecca898610c09153",
+      "bytes": 2449,
+      "source_lines": 63
+    },
+    {
+      "source": "kindlespouse/build/home-guard-checks/catalog-_f8hqe5n/catalog.png",
+      "archive": "groups/home-guard/home-guard-checks/catalog-_f8hqe5n/catalog.png",
+      "operation": "copy_bytes",
+      "source_sha256": "0e383502f8663b65579f175a50c983cbce3948fd7f563b7fa291e4de2a86425f",
+      "archived_sha256": "0e383502f8663b65579f175a50c983cbce3948fd7f563b7fa291e4de2a86425f",
+      "bytes": 40166,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/catalog-tests/run-8mcc7m4v/runtime.log",
+      "archive": "groups/catalog-500/catalog-tests/run-8mcc7m4v/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "b4485638511c407c02854ee75aa3b0bb27627ed123e111714a7144bb054767bc",
+      "archived_sha256": "8bebfbcf101413941801b362092645e5ef70f06952aef568fd1ffda3c8d14216",
+      "bytes": 1735,
+      "source_lines": 122
+    },
+    {
+      "source": "kindlespouse/build/cached-startup-checks/run-oq7xl0gu/cached-runtime.log",
+      "archive": "groups/cached-startup/cached-startup-checks/run-oq7xl0gu/cached-runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "9fd9da882e63681377cb9749edcea8aac73ee5d418893ae29fd2c78a4b38af51",
+      "archived_sha256": "c220fc08ece4252f7bac5f6309b1bb7ac97508a04a4e9f3a229a0a762570568d",
+      "bytes": 2259,
+      "source_lines": 60
+    },
+    {
+      "source": "kindlespouse/build/cached-startup-checks/run-oq7xl0gu/warm-runtime.log",
+      "archive": "groups/cached-startup/cached-startup-checks/run-oq7xl0gu/warm-runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "2db9012200de93ea257268f4497a587ee9aa4427447b11381726e9cbb2c2206a",
+      "archived_sha256": "b79e9f131962a47816f281852ee547c8d83215cfbddc5bf78a6107af5723a033",
+      "bytes": 2641,
+      "source_lines": 72
+    },
+    {
+      "source": "kindlespouse/build/cached-startup-checks/run-oq7xl0gu/cached-events.json",
+      "archive": "groups/cached-startup/cached-startup-checks/run-oq7xl0gu/cached-events.json",
+      "operation": "copy_bytes",
+      "source_sha256": "31cfce4e59393349fd591cbc98f6708f327e7d96ce9831b89c0750c8bb82fd02",
+      "archived_sha256": "31cfce4e59393349fd591cbc98f6708f327e7d96ce9831b89c0750c8bb82fd02",
+      "bytes": 120,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/cached-startup-checks/run-oq7xl0gu/in-progress.json",
+      "archive": "groups/cached-startup/cached-startup-checks/run-oq7xl0gu/in-progress.json",
+      "operation": "copy_bytes",
+      "source_sha256": "8fdcd800c606c7557ee9fb971f0a8070a2e7c841c97c9439b5377c9ff5e56e68",
+      "archived_sha256": "8fdcd800c606c7557ee9fb971f0a8070a2e7c841c97c9439b5377c9ff5e56e68",
+      "bytes": 839,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/cached-startup-checks/run-oq7xl0gu/result.json",
+      "archive": "groups/cached-startup/cached-startup-checks/run-oq7xl0gu/result.json",
+      "operation": "copy_bytes",
+      "source_sha256": "c7c4be05dc9d16bb84de6bd82bbc3d2e3677e8dc62196c3e1d982533028e1487",
+      "archived_sha256": "c7c4be05dc9d16bb84de6bd82bbc3d2e3677e8dc62196c3e1d982533028e1487",
+      "bytes": 512,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/cached-startup-checks/run-oq7xl0gu/warm-events.json",
+      "archive": "groups/cached-startup/cached-startup-checks/run-oq7xl0gu/warm-events.json",
+      "operation": "copy_bytes",
+      "source_sha256": "d42548660585d0892e4ca5603b926c1574c1bf7b4777d7e838a0ff3d8f270fed",
+      "archived_sha256": "d42548660585d0892e4ca5603b926c1574c1bf7b4777d7e838a0ff3d8f270fed",
+      "bytes": 7610,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/cached-startup-checks/run-oq7xl0gu/cached-startup-in-progress.png",
+      "archive": "groups/cached-startup/cached-startup-checks/run-oq7xl0gu/cached-startup-in-progress.png",
+      "operation": "copy_bytes",
+      "source_sha256": "d028049fb1c00427203a991942b0eed37a3ea1d161955a56a728bee54bc6b7df",
+      "archived_sha256": "d028049fb1c00427203a991942b0eed37a3ea1d161955a56a728bee54bc6b7df",
+      "bytes": 87222,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/notebook-summary-checks/summary-vjnz00zx/runtime.log",
+      "archive": "groups/notebook/notebook-summary-checks/summary-vjnz00zx/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "b5bcde8d5b7d6f35b27f2e228c4527ab2deff4caaf35beb1d8b49c1fa5c6ed2b",
+      "archived_sha256": "d738b189829e06c7cdf3ff4bc4bb1c134394f6a6e96c1faab9bbb2e456d9c30e",
+      "bytes": 2680,
+      "source_lines": 60
+    },
+    {
+      "source": "kindlespouse/build/notebook-summary-checks/summary-vjnz00zx/notebook-detail-layers.png",
+      "archive": "groups/notebook/notebook-summary-checks/summary-vjnz00zx/notebook-detail-layers.png",
+      "operation": "copy_bytes",
+      "source_sha256": "bc5ef4f2ebe4b3fddfd666eb3275a5feb14a7792ef9ee03210c9a3b76d563c6b",
+      "archived_sha256": "bc5ef4f2ebe4b3fddfd666eb3275a5feb14a7792ef9ee03210c9a3b76d563c6b",
+      "bytes": 120677,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/notebook-summary-checks/summary-vjnz00zx/notebook-detail-page2.png",
+      "archive": "groups/notebook/notebook-summary-checks/summary-vjnz00zx/notebook-detail-page2.png",
+      "operation": "copy_bytes",
+      "source_sha256": "f6512d32e5e9463659c0f53b19b39d420b07033414f725cb5c9a52ffd9034612",
+      "archived_sha256": "f6512d32e5e9463659c0f53b19b39d420b07033414f725cb5c9a52ffd9034612",
+      "bytes": 96965,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/notebook-summary-checks/summary-vjnz00zx/notebook-summary.png",
+      "archive": "groups/notebook/notebook-summary-checks/summary-vjnz00zx/notebook-summary.png",
+      "operation": "copy_bytes",
+      "source_sha256": "00ce043c7b7e4dd98b0c2b43ad60827ee21a34b57823d7d29ce642351548b59e",
+      "archived_sha256": "00ce043c7b7e4dd98b0c2b43ad60827ee21a34b57823d7d29ce642351548b59e",
+      "bytes": 80823,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/highlight-z_ukt9xr/runtime.log",
+      "archive": "groups/highlight/reader-checks/highlight-z_ukt9xr/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "80f5972d35b3e99f9d31bceb0237349c69df732c92e22779a10fc3009b6b0953",
+      "archived_sha256": "51828cc8b9eea94fef6d09c4aed91430cfae2ab40a5147a298edf6811f466f70",
+      "bytes": 2516,
+      "source_lines": 62
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/highlight-z_ukt9xr/highlight-monochrome-invert.png",
+      "archive": "groups/highlight/reader-checks/highlight-z_ukt9xr/highlight-monochrome-invert.png",
+      "operation": "copy_bytes",
+      "source_sha256": "3bcb2dc8e8c413dca3c74aad7f7ccee535f7814eb3edc8a7df29faf6ff2183bd",
+      "archived_sha256": "3bcb2dc8e8c413dca3c74aad7f7ccee535f7814eb3edc8a7df29faf6ff2183bd",
+      "bytes": 468475,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/highlight-z_ukt9xr/highlight-monochrome-lighten.png",
+      "archive": "groups/highlight/reader-checks/highlight-z_ukt9xr/highlight-monochrome-lighten.png",
+      "operation": "copy_bytes",
+      "source_sha256": "7164e4cda1f5c9a3c8f6864482975a975f78d7362a53e8ef5ab103e9b5375695",
+      "archived_sha256": "7164e4cda1f5c9a3c8f6864482975a975f78d7362a53e8ef5ab103e9b5375695",
+      "bytes": 208548,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/highlight-z_ukt9xr/highlight-monochrome-strikeout.png",
+      "archive": "groups/highlight/reader-checks/highlight-z_ukt9xr/highlight-monochrome-strikeout.png",
+      "operation": "copy_bytes",
+      "source_sha256": "b6e490c48fe1d3dc188d802f593d66b2e4184e5130859c8f2ae02ceb19c46b4a",
+      "archived_sha256": "b6e490c48fe1d3dc188d802f593d66b2e4184e5130859c8f2ae02ceb19c46b4a",
+      "bytes": 468496,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/highlight-z_ukt9xr/highlight-monochrome-underscore.png",
+      "archive": "groups/highlight/reader-checks/highlight-z_ukt9xr/highlight-monochrome-underscore.png",
+      "operation": "copy_bytes",
+      "source_sha256": "5711a94fb89c38ca846bc456e660b23013848407f7c1065da5910515811b33e5",
+      "archived_sha256": "5711a94fb89c38ca846bc456e660b23013848407f7c1065da5910515811b33e5",
+      "bytes": 468493,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/highlight-z_ukt9xr/highlight-more-before.png",
+      "archive": "groups/highlight/reader-checks/highlight-z_ukt9xr/highlight-more-before.png",
+      "operation": "copy_bytes",
+      "source_sha256": "c3b26e5bd522ff903c3200b00aacb708fe86380a7556c910f60a8d990aa011d2",
+      "archived_sha256": "c3b26e5bd522ff903c3200b00aacb708fe86380a7556c910f60a8d990aa011d2",
+      "bytes": 468464,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/highlight-z_ukt9xr/highlight-stock-more.png",
+      "archive": "groups/highlight/reader-checks/highlight-z_ukt9xr/highlight-stock-more.png",
+      "operation": "copy_bytes",
+      "source_sha256": "35095925e553616093eaceb3dc85313c52ffc8229fe9e4eb9d7f20c3bb98e5ac",
+      "archived_sha256": "35095925e553616093eaceb3dc85313c52ffc8229fe9e4eb9d7f20c3bb98e5ac",
+      "bytes": 409528,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-drt3t_1m/runtime.log",
+      "archive": "groups/reader-monochrome/reader-checks/all-drt3t_1m/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "69f5611220b4ae3fd65064eb2a3ae9acf229f3c76174691dde6f3d0cc5e3924d",
+      "archived_sha256": "e8652e33d686553090b59eb53ef7ca01b736e0e8047861ac793e6ebc63fc250f",
+      "bytes": 3385,
+      "source_lines": 85
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-drt3t_1m/reader-geometry.json",
+      "archive": "groups/reader-monochrome/reader-checks/all-drt3t_1m/reader-geometry.json",
+      "operation": "copy_bytes",
+      "source_sha256": "717160b27272b6d4535895bad580b0e313e45ecec260a0e3455ab5f11d15b72c",
+      "archived_sha256": "717160b27272b6d4535895bad580b0e313e45ecec260a0e3455ab5f11d15b72c",
+      "bytes": 169,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-drt3t_1m/highlight-monochrome-invert.png",
+      "archive": "groups/reader-monochrome/reader-checks/all-drt3t_1m/highlight-monochrome-invert.png",
+      "operation": "copy_bytes",
+      "source_sha256": "3bcb2dc8e8c413dca3c74aad7f7ccee535f7814eb3edc8a7df29faf6ff2183bd",
+      "archived_sha256": "3bcb2dc8e8c413dca3c74aad7f7ccee535f7814eb3edc8a7df29faf6ff2183bd",
+      "bytes": 468475,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-drt3t_1m/highlight-monochrome-lighten.png",
+      "archive": "groups/reader-monochrome/reader-checks/all-drt3t_1m/highlight-monochrome-lighten.png",
+      "operation": "copy_bytes",
+      "source_sha256": "7164e4cda1f5c9a3c8f6864482975a975f78d7362a53e8ef5ab103e9b5375695",
+      "archived_sha256": "7164e4cda1f5c9a3c8f6864482975a975f78d7362a53e8ef5ab103e9b5375695",
+      "bytes": 208548,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-drt3t_1m/highlight-monochrome-strikeout.png",
+      "archive": "groups/reader-monochrome/reader-checks/all-drt3t_1m/highlight-monochrome-strikeout.png",
+      "operation": "copy_bytes",
+      "source_sha256": "b6e490c48fe1d3dc188d802f593d66b2e4184e5130859c8f2ae02ceb19c46b4a",
+      "archived_sha256": "b6e490c48fe1d3dc188d802f593d66b2e4184e5130859c8f2ae02ceb19c46b4a",
+      "bytes": 468496,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-drt3t_1m/highlight-monochrome-underscore.png",
+      "archive": "groups/reader-monochrome/reader-checks/all-drt3t_1m/highlight-monochrome-underscore.png",
+      "operation": "copy_bytes",
+      "source_sha256": "5711a94fb89c38ca846bc456e660b23013848407f7c1065da5910515811b33e5",
+      "archived_sha256": "5711a94fb89c38ca846bc456e660b23013848407f7c1065da5910515811b33e5",
+      "bytes": 468493,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-drt3t_1m/highlight-more-before.png",
+      "archive": "groups/reader-monochrome/reader-checks/all-drt3t_1m/highlight-more-before.png",
+      "operation": "copy_bytes",
+      "source_sha256": "c3b26e5bd522ff903c3200b00aacb708fe86380a7556c910f60a8d990aa011d2",
+      "archived_sha256": "c3b26e5bd522ff903c3200b00aacb708fe86380a7556c910f60a8d990aa011d2",
+      "bytes": 468464,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-drt3t_1m/highlight-stock-more.png",
+      "archive": "groups/reader-monochrome/reader-checks/all-drt3t_1m/highlight-stock-more.png",
+      "operation": "copy_bytes",
+      "source_sha256": "35095925e553616093eaceb3dc85313c52ffc8229fe9e4eb9d7f20c3bb98e5ac",
+      "archived_sha256": "35095925e553616093eaceb3dc85313c52ffc8229fe9e4eb9d7f20c3bb98e5ac",
+      "bytes": 409528,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-drt3t_1m/reader-bar-zh.png",
+      "archive": "groups/reader-monochrome/reader-checks/all-drt3t_1m/reader-bar-zh.png",
+      "operation": "copy_bytes",
+      "source_sha256": "4012252bdac82a0040cd8887eb48a948eea13c5c91a7260d272632f6fdf8322d",
+      "archived_sha256": "4012252bdac82a0040cd8887eb48a948eea13c5c91a7260d272632f6fdf8322d",
+      "bytes": 800352,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-drt3t_1m/reader-bar.png",
+      "archive": "groups/reader-monochrome/reader-checks/all-drt3t_1m/reader-bar.png",
+      "operation": "copy_bytes",
+      "source_sha256": "4261ec6c5871897e492437ea6d3271e974bb781613005fd81d6a087d686c5ee3",
+      "archived_sha256": "4261ec6c5871897e492437ea6d3271e974bb781613005fd81d6a087d686c5ee3",
+      "bytes": 419034,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-drt3t_1m/reader-body-unobscured-zh.png",
+      "archive": "groups/reader-monochrome/reader-checks/all-drt3t_1m/reader-body-unobscured-zh.png",
+      "operation": "copy_bytes",
+      "source_sha256": "821b652d0bf6cb0e04ec5713c0adac08168e3925ba5dfeab93911ac0873fa006",
+      "archived_sha256": "821b652d0bf6cb0e04ec5713c0adac08168e3925ba5dfeab93911ac0873fa006",
+      "bytes": 799307,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-drt3t_1m/reader-body-unobscured.png",
+      "archive": "groups/reader-monochrome/reader-checks/all-drt3t_1m/reader-body-unobscured.png",
+      "operation": "copy_bytes",
+      "source_sha256": "2d6aecabda143b04608a6d783d6289784112f54e125a56cb9f8abae500039a5c",
+      "archived_sha256": "2d6aecabda143b04608a6d783d6289784112f54e125a56cb9f8abae500039a5c",
+      "bytes": 799689,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-drt3t_1m/reader-expected-viewport.png",
+      "archive": "groups/reader-monochrome/reader-checks/all-drt3t_1m/reader-expected-viewport.png",
+      "operation": "copy_bytes",
+      "source_sha256": "d39c9869136ce86666336cec08f9254ca1e8653d9bf7972f9322691d3bb004b0",
+      "archived_sha256": "d39c9869136ce86666336cec08f9254ca1e8653d9bf7972f9322691d3bb004b0",
+      "bytes": 729340,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-drt3t_1m/reader-landscape.png",
+      "archive": "groups/reader-monochrome/reader-checks/all-drt3t_1m/reader-landscape.png",
+      "operation": "copy_bytes",
+      "source_sha256": "9a21685bd913be88ef8426ce29517bb9a65c400c8b7f7eda02033ab75b234d69",
+      "archived_sha256": "9a21685bd913be88ef8426ce29517bb9a65c400c8b7f7eda02033ab75b234d69",
+      "bytes": 377497,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-drt3t_1m/reader-portrait-restored.png",
+      "archive": "groups/reader-monochrome/reader-checks/all-drt3t_1m/reader-portrait-restored.png",
+      "operation": "copy_bytes",
+      "source_sha256": "4261ec6c5871897e492437ea6d3271e974bb781613005fd81d6a087d686c5ee3",
+      "archived_sha256": "4261ec6c5871897e492437ea6d3271e974bb781613005fd81d6a087d686c5ee3",
+      "bytes": 419034,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-drt3t_1m/reader-restored.png",
+      "archive": "groups/reader-monochrome/reader-checks/all-drt3t_1m/reader-restored.png",
+      "operation": "copy_bytes",
+      "source_sha256": "426e27f74f4a416758e51928119b194116b01bc144649f88a24c08450fcd89f5",
+      "archived_sha256": "426e27f74f4a416758e51928119b194116b01bc144649f88a24c08450fcd89f5",
+      "bytes": 495258,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-drt3t_1m/reader-source.png",
+      "archive": "groups/reader-monochrome/reader-checks/all-drt3t_1m/reader-source.png",
+      "operation": "copy_bytes",
+      "source_sha256": "426e27f74f4a416758e51928119b194116b01bc144649f88a24c08450fcd89f5",
+      "archived_sha256": "426e27f74f4a416758e51928119b194116b01bc144649f88a24c08450fcd89f5",
+      "bytes": 495258,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-drt3t_1m/reader-stock-more.png",
+      "archive": "groups/reader-monochrome/reader-checks/all-drt3t_1m/reader-stock-more.png",
+      "operation": "copy_bytes",
+      "source_sha256": "4158cfb6c77da45a192b55626128aac8fb54e00791090d19d30a12cae49912c6",
+      "archived_sha256": "4158cfb6c77da45a192b55626128aac8fb54e00791090d19d30a12cae49912c6",
+      "bytes": 117857,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-yht_tz1i/runtime.log",
+      "archive": "groups/package-reader-monochrome/reader-checks/all-yht_tz1i/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "50bc770f013346912fcf6c9f462176212970f684bbb999aec6e77b396b4203f6",
+      "archived_sha256": "2c4f29d0d8f118014f5b481b16ce37af935a352343e19192f8ea1310827279a8",
+      "bytes": 3431,
+      "source_lines": 85
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-yht_tz1i/reader-geometry.json",
+      "archive": "groups/package-reader-monochrome/reader-checks/all-yht_tz1i/reader-geometry.json",
+      "operation": "copy_bytes",
+      "source_sha256": "ce924fe1415978f6472afd225f2bc2ea29090abee33dd14c76142ee2e86132ae",
+      "archived_sha256": "ce924fe1415978f6472afd225f2bc2ea29090abee33dd14c76142ee2e86132ae",
+      "bytes": 169,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-yht_tz1i/highlight-monochrome-invert.png",
+      "archive": "groups/package-reader-monochrome/reader-checks/all-yht_tz1i/highlight-monochrome-invert.png",
+      "operation": "copy_bytes",
+      "source_sha256": "3bcb2dc8e8c413dca3c74aad7f7ccee535f7814eb3edc8a7df29faf6ff2183bd",
+      "archived_sha256": "3bcb2dc8e8c413dca3c74aad7f7ccee535f7814eb3edc8a7df29faf6ff2183bd",
+      "bytes": 468475,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-yht_tz1i/highlight-monochrome-lighten.png",
+      "archive": "groups/package-reader-monochrome/reader-checks/all-yht_tz1i/highlight-monochrome-lighten.png",
+      "operation": "copy_bytes",
+      "source_sha256": "7164e4cda1f5c9a3c8f6864482975a975f78d7362a53e8ef5ab103e9b5375695",
+      "archived_sha256": "7164e4cda1f5c9a3c8f6864482975a975f78d7362a53e8ef5ab103e9b5375695",
+      "bytes": 208548,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-yht_tz1i/highlight-monochrome-strikeout.png",
+      "archive": "groups/package-reader-monochrome/reader-checks/all-yht_tz1i/highlight-monochrome-strikeout.png",
+      "operation": "copy_bytes",
+      "source_sha256": "b6e490c48fe1d3dc188d802f593d66b2e4184e5130859c8f2ae02ceb19c46b4a",
+      "archived_sha256": "b6e490c48fe1d3dc188d802f593d66b2e4184e5130859c8f2ae02ceb19c46b4a",
+      "bytes": 468496,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-yht_tz1i/highlight-monochrome-underscore.png",
+      "archive": "groups/package-reader-monochrome/reader-checks/all-yht_tz1i/highlight-monochrome-underscore.png",
+      "operation": "copy_bytes",
+      "source_sha256": "5711a94fb89c38ca846bc456e660b23013848407f7c1065da5910515811b33e5",
+      "archived_sha256": "5711a94fb89c38ca846bc456e660b23013848407f7c1065da5910515811b33e5",
+      "bytes": 468493,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-yht_tz1i/highlight-more-before.png",
+      "archive": "groups/package-reader-monochrome/reader-checks/all-yht_tz1i/highlight-more-before.png",
+      "operation": "copy_bytes",
+      "source_sha256": "c3b26e5bd522ff903c3200b00aacb708fe86380a7556c910f60a8d990aa011d2",
+      "archived_sha256": "c3b26e5bd522ff903c3200b00aacb708fe86380a7556c910f60a8d990aa011d2",
+      "bytes": 468464,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-yht_tz1i/highlight-stock-more.png",
+      "archive": "groups/package-reader-monochrome/reader-checks/all-yht_tz1i/highlight-stock-more.png",
+      "operation": "copy_bytes",
+      "source_sha256": "35095925e553616093eaceb3dc85313c52ffc8229fe9e4eb9d7f20c3bb98e5ac",
+      "archived_sha256": "35095925e553616093eaceb3dc85313c52ffc8229fe9e4eb9d7f20c3bb98e5ac",
+      "bytes": 409528,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-yht_tz1i/reader-bar-zh.png",
+      "archive": "groups/package-reader-monochrome/reader-checks/all-yht_tz1i/reader-bar-zh.png",
+      "operation": "copy_bytes",
+      "source_sha256": "4012252bdac82a0040cd8887eb48a948eea13c5c91a7260d272632f6fdf8322d",
+      "archived_sha256": "4012252bdac82a0040cd8887eb48a948eea13c5c91a7260d272632f6fdf8322d",
+      "bytes": 800352,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-yht_tz1i/reader-bar.png",
+      "archive": "groups/package-reader-monochrome/reader-checks/all-yht_tz1i/reader-bar.png",
+      "operation": "copy_bytes",
+      "source_sha256": "4261ec6c5871897e492437ea6d3271e974bb781613005fd81d6a087d686c5ee3",
+      "archived_sha256": "4261ec6c5871897e492437ea6d3271e974bb781613005fd81d6a087d686c5ee3",
+      "bytes": 419034,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-yht_tz1i/reader-body-unobscured-zh.png",
+      "archive": "groups/package-reader-monochrome/reader-checks/all-yht_tz1i/reader-body-unobscured-zh.png",
+      "operation": "copy_bytes",
+      "source_sha256": "821b652d0bf6cb0e04ec5713c0adac08168e3925ba5dfeab93911ac0873fa006",
+      "archived_sha256": "821b652d0bf6cb0e04ec5713c0adac08168e3925ba5dfeab93911ac0873fa006",
+      "bytes": 799307,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-yht_tz1i/reader-body-unobscured.png",
+      "archive": "groups/package-reader-monochrome/reader-checks/all-yht_tz1i/reader-body-unobscured.png",
+      "operation": "copy_bytes",
+      "source_sha256": "2d6aecabda143b04608a6d783d6289784112f54e125a56cb9f8abae500039a5c",
+      "archived_sha256": "2d6aecabda143b04608a6d783d6289784112f54e125a56cb9f8abae500039a5c",
+      "bytes": 799689,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-yht_tz1i/reader-expected-viewport.png",
+      "archive": "groups/package-reader-monochrome/reader-checks/all-yht_tz1i/reader-expected-viewport.png",
+      "operation": "copy_bytes",
+      "source_sha256": "d39c9869136ce86666336cec08f9254ca1e8653d9bf7972f9322691d3bb004b0",
+      "archived_sha256": "d39c9869136ce86666336cec08f9254ca1e8653d9bf7972f9322691d3bb004b0",
+      "bytes": 729340,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-yht_tz1i/reader-landscape.png",
+      "archive": "groups/package-reader-monochrome/reader-checks/all-yht_tz1i/reader-landscape.png",
+      "operation": "copy_bytes",
+      "source_sha256": "9a21685bd913be88ef8426ce29517bb9a65c400c8b7f7eda02033ab75b234d69",
+      "archived_sha256": "9a21685bd913be88ef8426ce29517bb9a65c400c8b7f7eda02033ab75b234d69",
+      "bytes": 377497,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-yht_tz1i/reader-portrait-restored.png",
+      "archive": "groups/package-reader-monochrome/reader-checks/all-yht_tz1i/reader-portrait-restored.png",
+      "operation": "copy_bytes",
+      "source_sha256": "4261ec6c5871897e492437ea6d3271e974bb781613005fd81d6a087d686c5ee3",
+      "archived_sha256": "4261ec6c5871897e492437ea6d3271e974bb781613005fd81d6a087d686c5ee3",
+      "bytes": 419034,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-yht_tz1i/reader-restored.png",
+      "archive": "groups/package-reader-monochrome/reader-checks/all-yht_tz1i/reader-restored.png",
+      "operation": "copy_bytes",
+      "source_sha256": "426e27f74f4a416758e51928119b194116b01bc144649f88a24c08450fcd89f5",
+      "archived_sha256": "426e27f74f4a416758e51928119b194116b01bc144649f88a24c08450fcd89f5",
+      "bytes": 495258,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-yht_tz1i/reader-source.png",
+      "archive": "groups/package-reader-monochrome/reader-checks/all-yht_tz1i/reader-source.png",
+      "operation": "copy_bytes",
+      "source_sha256": "426e27f74f4a416758e51928119b194116b01bc144649f88a24c08450fcd89f5",
+      "archived_sha256": "426e27f74f4a416758e51928119b194116b01bc144649f88a24c08450fcd89f5",
+      "bytes": 495258,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-yht_tz1i/reader-stock-more.png",
+      "archive": "groups/package-reader-monochrome/reader-checks/all-yht_tz1i/reader-stock-more.png",
+      "operation": "copy_bytes",
+      "source_sha256": "1fdd7e3520f1cbb8876042bc9e26f610c5679d9dd810d5cea735060ea23464e9",
+      "archived_sha256": "1fdd7e3520f1cbb8876042bc9e26f610c5679d9dd810d5cea735060ea23464e9",
+      "bytes": 117976,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/runtime.log",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "591cf3bef83966e8453ae4b9c235d96a20394a27ba01c2a7df1ce999f4d2814a",
+      "archived_sha256": "00d94c40eee79b4ad40021c7c7bb7b649bf1feee9a832642aa2b9314ee498c7c",
+      "bytes": 3381,
+      "source_lines": 85
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/reader-geometry.json",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/reader-geometry.json",
+      "operation": "copy_bytes",
+      "source_sha256": "92739cf85212dd1066ce4f179eccb0f23ae484ac83b20642da5f3baa23251e87",
+      "archived_sha256": "92739cf85212dd1066ce4f179eccb0f23ae484ac83b20642da5f3baa23251e87",
+      "bytes": 169,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/highlight-blue-invert.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/highlight-blue-invert.png",
+      "operation": "copy_bytes",
+      "source_sha256": "3afee541afb5692aecbb14e092205cf5db1748e7dcee0b2ccdca8f76d075b2f3",
+      "archived_sha256": "3afee541afb5692aecbb14e092205cf5db1748e7dcee0b2ccdca8f76d075b2f3",
+      "bytes": 474408,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/highlight-blue-lighten.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/highlight-blue-lighten.png",
+      "operation": "copy_bytes",
+      "source_sha256": "01efe3aaa67a9cc443a210f28ce99195f3fa29e83fdd1ee91beefb96ff6cd8bd",
+      "archived_sha256": "01efe3aaa67a9cc443a210f28ce99195f3fa29e83fdd1ee91beefb96ff6cd8bd",
+      "bytes": 481392,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/highlight-blue-strikeout.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/highlight-blue-strikeout.png",
+      "operation": "copy_bytes",
+      "source_sha256": "32d97db36c74efcd65df22fe93c3f9736cc2d339f0edf9a08c109c55c8e859b1",
+      "archived_sha256": "32d97db36c74efcd65df22fe93c3f9736cc2d339f0edf9a08c109c55c8e859b1",
+      "bytes": 474583,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/highlight-blue-underscore.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/highlight-blue-underscore.png",
+      "operation": "copy_bytes",
+      "source_sha256": "a42a3edfabb8e517c8ca29985d72f11b6d927dfb101ac04169a74e4ee886fae2",
+      "archived_sha256": "a42a3edfabb8e517c8ca29985d72f11b6d927dfb101ac04169a74e4ee886fae2",
+      "bytes": 474551,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/highlight-more-before.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/highlight-more-before.png",
+      "operation": "copy_bytes",
+      "source_sha256": "25a5b2b64ab7e7214ccdf395a12e20655dbabcd374fb7dccc614f727e5e2265d",
+      "archived_sha256": "25a5b2b64ab7e7214ccdf395a12e20655dbabcd374fb7dccc614f727e5e2265d",
+      "bytes": 474581,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/highlight-orange-invert.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/highlight-orange-invert.png",
+      "operation": "copy_bytes",
+      "source_sha256": "3afee541afb5692aecbb14e092205cf5db1748e7dcee0b2ccdca8f76d075b2f3",
+      "archived_sha256": "3afee541afb5692aecbb14e092205cf5db1748e7dcee0b2ccdca8f76d075b2f3",
+      "bytes": 474408,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/highlight-orange-lighten.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/highlight-orange-lighten.png",
+      "operation": "copy_bytes",
+      "source_sha256": "20012095ea560ce892641afb37aa0ecdd5dd49d98377021644411d077abb0475",
+      "archived_sha256": "20012095ea560ce892641afb37aa0ecdd5dd49d98377021644411d077abb0475",
+      "bytes": 478686,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/highlight-orange-strikeout.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/highlight-orange-strikeout.png",
+      "operation": "copy_bytes",
+      "source_sha256": "3413455dd9285f177b0d14fdc4e535f08a21ad0942991c7e56dd2f0804e7dc41",
+      "archived_sha256": "3413455dd9285f177b0d14fdc4e535f08a21ad0942991c7e56dd2f0804e7dc41",
+      "bytes": 474583,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/highlight-orange-underscore.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/highlight-orange-underscore.png",
+      "operation": "copy_bytes",
+      "source_sha256": "756acaffb9b1dff71d03a119b184686833b1ffa3688776fb6f4a5ddf2f96be3e",
+      "archived_sha256": "756acaffb9b1dff71d03a119b184686833b1ffa3688776fb6f4a5ddf2f96be3e",
+      "bytes": 474552,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/highlight-purple-invert.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/highlight-purple-invert.png",
+      "operation": "copy_bytes",
+      "source_sha256": "25a5b2b64ab7e7214ccdf395a12e20655dbabcd374fb7dccc614f727e5e2265d",
+      "archived_sha256": "25a5b2b64ab7e7214ccdf395a12e20655dbabcd374fb7dccc614f727e5e2265d",
+      "bytes": 474581,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/highlight-purple-lighten.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/highlight-purple-lighten.png",
+      "operation": "copy_bytes",
+      "source_sha256": "098da90d6925555574385a05aea1ea604e5cac56f684ce070fbc814b8c9dcf3a",
+      "archived_sha256": "098da90d6925555574385a05aea1ea604e5cac56f684ce070fbc814b8c9dcf3a",
+      "bytes": 480013,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/highlight-purple-strikeout.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/highlight-purple-strikeout.png",
+      "operation": "copy_bytes",
+      "source_sha256": "f0f7676fb297923f7a8621a6a2f4cf02f0504df601fc3438b3fb8be8683d61de",
+      "archived_sha256": "f0f7676fb297923f7a8621a6a2f4cf02f0504df601fc3438b3fb8be8683d61de",
+      "bytes": 474582,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/highlight-purple-underscore.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/highlight-purple-underscore.png",
+      "operation": "copy_bytes",
+      "source_sha256": "6c7b6e730b64c2e5c42c522bad0dafa2d27c544297b2d084aece84c94960f258",
+      "archived_sha256": "6c7b6e730b64c2e5c42c522bad0dafa2d27c544297b2d084aece84c94960f258",
+      "bytes": 474551,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/highlight-stock-more.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/highlight-stock-more.png",
+      "operation": "copy_bytes",
+      "source_sha256": "81dea3f626a7a4d22044242eb6643e1ad6ad0c373e9b20ab5ddb581724fc9e25",
+      "archived_sha256": "81dea3f626a7a4d22044242eb6643e1ad6ad0c373e9b20ab5ddb581724fc9e25",
+      "bytes": 403810,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/highlight-yellow-invert.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/highlight-yellow-invert.png",
+      "operation": "copy_bytes",
+      "source_sha256": "25a5b2b64ab7e7214ccdf395a12e20655dbabcd374fb7dccc614f727e5e2265d",
+      "archived_sha256": "25a5b2b64ab7e7214ccdf395a12e20655dbabcd374fb7dccc614f727e5e2265d",
+      "bytes": 474581,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/highlight-yellow-lighten.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/highlight-yellow-lighten.png",
+      "operation": "copy_bytes",
+      "source_sha256": "1331f43da3e244b658751037f7ad5821b16650158fca6dade25c76c05ac2082a",
+      "archived_sha256": "1331f43da3e244b658751037f7ad5821b16650158fca6dade25c76c05ac2082a",
+      "bytes": 481277,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/highlight-yellow-strikeout.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/highlight-yellow-strikeout.png",
+      "operation": "copy_bytes",
+      "source_sha256": "9cf3bed9bec2799f4ec7e23e30ac3d1ff9a0f361cbf1f70c18b863f7e5a5e520",
+      "archived_sha256": "9cf3bed9bec2799f4ec7e23e30ac3d1ff9a0f361cbf1f70c18b863f7e5a5e520",
+      "bytes": 474550,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/highlight-yellow-underscore.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/highlight-yellow-underscore.png",
+      "operation": "copy_bytes",
+      "source_sha256": "83d3204b5d5d48fc43124ce4cc79158b445dd0ff8091e59cc09ab167dd4f17a7",
+      "archived_sha256": "83d3204b5d5d48fc43124ce4cc79158b445dd0ff8091e59cc09ab167dd4f17a7",
+      "bytes": 474549,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/reader-bar-zh.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/reader-bar-zh.png",
+      "operation": "copy_bytes",
+      "source_sha256": "e5698f0c54741ac40b05b840523a4c2dfadb1a7c4faa142b6200ee3415ff3ddd",
+      "archived_sha256": "e5698f0c54741ac40b05b840523a4c2dfadb1a7c4faa142b6200ee3415ff3ddd",
+      "bytes": 793892,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/reader-bar.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/reader-bar.png",
+      "operation": "copy_bytes",
+      "source_sha256": "30ebbd22d694ee0b57c74fd7e454ab64966faa4a6b2401cd1380d097780014a3",
+      "archived_sha256": "30ebbd22d694ee0b57c74fd7e454ab64966faa4a6b2401cd1380d097780014a3",
+      "bytes": 419273,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/reader-body-unobscured-zh.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/reader-body-unobscured-zh.png",
+      "operation": "copy_bytes",
+      "source_sha256": "f83e066ed8c14449e7236052428b53ef5b26ff00a9d87e356961d6157eabc809",
+      "archived_sha256": "f83e066ed8c14449e7236052428b53ef5b26ff00a9d87e356961d6157eabc809",
+      "bytes": 792847,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/reader-body-unobscured.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/reader-body-unobscured.png",
+      "operation": "copy_bytes",
+      "source_sha256": "7747ef3858685e40ed60975f272d85298b907fdfcb9a2060bd27a95b519d01b0",
+      "archived_sha256": "7747ef3858685e40ed60975f272d85298b907fdfcb9a2060bd27a95b519d01b0",
+      "bytes": 793229,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/reader-expected-viewport.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/reader-expected-viewport.png",
+      "operation": "copy_bytes",
+      "source_sha256": "9f33066760274db007142fab3673aaf38a10d8f4635e03ecb45b2fc172f020a5",
+      "archived_sha256": "9f33066760274db007142fab3673aaf38a10d8f4635e03ecb45b2fc172f020a5",
+      "bytes": 722964,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/reader-landscape.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/reader-landscape.png",
+      "operation": "copy_bytes",
+      "source_sha256": "c29c412c2f591440e32603bff770abaa0ab730b1d1a09e92b60de101fa53b6bd",
+      "archived_sha256": "c29c412c2f591440e32603bff770abaa0ab730b1d1a09e92b60de101fa53b6bd",
+      "bytes": 377735,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/reader-portrait-restored.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/reader-portrait-restored.png",
+      "operation": "copy_bytes",
+      "source_sha256": "30ebbd22d694ee0b57c74fd7e454ab64966faa4a6b2401cd1380d097780014a3",
+      "archived_sha256": "30ebbd22d694ee0b57c74fd7e454ab64966faa4a6b2401cd1380d097780014a3",
+      "bytes": 419273,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/reader-restored.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/reader-restored.png",
+      "operation": "copy_bytes",
+      "source_sha256": "5d14fa76017f919c1178aae6789249fe45b061a88c6bd2d3c405473ceba4844c",
+      "archived_sha256": "5d14fa76017f919c1178aae6789249fe45b061a88c6bd2d3c405473ceba4844c",
+      "bytes": 489440,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/reader-source.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/reader-source.png",
+      "operation": "copy_bytes",
+      "source_sha256": "5d14fa76017f919c1178aae6789249fe45b061a88c6bd2d3c405473ceba4844c",
+      "archived_sha256": "5d14fa76017f919c1178aae6789249fe45b061a88c6bd2d3c405473ceba4844c",
+      "bytes": 489440,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-hzszj9yh/reader-stock-more.png",
+      "archive": "groups/reader-color/reader-checks/all-hzszj9yh/reader-stock-more.png",
+      "operation": "copy_bytes",
+      "source_sha256": "1fdd7e3520f1cbb8876042bc9e26f610c5679d9dd810d5cea735060ea23464e9",
+      "archived_sha256": "1fdd7e3520f1cbb8876042bc9e26f610c5679d9dd810d5cea735060ea23464e9",
+      "bytes": 117976,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/runtime.log",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "8a494b7aaca267cfcabd0847625dd01c0030e3095decdcbcada5c7740917eb30",
+      "archived_sha256": "4e5855379ee8a86c56a1855a46f45661c1918f943c55973f4b5760b570845314",
+      "bytes": 3427,
+      "source_lines": 85
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/reader-geometry.json",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/reader-geometry.json",
+      "operation": "copy_bytes",
+      "source_sha256": "2141591c853d2579c6220ebc0d57ccda5bd6b759f429128cc0d9b1f4ae66ba32",
+      "archived_sha256": "2141591c853d2579c6220ebc0d57ccda5bd6b759f429128cc0d9b1f4ae66ba32",
+      "bytes": 169,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/highlight-blue-invert.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/highlight-blue-invert.png",
+      "operation": "copy_bytes",
+      "source_sha256": "3afee541afb5692aecbb14e092205cf5db1748e7dcee0b2ccdca8f76d075b2f3",
+      "archived_sha256": "3afee541afb5692aecbb14e092205cf5db1748e7dcee0b2ccdca8f76d075b2f3",
+      "bytes": 474408,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/highlight-blue-lighten.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/highlight-blue-lighten.png",
+      "operation": "copy_bytes",
+      "source_sha256": "01efe3aaa67a9cc443a210f28ce99195f3fa29e83fdd1ee91beefb96ff6cd8bd",
+      "archived_sha256": "01efe3aaa67a9cc443a210f28ce99195f3fa29e83fdd1ee91beefb96ff6cd8bd",
+      "bytes": 481392,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/highlight-blue-strikeout.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/highlight-blue-strikeout.png",
+      "operation": "copy_bytes",
+      "source_sha256": "32d97db36c74efcd65df22fe93c3f9736cc2d339f0edf9a08c109c55c8e859b1",
+      "archived_sha256": "32d97db36c74efcd65df22fe93c3f9736cc2d339f0edf9a08c109c55c8e859b1",
+      "bytes": 474583,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/highlight-blue-underscore.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/highlight-blue-underscore.png",
+      "operation": "copy_bytes",
+      "source_sha256": "a42a3edfabb8e517c8ca29985d72f11b6d927dfb101ac04169a74e4ee886fae2",
+      "archived_sha256": "a42a3edfabb8e517c8ca29985d72f11b6d927dfb101ac04169a74e4ee886fae2",
+      "bytes": 474551,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/highlight-more-before.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/highlight-more-before.png",
+      "operation": "copy_bytes",
+      "source_sha256": "25a5b2b64ab7e7214ccdf395a12e20655dbabcd374fb7dccc614f727e5e2265d",
+      "archived_sha256": "25a5b2b64ab7e7214ccdf395a12e20655dbabcd374fb7dccc614f727e5e2265d",
+      "bytes": 474581,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/highlight-orange-invert.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/highlight-orange-invert.png",
+      "operation": "copy_bytes",
+      "source_sha256": "3afee541afb5692aecbb14e092205cf5db1748e7dcee0b2ccdca8f76d075b2f3",
+      "archived_sha256": "3afee541afb5692aecbb14e092205cf5db1748e7dcee0b2ccdca8f76d075b2f3",
+      "bytes": 474408,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/highlight-orange-lighten.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/highlight-orange-lighten.png",
+      "operation": "copy_bytes",
+      "source_sha256": "20012095ea560ce892641afb37aa0ecdd5dd49d98377021644411d077abb0475",
+      "archived_sha256": "20012095ea560ce892641afb37aa0ecdd5dd49d98377021644411d077abb0475",
+      "bytes": 478686,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/highlight-orange-strikeout.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/highlight-orange-strikeout.png",
+      "operation": "copy_bytes",
+      "source_sha256": "3413455dd9285f177b0d14fdc4e535f08a21ad0942991c7e56dd2f0804e7dc41",
+      "archived_sha256": "3413455dd9285f177b0d14fdc4e535f08a21ad0942991c7e56dd2f0804e7dc41",
+      "bytes": 474583,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/highlight-orange-underscore.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/highlight-orange-underscore.png",
+      "operation": "copy_bytes",
+      "source_sha256": "756acaffb9b1dff71d03a119b184686833b1ffa3688776fb6f4a5ddf2f96be3e",
+      "archived_sha256": "756acaffb9b1dff71d03a119b184686833b1ffa3688776fb6f4a5ddf2f96be3e",
+      "bytes": 474552,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/highlight-purple-invert.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/highlight-purple-invert.png",
+      "operation": "copy_bytes",
+      "source_sha256": "25a5b2b64ab7e7214ccdf395a12e20655dbabcd374fb7dccc614f727e5e2265d",
+      "archived_sha256": "25a5b2b64ab7e7214ccdf395a12e20655dbabcd374fb7dccc614f727e5e2265d",
+      "bytes": 474581,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/highlight-purple-lighten.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/highlight-purple-lighten.png",
+      "operation": "copy_bytes",
+      "source_sha256": "098da90d6925555574385a05aea1ea604e5cac56f684ce070fbc814b8c9dcf3a",
+      "archived_sha256": "098da90d6925555574385a05aea1ea604e5cac56f684ce070fbc814b8c9dcf3a",
+      "bytes": 480013,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/highlight-purple-strikeout.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/highlight-purple-strikeout.png",
+      "operation": "copy_bytes",
+      "source_sha256": "f0f7676fb297923f7a8621a6a2f4cf02f0504df601fc3438b3fb8be8683d61de",
+      "archived_sha256": "f0f7676fb297923f7a8621a6a2f4cf02f0504df601fc3438b3fb8be8683d61de",
+      "bytes": 474582,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/highlight-purple-underscore.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/highlight-purple-underscore.png",
+      "operation": "copy_bytes",
+      "source_sha256": "6c7b6e730b64c2e5c42c522bad0dafa2d27c544297b2d084aece84c94960f258",
+      "archived_sha256": "6c7b6e730b64c2e5c42c522bad0dafa2d27c544297b2d084aece84c94960f258",
+      "bytes": 474551,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/highlight-stock-more.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/highlight-stock-more.png",
+      "operation": "copy_bytes",
+      "source_sha256": "81dea3f626a7a4d22044242eb6643e1ad6ad0c373e9b20ab5ddb581724fc9e25",
+      "archived_sha256": "81dea3f626a7a4d22044242eb6643e1ad6ad0c373e9b20ab5ddb581724fc9e25",
+      "bytes": 403810,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/highlight-yellow-invert.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/highlight-yellow-invert.png",
+      "operation": "copy_bytes",
+      "source_sha256": "25a5b2b64ab7e7214ccdf395a12e20655dbabcd374fb7dccc614f727e5e2265d",
+      "archived_sha256": "25a5b2b64ab7e7214ccdf395a12e20655dbabcd374fb7dccc614f727e5e2265d",
+      "bytes": 474581,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/highlight-yellow-lighten.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/highlight-yellow-lighten.png",
+      "operation": "copy_bytes",
+      "source_sha256": "1331f43da3e244b658751037f7ad5821b16650158fca6dade25c76c05ac2082a",
+      "archived_sha256": "1331f43da3e244b658751037f7ad5821b16650158fca6dade25c76c05ac2082a",
+      "bytes": 481277,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/highlight-yellow-strikeout.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/highlight-yellow-strikeout.png",
+      "operation": "copy_bytes",
+      "source_sha256": "9cf3bed9bec2799f4ec7e23e30ac3d1ff9a0f361cbf1f70c18b863f7e5a5e520",
+      "archived_sha256": "9cf3bed9bec2799f4ec7e23e30ac3d1ff9a0f361cbf1f70c18b863f7e5a5e520",
+      "bytes": 474550,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/highlight-yellow-underscore.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/highlight-yellow-underscore.png",
+      "operation": "copy_bytes",
+      "source_sha256": "83d3204b5d5d48fc43124ce4cc79158b445dd0ff8091e59cc09ab167dd4f17a7",
+      "archived_sha256": "83d3204b5d5d48fc43124ce4cc79158b445dd0ff8091e59cc09ab167dd4f17a7",
+      "bytes": 474549,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/reader-bar-zh.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/reader-bar-zh.png",
+      "operation": "copy_bytes",
+      "source_sha256": "e5698f0c54741ac40b05b840523a4c2dfadb1a7c4faa142b6200ee3415ff3ddd",
+      "archived_sha256": "e5698f0c54741ac40b05b840523a4c2dfadb1a7c4faa142b6200ee3415ff3ddd",
+      "bytes": 793892,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/reader-bar.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/reader-bar.png",
+      "operation": "copy_bytes",
+      "source_sha256": "30ebbd22d694ee0b57c74fd7e454ab64966faa4a6b2401cd1380d097780014a3",
+      "archived_sha256": "30ebbd22d694ee0b57c74fd7e454ab64966faa4a6b2401cd1380d097780014a3",
+      "bytes": 419273,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/reader-body-unobscured-zh.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/reader-body-unobscured-zh.png",
+      "operation": "copy_bytes",
+      "source_sha256": "f83e066ed8c14449e7236052428b53ef5b26ff00a9d87e356961d6157eabc809",
+      "archived_sha256": "f83e066ed8c14449e7236052428b53ef5b26ff00a9d87e356961d6157eabc809",
+      "bytes": 792847,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/reader-body-unobscured.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/reader-body-unobscured.png",
+      "operation": "copy_bytes",
+      "source_sha256": "7747ef3858685e40ed60975f272d85298b907fdfcb9a2060bd27a95b519d01b0",
+      "archived_sha256": "7747ef3858685e40ed60975f272d85298b907fdfcb9a2060bd27a95b519d01b0",
+      "bytes": 793229,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/reader-expected-viewport.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/reader-expected-viewport.png",
+      "operation": "copy_bytes",
+      "source_sha256": "9f33066760274db007142fab3673aaf38a10d8f4635e03ecb45b2fc172f020a5",
+      "archived_sha256": "9f33066760274db007142fab3673aaf38a10d8f4635e03ecb45b2fc172f020a5",
+      "bytes": 722964,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/reader-landscape.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/reader-landscape.png",
+      "operation": "copy_bytes",
+      "source_sha256": "c29c412c2f591440e32603bff770abaa0ab730b1d1a09e92b60de101fa53b6bd",
+      "archived_sha256": "c29c412c2f591440e32603bff770abaa0ab730b1d1a09e92b60de101fa53b6bd",
+      "bytes": 377735,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/reader-portrait-restored.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/reader-portrait-restored.png",
+      "operation": "copy_bytes",
+      "source_sha256": "30ebbd22d694ee0b57c74fd7e454ab64966faa4a6b2401cd1380d097780014a3",
+      "archived_sha256": "30ebbd22d694ee0b57c74fd7e454ab64966faa4a6b2401cd1380d097780014a3",
+      "bytes": 419273,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/reader-restored.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/reader-restored.png",
+      "operation": "copy_bytes",
+      "source_sha256": "5d14fa76017f919c1178aae6789249fe45b061a88c6bd2d3c405473ceba4844c",
+      "archived_sha256": "5d14fa76017f919c1178aae6789249fe45b061a88c6bd2d3c405473ceba4844c",
+      "bytes": 489440,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/reader-source.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/reader-source.png",
+      "operation": "copy_bytes",
+      "source_sha256": "5d14fa76017f919c1178aae6789249fe45b061a88c6bd2d3c405473ceba4844c",
+      "archived_sha256": "5d14fa76017f919c1178aae6789249fe45b061a88c6bd2d3c405473ceba4844c",
+      "bytes": 489440,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/all-i7h15g0e/reader-stock-more.png",
+      "archive": "groups/package-reader-color/reader-checks/all-i7h15g0e/reader-stock-more.png",
+      "operation": "copy_bytes",
+      "source_sha256": "1fdd7e3520f1cbb8876042bc9e26f610c5679d9dd810d5cea735060ea23464e9",
+      "archived_sha256": "1fdd7e3520f1cbb8876042bc9e26f610c5679d9dd810d5cea735060ea23464e9",
+      "bytes": 117976,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/test/runtime.log",
+      "archive": "groups/home/test/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "fbfb0e1abae7c7bcb82b67f6ad553c0ced2ef78e783c9872f0eeace10d997fa7",
+      "archived_sha256": "caf63236d3f067fcb7d6252ffef921eb6b2cad8ad4c6435d40b7dc2621cef149",
+      "bytes": 2122,
+      "source_lines": 61
+    },
+    {
+      "source": "kindlespouse/build/integrated-en/runtime.log",
+      "archive": "groups/home-en/integrated-en/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "7886be621beb0dddfca6eec748d28c8f4c86755c505115fd8d3fa1f4fa742fd0",
+      "archived_sha256": "f109501b828ad3d3bb0822e320c886f98a3f3fced82b110639c0fde27e8df100",
+      "bytes": 2135,
+      "source_lines": 62
+    },
+    {
+      "source": "kindlespouse/build/integrated-zh_CN/runtime.log",
+      "archive": "groups/home-zh_CN/integrated-zh_CN/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "629506ac7cede4e36f21eefbe4b2e72f5a175178c3815c34f36e72ecf1c24de4",
+      "archived_sha256": "70925d50e8f680e715929fdc37b48aafe8bfafb889efa095b9ce5812e649efc7",
+      "bytes": 2141,
+      "source_lines": 62
+    },
+    {
+      "source": "kindlespouse/build/test500/runtime.log",
+      "archive": "groups/home-500/test500/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "f28ff53774edf7a0173cdfe43010265c81e04a40a452b80953190df0e16c7e32",
+      "archived_sha256": "6b3f2055d932a57686d12bfe45cbf64038adddaee92fb62115606cf236afffee",
+      "bytes": 2065,
+      "source_lines": 120
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/reader-l48gsqqx/runtime.log",
+      "archive": "groups/reader-pdf/reader-checks/reader-l48gsqqx/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "1859f2a8bd660a65ee8bd9b90bf8b3a2b47013adffe129119f21b79033e7c813",
+      "archived_sha256": "5e372513bfcbc8b12aadc16164e7ae4c203b65b920166c8f54f8f86683222727",
+      "bytes": 3257,
+      "source_lines": 84
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/reader-l48gsqqx/reader-geometry.json",
+      "archive": "groups/reader-pdf/reader-checks/reader-l48gsqqx/reader-geometry.json",
+      "operation": "copy_bytes",
+      "source_sha256": "0d7363c07f292f76c080f336e245be2dc2e2d6d8bf12a9c110debfb71a88607f",
+      "archived_sha256": "0d7363c07f292f76c080f336e245be2dc2e2d6d8bf12a9c110debfb71a88607f",
+      "bytes": 169,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/reader-l48gsqqx/reader-bar-zh.png",
+      "archive": "groups/reader-pdf/reader-checks/reader-l48gsqqx/reader-bar-zh.png",
+      "operation": "copy_bytes",
+      "source_sha256": "a1e31d312cf7564cdaa8d440443975d86b53271ec437d0228894da6dc335b400",
+      "archived_sha256": "a1e31d312cf7564cdaa8d440443975d86b53271ec437d0228894da6dc335b400",
+      "bytes": 357625,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/reader-l48gsqqx/reader-bar.png",
+      "archive": "groups/reader-pdf/reader-checks/reader-l48gsqqx/reader-bar.png",
+      "operation": "copy_bytes",
+      "source_sha256": "e487a2cd78412836a2cb33edc409f8c197e251cbd9631e573249e2dbe7138116",
+      "archived_sha256": "e487a2cd78412836a2cb33edc409f8c197e251cbd9631e573249e2dbe7138116",
+      "bytes": 368303,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/reader-l48gsqqx/reader-body-unobscured-zh.png",
+      "archive": "groups/reader-pdf/reader-checks/reader-l48gsqqx/reader-body-unobscured-zh.png",
+      "operation": "copy_bytes",
+      "source_sha256": "418ebbe64d0f5ff32947282f62fc98048ceb69a40eccf296359d2212c79eaaa4",
+      "archived_sha256": "418ebbe64d0f5ff32947282f62fc98048ceb69a40eccf296359d2212c79eaaa4",
+      "bytes": 357354,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/reader-l48gsqqx/reader-body-unobscured.png",
+      "archive": "groups/reader-pdf/reader-checks/reader-l48gsqqx/reader-body-unobscured.png",
+      "operation": "copy_bytes",
+      "source_sha256": "1078c916163abe4ca8c806d1d7176ed25611372b76a1237aed6ee45654ca856a",
+      "archived_sha256": "1078c916163abe4ca8c806d1d7176ed25611372b76a1237aed6ee45654ca856a",
+      "bytes": 357394,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/reader-l48gsqqx/reader-expected-viewport.png",
+      "archive": "groups/reader-pdf/reader-checks/reader-l48gsqqx/reader-expected-viewport.png",
+      "operation": "copy_bytes",
+      "source_sha256": "a66d1a553bb86dda64f887acf0cb507539c2f0b4d79d8f6f27d6df8f2649e4ca",
+      "archived_sha256": "a66d1a553bb86dda64f887acf0cb507539c2f0b4d79d8f6f27d6df8f2649e4ca",
+      "bytes": 332642,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/reader-l48gsqqx/reader-landscape.png",
+      "archive": "groups/reader-pdf/reader-checks/reader-l48gsqqx/reader-landscape.png",
+      "operation": "copy_bytes",
+      "source_sha256": "5df82c059f0909d8def27572690ba90158a4d45489025983ad08570d9ce5d1cb",
+      "archived_sha256": "5df82c059f0909d8def27572690ba90158a4d45489025983ad08570d9ce5d1cb",
+      "bytes": 271054,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/reader-l48gsqqx/reader-portrait-restored.png",
+      "archive": "groups/reader-pdf/reader-checks/reader-l48gsqqx/reader-portrait-restored.png",
+      "operation": "copy_bytes",
+      "source_sha256": "e487a2cd78412836a2cb33edc409f8c197e251cbd9631e573249e2dbe7138116",
+      "archived_sha256": "e487a2cd78412836a2cb33edc409f8c197e251cbd9631e573249e2dbe7138116",
+      "bytes": 368303,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/reader-l48gsqqx/reader-restored.png",
+      "archive": "groups/reader-pdf/reader-checks/reader-l48gsqqx/reader-restored.png",
+      "operation": "copy_bytes",
+      "source_sha256": "a133ab2f357720fba4b586a6d2d43e7bc02a03da7aea3ba5bbc20c362c3ffe10",
+      "archived_sha256": "a133ab2f357720fba4b586a6d2d43e7bc02a03da7aea3ba5bbc20c362c3ffe10",
+      "bytes": 217194,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/reader-l48gsqqx/reader-source.png",
+      "archive": "groups/reader-pdf/reader-checks/reader-l48gsqqx/reader-source.png",
+      "operation": "copy_bytes",
+      "source_sha256": "a133ab2f357720fba4b586a6d2d43e7bc02a03da7aea3ba5bbc20c362c3ffe10",
+      "archived_sha256": "a133ab2f357720fba4b586a6d2d43e7bc02a03da7aea3ba5bbc20c362c3ffe10",
+      "bytes": 217194,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/reader-checks/reader-l48gsqqx/reader-stock-more.png",
+      "archive": "groups/reader-pdf/reader-checks/reader-l48gsqqx/reader-stock-more.png",
+      "operation": "copy_bytes",
+      "source_sha256": "373ea56d74ce359a36790f68b00f9ba4adcc9c9d693c4b6bb1e6874b322628b4",
+      "archived_sha256": "373ea56d74ce359a36790f68b00f9ba4adcc9c9d693c4b6bb1e6874b322628b4",
+      "bytes": 123102,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/packaged-zh_CN-xfuful90/runtime.log",
+      "archive": "groups/package-home/packaged-zh_CN-xfuful90/runtime.log",
+      "operation": "last_50_lines_bytes",
+      "source_sha256": "435752308988288bb1a939c788dce75834bbad640c17a4cef3dbb9f67fb5f85b",
+      "archived_sha256": "568c6361053f353778eba5219e8ee85e573a2959beea0f2fb26769a0be11c2ee",
+      "bytes": 2603,
+      "source_lines": 70
+    },
+    {
+      "source": "kindlespouse/build/artifacts/catalog-500.png",
+      "archive": "groups/home-500/artifacts/catalog-500.png",
+      "operation": "copy_bytes",
+      "source_sha256": "83e8ca39cfd03babaf92686c23b273286bf77eb595df0c2a44b0e539339b78ac",
+      "archived_sha256": "83e8ca39cfd03babaf92686c23b273286bf77eb595df0c2a44b0e539339b78ac",
+      "bytes": 86731,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/koreader-home-landscape.png",
+      "archive": "groups/home/artifacts/koreader-home-landscape.png",
+      "operation": "copy_bytes",
+      "source_sha256": "805bf6dcd476134b163b233f3e25c00eeac3a7d5911c8780d3a6c4d0b2a750f5",
+      "archived_sha256": "805bf6dcd476134b163b233f3e25c00eeac3a7d5911c8780d3a6c4d0b2a750f5",
+      "bytes": 57702,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/koreader-home-library.png",
+      "archive": "groups/home/artifacts/koreader-home-library.png",
+      "operation": "copy_bytes",
+      "source_sha256": "cf3190b8b320edb359a414d3407d89ed019de90d96511790bc9c097cca20b2b6",
+      "archived_sha256": "cf3190b8b320edb359a414d3407d89ed019de90d96511790bc9c097cca20b2b6",
+      "bytes": 64624,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/koreader-home-list.png",
+      "archive": "groups/home/artifacts/koreader-home-list.png",
+      "operation": "copy_bytes",
+      "source_sha256": "d4d4077d7941a252cbab02142a07ba45b4486e1a90cbb0112123e5545962a66d",
+      "archived_sha256": "d4d4077d7941a252cbab02142a07ba45b4486e1a90cbb0112123e5545962a66d",
+      "bytes": 79412,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/koreader-home-native.png",
+      "archive": "groups/home/artifacts/koreader-home-native.png",
+      "operation": "copy_bytes",
+      "source_sha256": "d4d4077d7941a252cbab02142a07ba45b4486e1a90cbb0112123e5545962a66d",
+      "archived_sha256": "d4d4077d7941a252cbab02142a07ba45b4486e1a90cbb0112123e5545962a66d",
+      "bytes": 79412,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/koreader-home-notebook-detail.png",
+      "archive": "groups/home/artifacts/koreader-home-notebook-detail.png",
+      "operation": "copy_bytes",
+      "source_sha256": "f622f041d0f1b7b3368790e4ed4834ecbb2fc5f791d89663f266f3996c20dbfe",
+      "archived_sha256": "f622f041d0f1b7b3368790e4ed4834ecbb2fc5f791d89663f266f3996c20dbfe",
+      "bytes": 59284,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/koreader-home-notebook.png",
+      "archive": "groups/home/artifacts/koreader-home-notebook.png",
+      "operation": "copy_bytes",
+      "source_sha256": "740ff690cacd8996bb9e661a2ec2d9641e89c7384ab893523daa9c1f840024f9",
+      "archived_sha256": "740ff690cacd8996bb9e661a2ec2d9641e89c7384ab893523daa9c1f840024f9",
+      "bytes": 64413,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/integrated-en/koreader-home-landscape.png",
+      "archive": "groups/home-en/artifacts/integrated-en/koreader-home-landscape.png",
+      "operation": "copy_bytes",
+      "source_sha256": "4468c7bd80ddb7ea2ce00ec1883f99558700dcd0d122e57bca053de14804add5",
+      "archived_sha256": "4468c7bd80ddb7ea2ce00ec1883f99558700dcd0d122e57bca053de14804add5",
+      "bytes": 61640,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/integrated-en/koreader-home-library.png",
+      "archive": "groups/home-en/artifacts/integrated-en/koreader-home-library.png",
+      "operation": "copy_bytes",
+      "source_sha256": "c57e4d6526ad7515c6b086f472398ce34993b962e33b8b0c5c877ee8cff00ac4",
+      "archived_sha256": "c57e4d6526ad7515c6b086f472398ce34993b962e33b8b0c5c877ee8cff00ac4",
+      "bytes": 68352,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/integrated-en/koreader-home-list.png",
+      "archive": "groups/home-en/artifacts/integrated-en/koreader-home-list.png",
+      "operation": "copy_bytes",
+      "source_sha256": "fd4116c078180c909e468315185ee8b5ccef698e7539a55c3c2af6e20f19cf05",
+      "archived_sha256": "fd4116c078180c909e468315185ee8b5ccef698e7539a55c3c2af6e20f19cf05",
+      "bytes": 79298,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/integrated-en/koreader-home-native.png",
+      "archive": "groups/home-en/artifacts/integrated-en/koreader-home-native.png",
+      "operation": "copy_bytes",
+      "source_sha256": "fd4116c078180c909e468315185ee8b5ccef698e7539a55c3c2af6e20f19cf05",
+      "archived_sha256": "fd4116c078180c909e468315185ee8b5ccef698e7539a55c3c2af6e20f19cf05",
+      "bytes": 79298,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/integrated-en/koreader-home-notebook-detail.png",
+      "archive": "groups/home-en/artifacts/integrated-en/koreader-home-notebook-detail.png",
+      "operation": "copy_bytes",
+      "source_sha256": "f622f041d0f1b7b3368790e4ed4834ecbb2fc5f791d89663f266f3996c20dbfe",
+      "archived_sha256": "f622f041d0f1b7b3368790e4ed4834ecbb2fc5f791d89663f266f3996c20dbfe",
+      "bytes": 59284,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/integrated-en/koreader-home-notebook.png",
+      "archive": "groups/home-en/artifacts/integrated-en/koreader-home-notebook.png",
+      "operation": "copy_bytes",
+      "source_sha256": "740ff690cacd8996bb9e661a2ec2d9641e89c7384ab893523daa9c1f840024f9",
+      "archived_sha256": "740ff690cacd8996bb9e661a2ec2d9641e89c7384ab893523daa9c1f840024f9",
+      "bytes": 64413,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/integrated-zh_CN/koreader-home-landscape.png",
+      "archive": "groups/home-zh_CN/artifacts/integrated-zh_CN/koreader-home-landscape.png",
+      "operation": "copy_bytes",
+      "source_sha256": "7d39105d848a9ebb2ab4e2cb060973fb22b39d55ecaa4cdd19229761f06a165b",
+      "archived_sha256": "7d39105d848a9ebb2ab4e2cb060973fb22b39d55ecaa4cdd19229761f06a165b",
+      "bytes": 61195,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/integrated-zh_CN/koreader-home-library.png",
+      "archive": "groups/home-zh_CN/artifacts/integrated-zh_CN/koreader-home-library.png",
+      "operation": "copy_bytes",
+      "source_sha256": "b391bafa1922f8f099c03ce7548594d089d2786d3f8e3ad1b352b5a18947001e",
+      "archived_sha256": "b391bafa1922f8f099c03ce7548594d089d2786d3f8e3ad1b352b5a18947001e",
+      "bytes": 67892,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/integrated-zh_CN/koreader-home-list.png",
+      "archive": "groups/home-zh_CN/artifacts/integrated-zh_CN/koreader-home-list.png",
+      "operation": "copy_bytes",
+      "source_sha256": "dce55f8b86af05f80902f312704999a4e2e537132ca95f42211b8a6e46713d2f",
+      "archived_sha256": "dce55f8b86af05f80902f312704999a4e2e537132ca95f42211b8a6e46713d2f",
+      "bytes": 78332,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/integrated-zh_CN/koreader-home-native.png",
+      "archive": "groups/home-zh_CN/artifacts/integrated-zh_CN/koreader-home-native.png",
+      "operation": "copy_bytes",
+      "source_sha256": "dce55f8b86af05f80902f312704999a4e2e537132ca95f42211b8a6e46713d2f",
+      "archived_sha256": "dce55f8b86af05f80902f312704999a4e2e537132ca95f42211b8a6e46713d2f",
+      "bytes": 78332,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/integrated-zh_CN/koreader-home-notebook-detail.png",
+      "archive": "groups/home-zh_CN/artifacts/integrated-zh_CN/koreader-home-notebook-detail.png",
+      "operation": "copy_bytes",
+      "source_sha256": "d832c6df79fdb32ccb02793a62894690ec765a6b82aa782e2bff4584e09137cd",
+      "archived_sha256": "d832c6df79fdb32ccb02793a62894690ec765a6b82aa782e2bff4584e09137cd",
+      "bytes": 58810,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/integrated-zh_CN/koreader-home-notebook.png",
+      "archive": "groups/home-zh_CN/artifacts/integrated-zh_CN/koreader-home-notebook.png",
+      "operation": "copy_bytes",
+      "source_sha256": "115d8ba53df60a7c0394e0e8ecbc76df7cd13d0cffabdc9ef77c1d047f6044f3",
+      "archived_sha256": "115d8ba53df60a7c0394e0e8ecbc76df7cd13d0cffabdc9ef77c1d047f6044f3",
+      "bytes": 67614,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/packaged-zh_CN/koreader-home-landscape.png",
+      "archive": "groups/package-home/artifacts/packaged-zh_CN/koreader-home-landscape.png",
+      "operation": "copy_bytes",
+      "source_sha256": "3bc1eff6b75370f5e70d13976b78ba08b2b882f2522e74c7f25b879bd9166e1e",
+      "archived_sha256": "3bc1eff6b75370f5e70d13976b78ba08b2b882f2522e74c7f25b879bd9166e1e",
+      "bytes": 61182,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/packaged-zh_CN/koreader-home-library.png",
+      "archive": "groups/package-home/artifacts/packaged-zh_CN/koreader-home-library.png",
+      "operation": "copy_bytes",
+      "source_sha256": "8acef10589e6a748d698037601ef6f4b463c177e0fe1f92555bb1f4b4eb5716a",
+      "archived_sha256": "8acef10589e6a748d698037601ef6f4b463c177e0fe1f92555bb1f4b4eb5716a",
+      "bytes": 67884,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/packaged-zh_CN/koreader-home-list.png",
+      "archive": "groups/package-home/artifacts/packaged-zh_CN/koreader-home-list.png",
+      "operation": "copy_bytes",
+      "source_sha256": "fead71ad3a14ab7a60494b56a0d2c3c0943046c99b9987ca5c6be08ba79b6a07",
+      "archived_sha256": "fead71ad3a14ab7a60494b56a0d2c3c0943046c99b9987ca5c6be08ba79b6a07",
+      "bytes": 78324,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/packaged-zh_CN/koreader-home-native.png",
+      "archive": "groups/package-home/artifacts/packaged-zh_CN/koreader-home-native.png",
+      "operation": "copy_bytes",
+      "source_sha256": "fead71ad3a14ab7a60494b56a0d2c3c0943046c99b9987ca5c6be08ba79b6a07",
+      "archived_sha256": "fead71ad3a14ab7a60494b56a0d2c3c0943046c99b9987ca5c6be08ba79b6a07",
+      "bytes": 78324,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/packaged-zh_CN/koreader-home-notebook-detail.png",
+      "archive": "groups/package-home/artifacts/packaged-zh_CN/koreader-home-notebook-detail.png",
+      "operation": "copy_bytes",
+      "source_sha256": "5bce7b4d070b173133c9fb6e6721fcde7a0f4ee54cc389b5ff3a81d439f3f4f6",
+      "archived_sha256": "5bce7b4d070b173133c9fb6e6721fcde7a0f4ee54cc389b5ff3a81d439f3f4f6",
+      "bytes": 58801,
+      "source_lines": null
+    },
+    {
+      "source": "kindlespouse/build/artifacts/packaged-zh_CN/koreader-home-notebook.png",
+      "archive": "groups/package-home/artifacts/packaged-zh_CN/koreader-home-notebook.png",
+      "operation": "copy_bytes",
+      "source_sha256": "651418f3981fbfbc2b951ddf556aabd31cc369f7bd1cb9287e8f72a8866cc7f3",
+      "archived_sha256": "651418f3981fbfbc2b951ddf556aabd31cc369f7bd1cb9287e8f72a8866cc7f3",
+      "bytes": 67604,
+      "source_lines": null
+    }
+  ]
+}
